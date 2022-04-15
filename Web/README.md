@@ -150,9 +150,7 @@ groupCall(params: {
     userIds: string[]; // IM的account账号
     type: CallType; // 呼叫类型 1:音频;2:视频;3:其他
     groupId?: string; // 群组id，不需要可以不传，后续该字段会废弃并入attachment中
-    attachment?: { // 自定义扩展字段
-        [key: string]: any;
-    };
+    attachment?: string // 自定义扩展字段
     success?: () => void; // 成功回调
     failed?: (err: any) => void; // 失败回调
 }): Promise<void>;
