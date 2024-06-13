@@ -1,0 +1,136 @@
+/**
+ * 引用 Android 系统库，示例如下：
+ * import { Context } from "android.content.Context";
+ * [可选实现，按需引入]
+ */
+
+import Context  from 'android.content.Context';
+/** 呼叫组件引入 */
+import NIMClient from "com.netease.nimlib.sdk.NIMClient";
+import LoginInfo from "com.netease.nimlib.sdk.auth.LoginInfo";
+import SDKOptions from 'com.netease.nimlib.sdk.SDKOptions';
+import CallKitUI from 'com.netease.yunxin.nertc.ui.CallKitUI';
+import IMKitClient from 'com.netease.yunxin.kit.corekit.im.IMKitClient';
+import LoginCallback from 'com.netease.yunxin.kit.corekit.im.login.LoginCallback'
+import CallKitUIOptions from 'com.netease.yunxin.nertc.ui.CallKitUIOptions';
+import CallKitUIOptionsBuilder from 'com.netease.yunxin.nertc.ui.CallKitUIOptions.Builder';
+import CallParam from 'com.netease.yunxin.nertc.ui.base.CallParam';
+import CallParamBuilder from 'com.netease.yunxin.nertc.ui.base.CallParam.Builder';
+
+/**
+ * 初始化呼叫组件
+ * @paramJson {appKey:""}
+ */
+export function initCall(paramJson:UTSJSONObject, callback?:(result: UTSJSONObject) => void) : void {
+	let appkey = paramJson['appKey'] as String | null;
+	console.log('initCall appkey = ' + appkey);
+	// 检查 appKey 是否为空或空字符串
+	if (appkey == null || appkey.trim() == "") {
+		let errorRes = new UTSJSONObject();
+		errorRes.set("code", -1);
+		errorRes.set("message", "appKey 为空");
+		callback?.(errorRes);
+		return;
+	}
+	
+
+	UTSAndroid.getDispatcher("main").async(function(_){
+	    console.log("当前任务执行在",Thread.currentThread().getName());
+		let sdkOptions = new SDKOptions();
+		sdkOptions.appKey = appkey;
+		IMKitClient.init(UTSAndroid.getAppContext() as Context,null,sdkOptions);
+		let errorRes = new UTSJSONObject();
+		errorRes.set("code", 200);
+		errorRes.set("message", "success");
+		callback?.(errorRes);
+	}, null)
+}
+
+/**
+ * 登录呼叫组件
+ * @paramJson {account:"",token:""}
+ */
+export function loginCall(paramJson:UTSJSONObject,callback?:(result: UTSJSONObject) => void) : void {
+	let account = paramJson['account'] as String ;
+	let token = paramJson['token'] as String ;
+	let key:String = NIMClient.getAppKey() as String;
+	console.log('loginCall:'+account);
+	let loginInfo = new LoginInfo(account, token);
+	IMKitClient.loginIM(loginInfo,callback == null ?null:LoginListener(callback));
+	UTSAndroid.getDispatcher("main").async(function(_){
+		let optionBuilder = new CallKitUIOptionsBuilder();
+		optionBuilder.rtcAppKey(key);
+		optionBuilder.currentUserAccId(account);
+		optionBuilder.timeOutMillisecond(300000);
+		optionBuilder.channel('Dcloud');
+		optionBuilder.framework('UniAppx');
+		let option = optionBuilder.build();
+		CallKitUI.init(UTSAndroid.getAppContext() as Context, option);
+	}, null)
+}
+
+/**
+ * 发起呼叫
+ * @paramJson {account:"",type:Int}，account被呼叫账号ID，type呼叫类型1音频呼叫 2 视频呼叫
+ */
+export function toCallPage(paramJson:UTSJSONObject, callback?:(result: UTSJSONObject) => void) : void {
+	let calledId = paramJson['calledAccount'] as String;
+	let callType = paramJson['type'] as Int;
+	
+	
+	if (!isIMLogined()) {
+		let errorRes = new UTSJSONObject();
+		errorRes.set("code", -1);
+		errorRes.set("message", "please call login method first");
+		callback?.(errorRes);
+		return;
+	}
+	
+	let builder = new CallParamBuilder();
+	builder.callType(callType);
+	builder.calledAccId(calledId);
+	let param = builder.build();
+	CallKitUI.startSingleCall(UTSAndroid.getAppContext()  as Context, param);
+	console.log('toCallPage:'+calledId);
+	let errorRes = new UTSJSONObject();
+	errorRes.set("code", 200);
+	errorRes.set("message", "success");
+	callback?.(errorRes);
+}
+
+/**
+ * 退出登录
+ */
+export function logoutCall(callback?:(result: UTSJSONObject) => void) : void {
+	IMKitClient.logoutIM(null);
+	CallKitUI.destroy();
+	let res = new UTSJSONObject()
+	res.set("code", 200)	
+	if(callback != null){
+		callback(res)
+	}
+}
+
+function isIMLogined() : boolean {
+	return (NIMClient.getCurrentAccount() != null && NIMClient.getCurrentAccount() !== "")
+}
+
+class LoginListener implements LoginCallback<LoginInfo>{
+	
+	constructor(public callback:(result: UTSJSONObject) => void) {}
+	
+	override onSuccess(data?: LoginInfo):void {
+	    	let res = new UTSJSONObject()
+	    	res.set("code", 200)
+	    	this.callback(res)
+
+	}
+	
+	override onError(errorCode: Int, errorMsg: String):void {
+	    let res = new UTSJSONObject()
+		res.set("code", errorCode)
+	    res.set("msg", errorMsg)
+	    this.callback(res)
+	}
+	
+}

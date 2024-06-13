@@ -1,0 +1,187 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 5.7.1 (swiftlang-5.7.1.135.3 clang-1400.0.29.51)
+// swift-module-flags: -target x86_64-apple-ios10.0-simulator -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -module-name NECommonKit
+// swift-module-flags-ignorable: -enable-bare-slash-regex
+import AVFoundation
+import Foundation
+@_exported import NECommonKit
+import Photos
+import Swift
+import SystemConfiguration
+import UIKit
+import _Concurrency
+import _StringProcessing
+extension Swift.Array {
+  public func chunk(_ chunkSize: Swift.Int) -> [[Element]]
+}
+@propertyWrapper public struct Atomic<Value> {
+  public init(wrappedValue value: Value)
+  public var wrappedValue: Value {
+    get
+    set
+  }
+}
+public class CommonLoader<T> where T : AnyObject {
+  public init()
+  public func localizable(_ key: Swift.String) -> Swift.String
+  public func loadImage(_ name: Swift.String) -> UIKit.UIImage?
+  public func loadString(source: Swift.String?, type: Swift.String?) -> Swift.String?
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers public class CommonTool : ObjectiveC.NSObject {
+  public static func getCurrentLanguage() -> Swift.String
+  @objc override dynamic public init()
+  @objc deinit
+}
+public typealias NEAuthCompletion = (_ granted: Swift.Bool) -> Swift.Void
+@_inheritsConvenienceInitializers @objc public class NEAuthManager : ObjectiveC.NSObject {
+  @objc public class func hasAudioAuthoriztion() -> Swift.Bool
+  @objc public class func requestAudioAuthorization(_ completion: NECommonKit.NEAuthCompletion?)
+  @objc public class func hasCameraAuthorization() -> Swift.Bool
+  @objc public class func requestCameraAuthorization(_ completion: NECommonKit.NEAuthCompletion?)
+  @objc public class func hasPhotoAuthorization() -> Swift.Bool
+  public class func requestPhotoAuthorization(_ completion: NECommonKit.NEAuthCompletion?)
+  @objc override dynamic public init()
+  @objc deinit
+}
+public enum ReachabilityStatus {
+  case notReachable
+  case unknown
+  case ethernetOrWiFi
+  case wwan
+  public static func == (a: NECommonKit.ReachabilityStatus, b: NECommonKit.ReachabilityStatus) -> Swift.Bool
+  public func hash(into hasher: inout Swift.Hasher)
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+@_hasMissingDesignatedInitializers public class NEChatDetectNetworkTool {
+  public static let shareInstance: NECommonKit.NEChatDetectNetworkTool
+  final public let manager: NECommonKit.NENetworkReachabilityManager?
+  public func isNetworkRecahability() -> Swift.Bool
+  public func netWorkReachability(reachabilityStatus: @escaping (NECommonKit.ReachabilityStatus) -> Swift.Void)
+  @objc deinit
+}
+extension UIKit.UIColor {
+  public static let ne_darkText: UIKit.UIColor
+  public static let ne_greyText: UIKit.UIColor
+  public static let ne_lightText: UIKit.UIColor
+  public static let ne_blueText: UIKit.UIColor
+  public static let ne_redText: UIKit.UIColor
+  public static let ne_disableRedText: UIKit.UIColor
+  public static let ne_backcolor: UIKit.UIColor
+  public static let ne_emptyTitleColor: UIKit.UIColor
+  public static let ne_greenText: UIKit.UIColor
+  public static let ne_lightBackgroundColor: UIKit.UIColor
+  public static let ne_defautAvatarColor: UIKit.UIColor
+  public static let ne_greenColor: UIKit.UIColor
+  public static let ne_yellowBackgroundColor: UIKit.UIColor
+  public static let ne_borderColor: UIKit.UIColor
+  public static let ne_operationBorderColor: UIKit.UIColor
+  public static let ne_greyLine: UIKit.UIColor
+  public static let ne_redColor: UIKit.UIColor
+  public static let ne_backgroundColor: UIKit.UIColor
+  public static let ne_navLineColor: UIKit.UIColor
+  public static let ne_outlineColor: UIKit.UIColor
+  convenience public init(hexString: Swift.String, _ alpha: CoreFoundation.CGFloat = 1.0)
+  public var hexString: Swift.String? {
+    get
+  }
+  public class func colorWithNumber(number: Swift.UInt64?) -> UIKit.UIColor
+  @objc dynamic public class func colorWithString(string: Swift.String?) -> UIKit.UIColor
+}
+@objc @_inheritsConvenienceInitializers @objcMembers public class NECommonUtil : ObjectiveC.NSObject {
+  @objc public class func getJSONStringFromDictionary(_ dictionary: [Swift.String : Any]) -> Swift.String
+  @objc public class func getDictionaryFromJSONString(_ jsonString: Swift.String) -> Foundation.NSDictionary?
+  @objc override dynamic public init()
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @objcMembers public class NEConstant : ObjectiveC.NSObject {
+  @objc public static let screenWidth: CoreFoundation.CGFloat
+  @objc public static let screenHeight: CoreFoundation.CGFloat
+  @objc public static let sreenWidthScale: CoreFoundation.CGFloat
+  @objc public static let sreenHeightScale: CoreFoundation.CGFloat
+  @objc public static let navigationHeight: Swift.Double
+  @objc public static let statusBarHeight: CoreFoundation.CGFloat
+  @objc public static let navigationAndStatusHeight: Swift.Double
+  @objc public static let screenInterval: CoreFoundation.CGFloat
+  @objc public static let textFont: (_ fontName: Swift.String, _ fontSize: Swift.Float) -> UIKit.UIFont
+  @objc public static let defaultTextFont: (_ fontSize: Swift.Float) -> UIKit.UIFont
+  @objc public static let hexRGB: (_ rgbValue: Swift.Int) -> UIKit.UIColor
+  @objc public static let hexRGBAlpha: (_ rgbValue: Swift.Int, _ alpha: Swift.Float) -> UIKit.UIColor
+  @objc override dynamic public init()
+  @objc deinit
+}
+extension Foundation.Date {
+  public static func utcFormattedDate(_ from: Foundation.Date, withDate: Swift.Bool) -> Swift.String
+  public static func getFormatPlayTime(_ secounds: Foundation.TimeInterval) -> Swift.String
+  public static func getTimeString(_ time: Foundation.TimeInterval) -> Swift.String
+  public func isToday() -> Swift.Bool
+  public func isThisYear() -> Swift.Bool
+}
+@_hasMissingDesignatedInitializers open class NENetworkReachabilityManager {
+  public enum NetworkReachabilityStatus {
+    case unknown
+    case notReachable
+    case reachable(NECommonKit.NENetworkReachabilityManager.ConnectionType)
+  }
+  public enum ConnectionType {
+    case ethernetOrWiFi
+    case wwan
+    public static func == (a: NECommonKit.NENetworkReachabilityManager.ConnectionType, b: NECommonKit.NENetworkReachabilityManager.ConnectionType) -> Swift.Bool
+    public func hash(into hasher: inout Swift.Hasher)
+    public var hashValue: Swift.Int {
+      get
+    }
+  }
+  public typealias Listener = (NECommonKit.NENetworkReachabilityManager.NetworkReachabilityStatus) -> Swift.Void
+  open var isReachable: Swift.Bool {
+    get
+  }
+  open var isReachableOnWWAN: Swift.Bool {
+    get
+  }
+  open var isReachableOnEthernetOrWiFi: Swift.Bool {
+    get
+  }
+  open var networkReachabilityStatus: NECommonKit.NENetworkReachabilityManager.NetworkReachabilityStatus {
+    get
+  }
+  open var listenerQueue: Dispatch.DispatchQueue
+  open var listener: NECommonKit.NENetworkReachabilityManager.Listener?
+  open var flags: SystemConfiguration.SCNetworkReachabilityFlags? {
+    get
+  }
+  open var previousFlags: SystemConfiguration.SCNetworkReachabilityFlags
+  convenience public init?(host: Swift.String)
+  convenience public init?()
+  @objc deinit
+  @discardableResult
+  open func startListening() -> Swift.Bool
+  open func stopListening()
+}
+extension NECommonKit.NENetworkReachabilityManager.NetworkReachabilityStatus : Swift.Equatable {
+}
+public func == (lhs: NECommonKit.NENetworkReachabilityManager.NetworkReachabilityStatus, rhs: NECommonKit.NENetworkReachabilityManager.NetworkReachabilityStatus) -> Swift.Bool
+extension ObjectiveC.NSObject {
+  public class func className() -> Swift.String
+  public func className() -> Swift.String
+}
+extension Swift.String {
+  public func finalSize(_ font: UIKit.UIFont, _ size: CoreFoundation.CGSize, _ numberOfLines: Swift.Int = 0) -> CoreFoundation.CGSize
+}
+extension Foundation.NSAttributedString {
+  public func finalSize(_ font: UIKit.UIFont, _ size: CoreFoundation.CGSize, _ numberOfLines: Swift.Int = 0) -> CoreFoundation.CGSize
+}
+extension Swift.String {
+  @available(*, deprecated, message: "This method is deprecated")
+  public func findAllIndex(_ string: Swift.String) -> [Foundation.NSRange]
+  public static func stringFromDate(date: Foundation.Date) -> Swift.String
+  public static func firstDayInYear() -> Foundation.Date?
+  public static func stringFromDictionary(dictionary: [Swift.String : Any]) -> Swift.String?
+  public static func dictionaryFromString(string: Swift.String) -> [Swift.String : Any]?
+}
+extension NECommonKit.ReachabilityStatus : Swift.Equatable {}
+extension NECommonKit.ReachabilityStatus : Swift.Hashable {}
+extension NECommonKit.NENetworkReachabilityManager.ConnectionType : Swift.Equatable {}
+extension NECommonKit.NENetworkReachabilityManager.ConnectionType : Swift.Hashable {}

@@ -1,0 +1,6 @@
+framework module NERtcSDK {
+  umbrella header "NERtcSDK.h"
+
+  export *
+  module * { export * }
+}

@@ -1,0 +1,207 @@
+import { NSError } from 'Foundation';
+import { DispatchQueue } from 'Dispatch';
+import { NIMSDK, NIMSDKOption, NIMUser } from 'NIMSDK';
+import { Router } from 'NECoreKit';
+import { YXNetworkReachabilityManager } from 'NECommonKit';
+import { NESetupConfig, NECallEngine, NERtcCallKit, NECallType } from 'NERtcCallKit';
+import { NERtcCallUIKit, NECallUIKitConfig, NetManager, NECallUILanguageZhHans, NECallUILanguageEn} from 'NERtcCallUIKit';
+
+// 初始化 SDK
+export const initCall = function(params: UTSJSONObject, callback?:(result: UTSJSONObject) => void) : void {
+	const option = new NIMSDKOption()
+	const appKey = params["appKey"] as string | null
+	if (appKey != null && appKey!.length > 0) {
+		console.log("initCall appKey = " + appKey!);
+		option.appKey = appKey!
+	} else {
+		console.log("initCall appKey is null")
+		let errorRes = new UTSJSONObject();
+		errorRes.set("code", -1);
+		errorRes.set("message", "appKey 为空");
+		callback?.(errorRes);
+		return
+	}
+
+	const apnsCername = params["apnsCername"] as string | null
+	if (apnsCername != null && apnsCername!.length > 0) {
+		option.apnsCername = apnsCername!
+	}
+
+	const pkCername = params["pkCername"] as string | null
+	if (pkCername != null && pkCername!.length > 0) {
+		option.pkCername = pkCername!
+	}
+
+	// IM 初始化
+	NIMSDK.shared().register(with = option)
+
+	// 呼叫组件初始化
+	const setupConfig = new NESetupConfig(appkey = option.appKey)
+	setupConfig.channel = "Dcloud"
+	setupConfig.framework = "UniAppx"
+	NECallEngine.sharedInstance().setup(setupConfig)
+    NECallEngine.sharedInstance().setTimeout(30)
+
+	const uiConfig = new NECallUIKitConfig()
+	NERtcCallUIKit.sharedInstance().setup(with = uiConfig)
+	let errorRes = new UTSJSONObject();
+	errorRes.set("code", 200);
+	errorRes.set("message", "success");
+	callback?.(errorRes);
+}
+
+// 登录
+export const loginCall = function (params: UTSJSONObject, callback:(result: UTSJSONObject) => void) {
+	console.log("loginCall")
+	const account = params["account"] as string | null
+	const token = params["token"] as string | null
+	if (account == null || (account != null && account!.length <= 0)) {
+		console.log("ERROR: account is null")
+		let errorRes = new UTSJSONObject();
+		errorRes.set("code", -1);
+		errorRes.set("message", "account is empty");
+		callback(errorRes);
+		return
+	}
+	
+	console.log("loginCall account = " + account!)
+
+	if (token == null || (token != null && token!.length <= 0)) {
+		console.log("ERROR: account is null")
+		let errorRes = new UTSJSONObject();
+		errorRes.set("code", -1);
+		errorRes.set("message", "token is empty");
+		callback(errorRes);
+		return
+	}
+
+	NERtcCallKit.sharedInstance().login(account!, token = token!, completion = (error: NSError | null):void => {
+		const err: NSError | null = error as NSError | null
+		let res = new UTSJSONObject()
+		if (err != null) {
+			res.set("code", err!.code)
+			res.set("msg", err!.localizedDescription)
+			callback(res)
+		} else {
+			let loginInfo = new UTSJSONObject()
+			loginInfo.set("account", account)
+			loginInfo.set("token", token)
+
+			res.set("code", 200)
+			res.set("loginInfo", loginInfo)
+			callback(res)
+		}
+	})
+}
+
+// 登出
+export const logoutCall = function (callback: (res: UTSJSONObject) => void) {
+	console.log("logout")
+	NERtcCallKit.sharedInstance().logout((error: NSError | null):void => {
+		const err: NSError | null = error as NSError | null
+		let res = new UTSJSONObject()
+		if (err != null) {
+			res.set("code", err!.code)
+			res.set("msg", err!.localizedDescription)
+			callback(res)
+		} else {
+			res.set("code", 200)
+			callback(res)
+		}
+	})
+}
+
+// 发起呼叫
+export const toCallPage = function(params: UTSJSONObject, callback?:(result: UTSJSONObject) => void) : void {
+	const calledAccount = params["calledAccount"] as string | null
+	let type = params["type"] as number | null
+
+	console.log("toCallPage calledAccount = " + calledAccount!)
+	console.log("toCallPage type = ", type)
+
+	if (calledAccount == null || (calledAccount != null && calledAccount!.length <= 0)) {
+		console.log("ERROR: calledAccount is empty")
+		let errorRes = new UTSJSONObject();
+		errorRes.set("code", -1);
+		errorRes.set("message", "called account is empty");
+		callback?.(errorRes);
+		return
+	}
+
+	if (type == null || (type != null && type! < 1) || (type != null && type! > 2)) {
+		console.log("ERROR: type is null or illegal")
+		let errorRes = new UTSJSONObject();
+		errorRes.set("code", -1);
+		errorRes.set("message", "called type is null or illegal");
+		callback?.(errorRes);
+		return
+	}
+
+	const isLogined: boolean = NIMSDK.shared().loginManager.isLogined();
+	console.log("isLogined = ", isLogined);
+
+	if (!isLogined) {
+		let errorRes = new UTSJSONObject();
+		errorRes.set("code", -1);
+		errorRes.set("message", "please call login method first");
+		callback?.(errorRes);
+		return;
+	}
+
+	let remoteShowName: string | null
+	let remoteAvatar: string | null
+
+	const nimUser: NIMUser | null = NIMSDK.shared().userManager.userInfo(calledAccount!)
+	if (nimUser != null) {
+		const userId: string | null = nimUser!.userId
+		const nickName: string | null = nimUser!.userInfo?.nickName
+		const alias: string | null = nimUser!.alias
+		if (userId != null) {
+			remoteShowName = userId;
+		} else if (nickName != null) {
+			remoteShowName = nickName
+		} else if (alias != null) {
+			remoteShowName = alias
+		}
+		remoteAvatar = nimUser!.userInfo?.avatarUrl
+	}
+
+	let rtcParam = new Map<string, any>([
+		["remoteUserAccid", calledAccount! as any],
+		["type", type! as any],
+	])
+
+	if (remoteShowName != null && remoteShowName!.length > 0) {
+		rtcParam.set("remoteShowName", remoteShowName!)
+	}
+
+	const jsonShowName = params["remoteShowName"] as string | null
+	if (jsonShowName != null && jsonShowName!.length > 0) {
+		rtcParam.set("remoteShowName", jsonShowName!)
+	}
+
+	if (remoteAvatar != null && remoteAvatar!.length > 0) {
+		rtcParam.set("remoteAvatar", remoteAvatar!)
+	}
+
+	const jsonAvatar = params["remoteAvatar"] as string | null
+	if (jsonAvatar != null && jsonAvatar!.length > 0) {
+		rtcParam.set("remoteAvatar", jsonAvatar!)
+	}
+
+	// 校验网络状态
+	const netManager: NetManager | null = NetManager.shareInstance() as NetManager
+	if (netManager != null) {
+		let maneger = YXNetworkReachabilityManager.shared()
+		maneger.startMonitoring()
+		netManager!.isClose = !maneger.isReachable
+	}
+
+	DispatchQueue.main.async(execute=():void => {
+		Router.shared.use("imkit://callkit.page", parameters= rtcParam, closure= null)
+	})
+	let errorRes = new UTSJSONObject();
+	errorRes.set("code", 200);
+	errorRes.set("message", "success");
+	callback?.(errorRes);
+}

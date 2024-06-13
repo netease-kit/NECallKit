@@ -1,0 +1,10 @@
+{
+  "name": "co1",
+  "dependencies": {
+    "utils": "file:../common/utils",
+    "uni-config-center": "file:../../../../uni-config-center/uniCloud/cloudfunctions/common/uni-config-center"
+  },
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}

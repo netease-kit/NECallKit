@@ -1,0 +1,6 @@
+framework module YXAlog_iOS {
+  umbrella header "YXAlog_iOS-umbrella.h"
+
+  export *
+  module * { export * }
+}

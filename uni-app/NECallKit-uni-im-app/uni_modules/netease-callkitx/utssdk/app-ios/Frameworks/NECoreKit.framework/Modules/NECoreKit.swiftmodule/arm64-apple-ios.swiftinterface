@@ -1,0 +1,170 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 5.9 (swiftlang-5.9.0.128.108 clang-1500.0.40.1)
+// swift-module-flags: -target arm64-apple-ios11.0 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -module-name NECoreKit
+// swift-module-flags-ignorable: -enable-bare-slash-regex
+import Foundation
+@_exported import NECoreKit
+import Swift
+import UIKit
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+@_hasMissingDesignatedInitializers public class CoreKitEngine {
+  public static let instance: NECoreKit.CoreKitEngine
+  public func setupCoreKit()
+  @objc deinit
+}
+public class CoreLoader<T> where T : AnyObject {
+  final public let bundle: Foundation.Bundle
+  public init()
+  public func localizable(_ key: Swift.String) -> Swift.String
+  public func loadImage(_ name: Swift.String) -> UIKit.UIImage?
+  public func loadString(source: Swift.String?, type: Swift.String?) -> Swift.String?
+  @objc deinit
+}
+@objc public enum RouterState : ObjectiveC.NSInteger {
+  case businessError = -1
+  case systemError = 0
+  case success = 1
+  public init?(rawValue: ObjectiveC.NSInteger)
+  public typealias RawValue = ObjectiveC.NSInteger
+  public var rawValue: ObjectiveC.NSInteger {
+    get
+  }
+}
+public typealias RouteAsyncHandle = ([Swift.String : Any]) -> Swift.Void
+public typealias RouteHandleCallbackClosure = (Any?, NECoreKit.RouterState, Swift.String) -> Swift.Void
+extension UIKit.UIImage {
+  public class func ne_imageNamed(name: Swift.String?) -> UIKit.UIImage?
+}
+@_hasMissingDesignatedInitializers public class RouteRequest {
+  public var allParams: [Swift.String : Any] {
+    get
+  }
+  public subscript(key: Swift.String) -> Any? {
+    get
+  }
+  @objc deinit
+}
+public class Matcher {
+  public var handleClosure: NECoreKit.RouteAsyncHandle {
+    get
+  }
+  public var routeRegular: NECoreKit.Regular?
+  public init(_ expression: Swift.String, closure: @escaping NECoreKit.RouteAsyncHandle)
+  public func createRequest(_ pattern: Swift.String?, originalParams: [Swift.String : Any]?) -> NECoreKit.RouteRequest?
+  @objc deinit
+}
+public let SearchContactPageRouter: Swift.String
+public let ConversationPageRouter: Swift.String
+public let ContactPageRouter: Swift.String
+public let ContactUserSelectRouter: Swift.String
+public let ContactAddFriendRouter: Swift.String
+public let ChatAddFriendRouter: Swift.String
+public let ContactTeamDataRouter: Swift.String
+public let MeSettingRouter: Swift.String
+public let ContactUserInfoPageRouter: Swift.String
+public let SearchMessageRouter: Swift.String
+public let ValidationMessageRouter: Swift.String
+public let ContactBlackListRouter: Swift.String
+public let ContactTeamListRouter: Swift.String
+public let ContactPersonRouter: Swift.String
+public let ContactComputerRouter: Swift.String
+public let ContactSelectedUsersRouter: Swift.String
+public let TeamCreateDisuss: Swift.String
+public let TeamCreateSenior: Swift.String
+public let TeamCreateDiscussResult: Swift.String
+public let TeamCreateSeniorResult: Swift.String
+public let TeamSettingViewRouter: Swift.String
+public let PushTeamChatVCRouter: Swift.String
+public let PushP2pChatVCRouter: Swift.String
+public let PushPinMessageVCRouter: Swift.String
+public let CallViewRouter: Swift.String
+@objc @_inheritsConvenienceInitializers @objcMembers public class NEPathUtils : ObjectiveC.NSObject {
+  @objc public class func getDirectoryForDocuments(dir: Swift.String) -> Swift.String?
+  @objc public class func getDocumentPath() -> Swift.String?
+  @objc override dynamic public init()
+  @objc deinit
+}
+public struct RegularResult {
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers public class Regular : Foundation.NSRegularExpression {
+  @objc override dynamic public init(pattern: Swift.String, options: Foundation.NSRegularExpression.Options = []) throws
+  @discardableResult
+  public static func regular(with pattern: Swift.String) -> NECoreKit.Regular?
+  public func result(with string: Swift.String?) -> NECoreKit.RegularResult
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @objcMembers public class Router : ObjectiveC.NSObject {
+  @objc public static let shared: NECoreKit.Router
+  @objc public func register(_ url: Swift.String, closure: @escaping NECoreKit.RouteAsyncHandle)
+  @objc public func use(_ url: Swift.String, parameters: [Swift.String : Any]? = nil, closure: NECoreKit.RouteHandleCallbackClosure? = nil)
+  @objc override dynamic public init()
+  @objc deinit
+}
+extension Swift.String {
+  public func initalLetter() -> Swift.String?
+  public var isBlank: Swift.Bool {
+    get
+  }
+  public func highlight(keyWords: Swift.String?, highlightColor color: UIKit.UIColor) -> Foundation.NSMutableAttributedString
+}
+@objc @_inheritsConvenienceInitializers @objcMembers public class NEStringUtils : ObjectiveC.NSObject {
+  @objc public class func desensitize(string: Swift.String, sensitive: Swift.String) -> Swift.String
+  @objc public class func around(string: Swift.String, left: Swift.Int, right: Swift.Int, template: Swift.String) -> Swift.String
+  @objc override dynamic public init()
+  @objc deinit
+}
+public struct WeakDictionaryReference<Value> where Value : AnyObject {
+  public var value: Value? {
+    get
+  }
+}
+public struct WeakDictionaryKey<Key, Value> : Swift.Hashable where Key : AnyObject, Key : Swift.Hashable, Value : AnyObject {
+  public init(key: Key, value: Value? = nil)
+  public static func == (lhs: NECoreKit.WeakDictionaryKey<Key, Value>, rhs: NECoreKit.WeakDictionaryKey<Key, Value>) -> Swift.Bool
+  public func hash(into hasher: inout Swift.Hasher)
+  public var key: Key? {
+    get
+  }
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+public struct WeakDictionary<Key, Value> where Key : Swift.Hashable, Value : AnyObject {
+  public init()
+  public init(dictionary: [Key : Value])
+  public mutating func reap()
+  public func weakDictionary() -> NECoreKit.WeakDictionary<Key, Value>
+  public func dictionary() -> [Key : Value]
+}
+extension NECoreKit.WeakDictionary : Swift.Collection {
+  public typealias Index = Swift.DictionaryIndex<Key, NECoreKit.WeakDictionaryReference<Value>>
+  public var startIndex: NECoreKit.WeakDictionary<Key, Value>.Index {
+    get
+  }
+  public var endIndex: NECoreKit.WeakDictionary<Key, Value>.Index {
+    get
+  }
+  public func index(after index: NECoreKit.WeakDictionary<Key, Value>.Index) -> NECoreKit.WeakDictionary<Key, Value>.Index
+  public subscript(position: NECoreKit.WeakDictionary<Key, Value>.Index) -> (Key, NECoreKit.WeakDictionaryReference<Value>) {
+    get
+  }
+  public subscript(key: Key) -> Value? {
+    get
+    set
+  }
+  public subscript(bounds: Swift.Range<NECoreKit.WeakDictionary<Key, Value>.Index>) -> NECoreKit.WeakDictionary<Key, Value> {
+    get
+  }
+  public typealias Element = (Key, NECoreKit.WeakDictionaryReference<Value>)
+  public typealias Indices = Swift.DefaultIndices<NECoreKit.WeakDictionary<Key, Value>>
+  public typealias Iterator = Swift.IndexingIterator<NECoreKit.WeakDictionary<Key, Value>>
+  public typealias SubSequence = NECoreKit.WeakDictionary<Key, Value>
+}
+extension Swift.Dictionary where Value : AnyObject {
+  public func weakDictionary() -> NECoreKit.WeakDictionary<Key, Value>
+}
+extension NECoreKit.RouterState : Swift.Equatable {}
+extension NECoreKit.RouterState : Swift.Hashable {}
+extension NECoreKit.RouterState : Swift.RawRepresentable {}

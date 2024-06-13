@@ -1,0 +1,90 @@
+{
+  "id": "netease-callkitx",
+  "displayName": "【官方】网易云信RTC音视频通话点对点呼叫组件(uni-app x)",
+  "version": "2.4.1",
+  "description": "音视频通话插件基于云信信令、音视频通话 2.0 和 IM 即时通讯产品封装的融合性场景组件，简化了呼叫流程，将呼叫功能以 UI 组件化的形式提供给客户，提高接入效率、降低使用成本。",
+  "keywords": [
+    "官方",
+    "免费",
+    "音视频通话",
+    "呼叫",
+    "点对点"
+],
+  "repository": "",
+  "engines": {
+    "HBuilderX": "^3.99"
+  },
+  "dcloudext": {
+    "type": "uts",
+    "sale": {
+      "regular": {
+        "price": "0.00"
+      },
+      "sourcecode": {
+        "price": "0.00"
+      }
+    },
+    "contact": {
+      "qq": ""
+    },
+    "declaration": {
+      "ads": "无",
+      "data": "无",
+      "permissions": "\"android.permission.ACCESS_NETWORK_STATE\"   - 网络状态权限\n\"android.permission.CAMERA\"  - 相机权限\n\"android.permission.RECORD_AUDIO\"  -录音权限\n\"android.permission.FOREGROUND_SERVICE\" -后台服务权限\n\"android.permission.SYSTEM_ALERT_WINDOW\" -弹窗权限"
+    },
+    "npmurl": ""
+  },
+  "uni_modules": {
+    "dependencies": [],
+    "encrypt": [],
+    "platforms": {
+      "cloud": {
+        "tcb": "y",
+        "aliyun": "y",
+        "alipay": "y"
+      },
+      "client": {
+        "Vue": {
+          "vue2": "y",
+          "vue3": "y"
+        },
+        "App": {
+          "app-android": {
+            "minVersion": "21"
+        },
+          "app-ios": {
+            "minVersion": "11"
+        }
+        },
+        "H5-mobile": {
+          "Safari": "n",
+          "Android Browser": "n",
+          "微信浏览器(Android)": "n",
+          "QQ浏览器(Android)": "n"
+        },
+        "H5-pc": {
+          "Chrome": "n",
+          "IE": "n",
+          "Edge": "n",
+          "Firefox": "n",
+          "Safari": "n"
+        },
+        "小程序": {
+          "微信": "n",
+          "阿里": "n",
+          "百度": "n",
+          "字节跳动": "n",
+          "QQ": "n",
+          "钉钉": "n",
+          "快手": "n",
+          "飞书": "n",
+          "京东": "n"
+        },
+        "快应用": {
+          "华为": "n",
+          "联盟": "n"
+        }
+      }
+    }
+  }
+}

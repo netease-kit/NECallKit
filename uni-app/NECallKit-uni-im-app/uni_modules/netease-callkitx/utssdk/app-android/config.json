@@ -1,0 +1,13 @@
+{
+  "dependencies": [
+	  {
+		  "id": "com.netease.yunxin.kit.core:corekit-im",
+		  "source": "implementation('com.netease.yunxin.kit.core:corekit-im:1.4.9', {\r\nexclude group: 'androidx.core', module: 'core-ktx'\r\n})"  
+	  },
+	  {
+		  "id": "com.netease.yunxin.kit.call:call-ui",
+		  "source": "implementation('com.netease.yunxin.kit.call:call-ui:2.4.0', {\r\nexclude group: 'androidx.core', module: 'core-ktx'\r\n})"  
+	  }
+  ],
+  "minSdkVersion": "21"
+}

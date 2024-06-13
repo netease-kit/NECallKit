@@ -1,0 +1,1551 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 5.7.1 (swiftlang-5.7.1.135.3 clang-1400.0.29.51)
+// swift-module-flags: -target arm64-apple-ios10.0 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -module-name NECommonUIKit
+// swift-module-flags-ignorable: -enable-bare-slash-regex
+import AVFoundation
+import CoreGraphics
+import Foundation
+import NECommonKit
+@_exported import NECommonUIKit
+import ObjectiveC
+import Photos
+import QuartzCore
+import SDWebImage
+import Swift
+import UIKit
+import _Concurrency
+import _StringProcessing
+@objc public protocol BrowserToolsBarDelegate : ObjectiveC.NSObjectProtocol {
+  @objc func didCloseClick()
+  @objc func didPhotoClick()
+  @objc func didSaveClick()
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class BrowserToolsBar : UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: NECommonUIKit.BrowserToolsBarDelegate?
+  @objc @_Concurrency.MainActor(unsafe) public var saveBtn: NECommonUIKit.ExpandButton {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var closeBtn: NECommonUIKit.ExpandButton {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var photoBtn: NECommonUIKit.ExpandButton {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc @_Concurrency.MainActor(unsafe) open func setupUI()
+  @objc @_Concurrency.MainActor(unsafe) open func saveClick()
+  @objc @_Concurrency.MainActor(unsafe) open func photoClick()
+  @objc @_Concurrency.MainActor(unsafe) open func closeClick()
+  @objc deinit
+}
+public func commonLocalizable(_ key: Swift.String) -> Swift.String
+public let useSystemNav: Swift.String
+public struct CornerType : Swift.OptionSet {
+  public init(rawValue: Swift.Int)
+  public let rawValue: Swift.Int
+  public static let none: NECommonUIKit.CornerType
+  public static let topLeft: NECommonUIKit.CornerType
+  public static let topRight: NECommonUIKit.CornerType
+  public static let bottomLeft: NECommonUIKit.CornerType
+  public static let bottomRight: NECommonUIKit.CornerType
+  public typealias ArrayLiteralElement = NECommonUIKit.CornerType
+  public typealias Element = NECommonUIKit.CornerType
+  public typealias RawValue = Swift.Int
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class CornerCell : UIKit.UITableViewCell {
+  @objc @_Concurrency.MainActor(unsafe) public var fillColor: UIKit.UIColor
+  @objc @_Concurrency.MainActor(unsafe) public var edgeInset: UIKit.UIEdgeInsets
+  @objc @_Concurrency.MainActor(unsafe) public var dividerLineLeftMargin: UIKit.NSLayoutConstraint?
+  @objc @_Concurrency.MainActor(unsafe) public var dividerLineRightMargin: UIKit.NSLayoutConstraint?
+  @_Concurrency.MainActor(unsafe) public var cornerType: NECommonUIKit.CornerType {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(style: UIKit.UITableViewCell.CellStyle, reuseIdentifier: Swift.String?)
+  @objc @_Concurrency.MainActor(unsafe) public var dividerLine: UIKit.UIView {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var showDefaultLine: Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func draw(_ rect: CoreFoundation.CGRect)
+  @objc @_Concurrency.MainActor(unsafe) public func drawRoundedCorner(rect: CoreFoundation.CGRect)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class ExpandButton : UIKit.UIButton {
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func point(inside point: CoreFoundation.CGPoint, with event: UIKit.UIEvent?) -> Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@objc public enum FileState : Swift.Int {
+  case FileOpen = 1
+  case FileDownload
+  public init?(rawValue: Swift.Int)
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class FileStateView : UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) public var state: NECommonUIKit.FileState {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc @_Concurrency.MainActor(unsafe) public func setProgress(_ progress: Swift.Float)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class SearchSessionBaseView : UIKit.UITableViewHeaderFooterView {
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc @_Concurrency.MainActor(unsafe) open func setupUI()
+  @objc @_Concurrency.MainActor(unsafe) open func setUpTitle(title: Swift.String)
+  @objc @_Concurrency.MainActor(unsafe) public var title: UIKit.UILabel {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var bottomLine: UIKit.UIView {
+    @objc get
+    @objc set
+  }
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class FunSearchSessionHeaderView : NECommonUIKit.SearchSessionBaseView {
+  @_Concurrency.MainActor(unsafe) @objc override open func setupUI()
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @_Concurrency.MainActor(unsafe) public class FunSearchView : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) public var backView: UIKit.UIView {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var searchBotton: UIKit.UIButton {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @objc deinit
+}
+@objc @_hasMissingDesignatedInitializers @_Concurrency.MainActor(unsafe) public class NEActionSheetController : UIKit.UINavigationController {
+  @_Concurrency.MainActor(unsafe) public var dismissOnTouchOutside: Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(rootViewController: UIKit.UIViewController)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewDidLayoutSubviews()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(nibName nibNameOrNil: Swift.String?, bundle nibBundleOrNil: Foundation.Bundle?)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func forwardingTarget(for aSelector: ObjectiveC.Selector!) -> Any?
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers @objcMembers public class NEAlertViewController {
+  @objc public class func presentAlertViewController(_ title: Swift.String?, messageContent: Swift.String?, cancelTitle: Swift.String?, confirmTitle: Swift.String?, cancelComplete: (() -> Swift.Void)? = nil, confirmComplete: (() -> Swift.Void)? = nil)
+  @objc public class func removePresentAlertViewController()
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @available(iOSApplicationExtension, unavailable)
+@objc @_Concurrency.MainActor(unsafe) open class NEBarButtonItem : UIKit.UIBarButtonItem {
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init()
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder aDecoder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open var tintColor: UIKit.UIColor? {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) open func setTarget(_ target: Swift.AnyObject?, action: ObjectiveC.Selector?)
+  @objc @_Concurrency.MainActor(unsafe) open var invocation: NECommonUIKit.NEInvocation?
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class NEBaseTableViewController : NECommonUIKit.NEBaseViewController {
+  @objc @_Concurrency.MainActor(unsafe) public var tableView: UIKit.UITableView {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func viewDidLoad()
+  @objc @_Concurrency.MainActor(unsafe) open func setupTable()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(nibName nibNameOrNil: Swift.String?, bundle nibBundleOrNil: Foundation.Bundle?)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class NEBaseViewController : UIKit.UIViewController, UIKit.UIGestureRecognizerDelegate {
+  @objc @_Concurrency.MainActor(unsafe) public var topConstant: CoreFoundation.CGFloat
+  @objc @_Concurrency.MainActor(unsafe) final public let navigationView: NECommonUIKit.NENavigationView
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open var title: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func viewDidLoad()
+  @objc @_Concurrency.MainActor(unsafe) open func backEvent()
+  @objc @_Concurrency.MainActor(unsafe) public func addLeftSwipeDismissGesture()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(nibName nibNameOrNil: Swift.String?, bundle nibBundleOrNil: Foundation.Bundle?)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class NEBrokenNetworkView : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc @_Concurrency.MainActor(unsafe) public var errorIcon: UIKit.UIImageView {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var content: UIKit.UILabel {
+    @objc get
+    @objc set
+  }
+  @objc deinit
+}
+public enum ButtonStyle {
+  case top
+  case left
+  case bottom
+  case right
+  public static func == (a: NECommonUIKit.ButtonStyle, b: NECommonUIKit.ButtonStyle) -> Swift.Bool
+  public func hash(into hasher: inout Swift.Hasher)
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+extension UIKit.UIButton {
+  @_Concurrency.MainActor(unsafe) public func layoutButtonImage(style: NECommonUIKit.ButtonStyle = ButtonStyle.left, space: CoreFoundation.CGFloat = 5)
+}
+@_hasMissingDesignatedInitializers @objcMembers public class NEConfigManager {
+  public static let instance: NECommonUIKit.NEConfigManager
+  @objc public func setParameter(key: Swift.String, value: Any?)
+  @objc public func getParameter(key: Swift.String) -> Any?
+  @objc deinit
+}
+@objc @_Concurrency.MainActor(unsafe) public class NECustomAlertAction : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) public var showDefaultLine: Swift.Bool
+  @_Concurrency.MainActor(unsafe) public var contentText: UIKit.UILabel {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var clickAction: (() -> Swift.Void)?
+  @_Concurrency.MainActor(unsafe) public var cancelAction: (() -> Swift.Void)?
+  @_Concurrency.MainActor(unsafe) public var fillColor: UIKit.UIColor
+  @_Concurrency.MainActor(unsafe) public var edgeInset: UIKit.UIEdgeInsets
+  @_Concurrency.MainActor(unsafe) public var dividerLineLeftMargin: UIKit.NSLayoutConstraint?
+  @_Concurrency.MainActor(unsafe) public var dividerLineRightMargin: UIKit.NSLayoutConstraint?
+  @_Concurrency.MainActor(unsafe) public var cornerType: NECommonUIKit.CornerType {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var dividerLine: UIKit.UIView {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public init(title: Swift.String?, _ completion: (() -> Swift.Void)?)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func draw(_ rect: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) public func drawRoundedCorner(rect: CoreFoundation.CGRect)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) public class NECustomActionSheetController : UIKit.UIViewController {
+  @objc @_Concurrency.MainActor(unsafe) public var cancelAction: NECommonUIKit.NECustomAlertAction {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var boldDividerLine: UIKit.UIView
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(nibName nibNameOrNil: Swift.String?, bundle nibBundleOrNil: Foundation.Bundle?)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewDidLoad()
+  @objc @_Concurrency.MainActor(unsafe) public func addAction(_ action: NECommonUIKit.NECustomAlertAction, _ actionHeight: CoreFoundation.CGFloat = 51)
+  @objc deinit
+}
+@objc @objcMembers @_Concurrency.MainActor(unsafe) open class NEEmptyDataView : UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) public var widthConstraint: UIKit.NSLayoutConstraint?
+  @objc @_Concurrency.MainActor(unsafe) public var heightConstraint: UIKit.NSLayoutConstraint?
+  @objc @_Concurrency.MainActor(unsafe) public init(imageName: Swift.String, content: Swift.String, frame: CoreFoundation.CGRect)
+  @objc @_Concurrency.MainActor(unsafe) public init(image: UIKit.UIImage?, content: Swift.String, frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc @_Concurrency.MainActor(unsafe) public var emptyImageView: UIKit.UIImageView {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public func settingContent(content: Swift.String)
+  @objc @_Concurrency.MainActor(unsafe) public func setEmptyImage(name: Swift.String)
+  @objc @_Concurrency.MainActor(unsafe) public func setEmptyImage(image: UIKit.UIImage?)
+  @objc deinit
+}
+@available(iOSApplicationExtension, unavailable)
+@objc final public class NEInvocation : ObjectiveC.NSObject {
+  @objc weak final public var target: Swift.AnyObject?
+  @objc final public var action: ObjectiveC.Selector
+  @objc public init(_ target: Swift.AnyObject, _ action: ObjectiveC.Selector)
+  @objc final public func invoke(from: Any)
+  @objc deinit
+}
+@_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @available(iOSApplicationExtension, unavailable)
+@objc final public class NEKeyboardManager : ObjectiveC.NSObject {
+  @objc public static let shared: NECommonUIKit.NEKeyboardManager
+  @objc final public var enable: Swift.Bool {
+    @objc get
+    @objc set
+  }
+  @objc final public var keyboardDistanceFromTextField: CoreFoundation.CGFloat
+  @objc final public var enableAutoToolbar: Swift.Bool {
+    @objc get
+    @objc set
+  }
+  @objc final public var toolbarManageBehaviour: NECommonUIKit.IQAutoToolbarManageBehaviour
+  @objc final public var shouldToolbarUsesTextFieldTintColor: Swift.Bool
+  @objc final public var toolbarTintColor: UIKit.UIColor?
+  @objc final public var toolbarBarTintColor: UIKit.UIColor?
+  @objc final public var previousNextDisplayMode: NECommonUIKit.IQPreviousNextDisplayMode
+  @objc final public var toolbarPreviousBarButtonItemImage: UIKit.UIImage?
+  @objc final public var toolbarNextBarButtonItemImage: UIKit.UIImage?
+  @objc final public var toolbarDoneBarButtonItemImage: UIKit.UIImage?
+  @objc final public var toolbarPreviousBarButtonItemText: Swift.String?
+  @objc final public var toolbarPreviousBarButtonItemAccessibilityLabel: Swift.String?
+  @objc final public var toolbarNextBarButtonItemText: Swift.String?
+  @objc final public var toolbarNextBarButtonItemAccessibilityLabel: Swift.String?
+  @objc final public var toolbarDoneBarButtonItemText: Swift.String?
+  @objc final public var toolbarDoneBarButtonItemAccessibilityLabel: Swift.String?
+  @objc final public var shouldShowToolbarPlaceholder: Swift.Bool
+  @objc final public var placeholderFont: UIKit.UIFont?
+  @objc final public var placeholderColor: UIKit.UIColor?
+  @objc final public var placeholderButtonColor: UIKit.UIColor?
+  @objc final public var overrideKeyboardAppearance: Swift.Bool
+  @objc final public var keyboardAppearance: UIKit.UIKeyboardAppearance
+  @objc final public var shouldResignOnTouchOutside: Swift.Bool {
+    @objc get
+    @objc set
+  }
+  @objc final public var resignFirstResponderGesture: UIKit.UITapGestureRecognizer {
+    @objc get
+    @objc set
+  }
+  @discardableResult
+  @objc final public func resignFirstResponder() -> Swift.Bool
+  @objc final public var shouldPlayInputClicks: Swift.Bool
+  @objc final public var layoutIfNeededOnUpdate: Swift.Bool
+  @objc final public var disabledDistanceHandlingClasses: [UIKit.UIViewController.Type]
+  @objc final public var enabledDistanceHandlingClasses: [UIKit.UIViewController.Type]
+  @objc final public var disabledToolbarClasses: [UIKit.UIViewController.Type]
+  @objc final public var enabledToolbarClasses: [UIKit.UIViewController.Type]
+  @objc final public var toolbarPreviousNextAllowedClasses: [UIKit.UIView.Type]
+  @objc final public var disabledTouchResignedClasses: [UIKit.UIViewController.Type]
+  @objc final public var enabledTouchResignedClasses: [UIKit.UIViewController.Type]
+  @objc final public var touchResignedGestureIgnoreClasses: [UIKit.UIView.Type]
+  @objc final public func registerTextFieldViewClass(_ aClass: UIKit.UIView.Type, didBeginEditingNotificationName: Swift.String, didEndEditingNotificationName: Swift.String)
+  @objc final public func unregisterTextFieldViewClass(_ aClass: UIKit.UIView.Type, didBeginEditingNotificationName: Swift.String, didEndEditingNotificationName: Swift.String)
+  @objc deinit
+  @objc final public func reloadLayoutIfNeeded()
+}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.NEKeyboardManager : UIKit.UIGestureRecognizerDelegate {
+  @_Concurrency.MainActor(unsafe) @objc final public func gestureRecognizer(_ gestureRecognizer: UIKit.UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIKit.UIGestureRecognizer) -> Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc final public func gestureRecognizer(_ gestureRecognizer: UIKit.UIGestureRecognizer, shouldReceive touch: UIKit.UITouch) -> Swift.Bool
+}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.NEKeyboardManager {
+  @objc final public var enableDebugging: Swift.Bool {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc final public func registerAllNotifications()
+  @objc final public func unregisterAllNotifications()
+  public enum Static {
+  }
+}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.NEKeyboardManager {
+  @objc final public var movedDistance: CoreFoundation.CGFloat {
+    @objc get
+  }
+  @objc final public var movedDistanceChanged: ((CoreFoundation.CGFloat) -> Swift.Void)? {
+    @objc get
+    @objc set(newValue)
+  }
+}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.NEKeyboardManager {
+  @objc final public func reloadInputViews()
+}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.NEKeyboardManager {
+  @objc final public var canGoPrevious: Swift.Bool {
+    @objc get
+  }
+  @objc final public var canGoNext: Swift.Bool {
+    @objc get
+  }
+  @discardableResult
+  @objc final public func goPrevious() -> Swift.Bool
+  @discardableResult
+  @objc final public func goNext() -> Swift.Bool
+}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.NEKeyboardManager {
+  @objc final public var keyboardShowing: Swift.Bool {
+    @objc get
+  }
+}
+@available(iOSApplicationExtension, unavailable)
+@objc public enum IQAutoToolbarManageBehaviour : Swift.Int {
+  case bySubviews
+  case byTag
+  case byPosition
+  public init?(rawValue: Swift.Int)
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+@available(iOSApplicationExtension, unavailable)
+@objc public enum IQPreviousNextDisplayMode : Swift.Int {
+  case `default`
+  case alwaysHide
+  case alwaysShow
+  public init?(rawValue: Swift.Int)
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+@available(iOSApplicationExtension, unavailable)
+@objc public enum NEEnableMode : Swift.Int {
+  case `default`
+  case enabled
+  case disabled
+  public init?(rawValue: Swift.Int)
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+@_inheritsConvenienceInitializers @available(iOSApplicationExtension, unavailable)
+@objc final public class IQKeyboardReturnKeyHandler : ObjectiveC.NSObject {
+  @objc weak final public var delegate: (UIKit.UITextFieldDelegate & UIKit.UITextViewDelegate)?
+  @objc final public var lastTextFieldReturnKeyType: UIKit.UIReturnKeyType {
+    @objc get
+    @objc set
+  }
+  @objc override dynamic public init()
+  @objc public init(controller: UIKit.UIViewController)
+  @objc deinit
+  @objc final public func addTextFieldView(_ view: UIKit.UIView)
+  @objc final public func removeTextFieldView(_ view: UIKit.UIView)
+  @objc final public func addResponderFromView(_ view: UIKit.UIView)
+  @objc final public func removeResponderFromView(_ view: UIKit.UIView)
+}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.IQKeyboardReturnKeyHandler : UIKit.UITextFieldDelegate {
+  @_Concurrency.MainActor(unsafe) @objc final public func textFieldShouldBeginEditing(_ textField: UIKit.UITextField) -> Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc final public func textFieldShouldEndEditing(_ textField: UIKit.UITextField) -> Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc final public func textFieldDidBeginEditing(_ textField: UIKit.UITextField)
+  @_Concurrency.MainActor(unsafe) @objc final public func textFieldDidEndEditing(_ textField: UIKit.UITextField)
+  @available(iOS 10.0, *)
+  @_Concurrency.MainActor(unsafe) @objc final public func textFieldDidEndEditing(_ textField: UIKit.UITextField, reason: UIKit.UITextField.DidEndEditingReason)
+  @_Concurrency.MainActor(unsafe) @objc final public func textField(_ textField: UIKit.UITextField, shouldChangeCharactersIn range: Foundation.NSRange, replacementString string: Swift.String) -> Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc final public func textFieldShouldClear(_ textField: UIKit.UITextField) -> Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc final public func textFieldShouldReturn(_ textField: UIKit.UITextField) -> Swift.Bool
+}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.IQKeyboardReturnKeyHandler : UIKit.UITextViewDelegate {
+  @_Concurrency.MainActor(unsafe) @objc final public func textViewShouldBeginEditing(_ textView: UIKit.UITextView) -> Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc final public func textViewShouldEndEditing(_ textView: UIKit.UITextView) -> Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc final public func textViewDidBeginEditing(_ textView: UIKit.UITextView)
+  @_Concurrency.MainActor(unsafe) @objc final public func textViewDidEndEditing(_ textView: UIKit.UITextView)
+  @_Concurrency.MainActor(unsafe) @objc final public func textView(_ textView: UIKit.UITextView, shouldChangeTextIn range: Foundation.NSRange, replacementText text: Swift.String) -> Swift.Bool
+  @_Concurrency.MainActor(unsafe) @objc final public func textViewDidChange(_ textView: UIKit.UITextView)
+  @_Concurrency.MainActor(unsafe) @objc final public func textViewDidChangeSelection(_ textView: UIKit.UITextView)
+  @available(iOS 10.0, *)
+  @_Concurrency.MainActor(unsafe) @objc final public func textView(_ aTextView: UIKit.UITextView, shouldInteractWith URL: Foundation.URL, in characterRange: Foundation.NSRange, interaction: UIKit.UITextItemInteraction) -> Swift.Bool
+  @available(iOS 10.0, *)
+  @_Concurrency.MainActor(unsafe) @objc final public func textView(_ aTextView: UIKit.UITextView, shouldInteractWith textAttachment: UIKit.NSTextAttachment, in characterRange: Foundation.NSRange, interaction: UIKit.UITextItemInteraction) -> Swift.Bool
+  @available(iOS, deprecated: 10.0)
+  @_Concurrency.MainActor(unsafe) @objc final public func textView(_ aTextView: UIKit.UITextView, shouldInteractWith URL: Foundation.URL, in characterRange: Foundation.NSRange) -> Swift.Bool
+  @available(iOS, deprecated: 10.0)
+  @_Concurrency.MainActor(unsafe) @objc final public func textView(_ aTextView: UIKit.UITextView, shouldInteractWith textAttachment: UIKit.NSTextAttachment, in characterRange: Foundation.NSRange) -> Swift.Bool
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class NENavigationView : UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) public var bottomMargin: CoreFoundation.CGFloat
+  @objc @_Concurrency.MainActor(unsafe) public var leftMargin: CoreFoundation.CGFloat
+  @objc @_Concurrency.MainActor(unsafe) public var titleBarBottomLineHeight: Swift.Double
+  @objc @_Concurrency.MainActor(unsafe) public var backButton: UIKit.UIButton {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var navTitle: UIKit.UILabel {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var moreButton: UIKit.UIButton {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var titleBarView: UIKit.UIView {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var titleBarBottomLine: UIKit.UIView {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc @_Concurrency.MainActor(unsafe) public func setBackButtonTitle(_ title: Swift.String)
+  @objc @_Concurrency.MainActor(unsafe) public func setBackButtonImage(_ image: UIKit.UIImage?)
+  @objc @_Concurrency.MainActor(unsafe) public func addBackButtonTarget(target: Any?, selector: ObjectiveC.Selector)
+  @objc @_Concurrency.MainActor(unsafe) public func setMoreButtonTitle(_ title: Swift.String)
+  @objc @_Concurrency.MainActor(unsafe) public func setMoreButtonImage(_ image: UIKit.UIImage?)
+  @objc @_Concurrency.MainActor(unsafe) public func addMoreButtonTarget(target: Any?, selector: ObjectiveC.Selector)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @_Concurrency.MainActor(unsafe) public class NEOverlayFocusView : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) public var contentBackgroundColor: UIKit.UIColor? {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func layoutSubviews()
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @_Concurrency.MainActor(unsafe) public class NEOverlayMenuCell : NECommonUIKit.NEPagingMenuViewCell {
+  @_Concurrency.MainActor(unsafe) weak public var referencedMenuView: NECommonUIKit.PagingMenuView?
+  @_Concurrency.MainActor(unsafe) weak public var referencedFocusView: NECommonUIKit.PagingMenuFocusView?
+  @_Concurrency.MainActor(unsafe) public var hightlightTextColor: UIKit.UIColor? {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var normalTextColor: UIKit.UIColor? {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var hightlightTextFont: UIKit.UIFont? {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var normalTextFont: UIKit.UIFont? {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public static let sizingCell: NECommonUIKit.NEOverlayMenuCell
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func layoutSubviews()
+  @_Concurrency.MainActor(unsafe) public func configure(title: Swift.String)
+  @_Concurrency.MainActor(unsafe) public func updateMask(animated: Swift.Bool = true)
+  @_Concurrency.MainActor(unsafe) public func calculateWidth(from height: CoreFoundation.CGFloat, title: Swift.String) -> CoreFoundation.CGFloat
+  @objc deinit
+}
+public protocol NEPagingContentViewControllerDelegate : AnyObject {
+  func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, willBeginManualScrollOn index: Swift.Int)
+  func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, didManualScrollOn index: Swift.Int, percent: CoreFoundation.CGFloat)
+  func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, didEndManualScrollOn index: Swift.Int)
+  func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, willBeginPagingAt index: Swift.Int, animated: Swift.Bool)
+  func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, willFinishPagingAt index: Swift.Int, animated: Swift.Bool)
+  func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, didFinishPagingAt index: Swift.Int, animated: Swift.Bool)
+}
+extension NECommonUIKit.NEPagingContentViewControllerDelegate {
+  public func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, willBeginManualScrollOn index: Swift.Int)
+  public func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, didManualScrollOn index: Swift.Int, percent: CoreFoundation.CGFloat)
+  public func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, didEndManualScrollOn index: Swift.Int)
+  public func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, willBeginPagingAt index: Swift.Int, animated: Swift.Bool)
+  public func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, willFinishPagingAt index: Swift.Int, animated: Swift.Bool)
+  public func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, didFinishPagingAt index: Swift.Int, animated: Swift.Bool)
+}
+public protocol NEPagingContentViewControllerDataSource : AnyObject {
+  func numberOfItemsForContentViewController(viewController: NECommonUIKit.NEPagingContentViewController) -> Swift.Int
+  func contentViewController(viewController: NECommonUIKit.NEPagingContentViewController, viewControllerAt index: Swift.Int) -> UIKit.UIViewController
+}
+@objc @_inheritsConvenienceInitializers @_Concurrency.MainActor(unsafe) public class NEPagingContentViewController : UIKit.UIViewController {
+  @_Concurrency.MainActor(unsafe) weak public var delegate: NECommonUIKit.NEPagingContentViewControllerDelegate?
+  @_Concurrency.MainActor(unsafe) weak public var dataSource: NECommonUIKit.NEPagingContentViewControllerDataSource?
+  @_Concurrency.MainActor(unsafe) public var isEnabledPreloadContent: Swift.Bool
+  @_Concurrency.MainActor(unsafe) public var contentOffsetRatio: CoreFoundation.CGFloat {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var currentPageIndex: Swift.Int {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var currentPagingPercent: CoreFoundation.CGFloat {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var adjucentPageIndex: Swift.Int {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public func reloadData(with page: Swift.Int? = nil, completion: (() -> Swift.Void)? = nil)
+  @_Concurrency.MainActor(unsafe) public func scroll(to page: Swift.Int, animated: Swift.Bool, completion: ((Swift.Bool) -> Swift.Void)? = nil)
+  @_Concurrency.MainActor(unsafe) final public let scrollView: UIKit.UIScrollView
+  @_Concurrency.MainActor(unsafe) public func preloadContentIfNeeded(with scrollingPercent: CoreFoundation.CGFloat)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewDidLoad()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewWillAppear(_ animated: Swift.Bool)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewDidAppear(_ animated: Swift.Bool)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewWillDisappear(_ animated: Swift.Bool)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewDidDisappear(_ animated: Swift.Bool)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewDidLayoutSubviews()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func didReceiveMemoryWarning()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewWillTransition(to size: CoreFoundation.CGSize, with coordinator: UIKit.UIViewControllerTransitionCoordinator)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public var shouldAutomaticallyForwardAppearanceMethods: Swift.Bool {
+    @objc get
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(nibName nibNameOrNil: Swift.String?, bundle nibBundleOrNil: Foundation.Bundle?)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+extension NECommonUIKit.NEPagingContentViewController : UIKit.UIScrollViewDelegate {
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewWillBeginDragging(_ scrollView: UIKit.UIScrollView)
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewDidScroll(_ scrollView: UIKit.UIScrollView)
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewWillBeginDecelerating(_ scrollView: UIKit.UIScrollView)
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewDidEndDecelerating(_ scrollView: UIKit.UIScrollView)
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewDidEndDragging(_ scrollView: UIKit.UIScrollView, willDecelerate decelerate: Swift.Bool)
+}
+@_hasMissingDesignatedInitializers public class NEPagingKitConfig {
+  public static var focusColor: UIKit.UIColor
+  public static var normalColor: UIKit.UIColor
+  public static var menuTitleFont: UIKit.UIFont
+  @objc deinit
+}
+public struct NEPagingKitProxy<Base> {
+  public init(_ base: Base)
+}
+extension ObjectiveC.NSObjectProtocol {
+  public static var pk: NECommonUIKit.NEPagingKitProxy<Self.Type> {
+    get
+  }
+  public var pk: NECommonUIKit.NEPagingKitProxy<Self> {
+    get
+  }
+}
+extension NECommonUIKit.NEPagingKitProxy where Base == UIKit.UIColor.Type {
+  public var focusRed: UIKit.UIColor {
+    get
+  }
+}
+@objc @_inheritsConvenienceInitializers @_Concurrency.MainActor(unsafe) open class NEPagingMenuViewCell : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) open var isSelected: Swift.Bool
+  @_Concurrency.MainActor(unsafe) public var identifier: Swift.String! {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var index: Swift.Int! {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@_hasMissingDesignatedInitializers open class PagingMenuFocusViewAnimationCoordinator {
+  final public let beginFrame: CoreFoundation.CGRect
+  final public let endFrame: CoreFoundation.CGRect
+  open func animateFocusView(alongside animation: @escaping (NECommonUIKit.PagingMenuFocusViewAnimationCoordinator) -> Swift.Void, completion: ((Swift.Bool) -> Swift.Void)?)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_Concurrency.MainActor(unsafe) open class PagingMenuFocusView : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) open var selectedIndex: Swift.Int?
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder aDecoder: Foundation.NSCoder)
+  @objc deinit
+}
+public protocol PagingMenuViewDataSource : AnyObject {
+  func numberOfItemForPagingMenuView() -> Swift.Int
+  func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, cellForItemAt index: Swift.Int) -> NECommonUIKit.NEPagingMenuViewCell
+  func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, widthForItemAt index: Swift.Int) -> CoreFoundation.CGFloat
+}
+public protocol PagingMenuViewDelegate : AnyObject {
+  func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, didSelectItemAt index: Swift.Int)
+  func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, willAnimateFocusViewTo index: Swift.Int, with coordinator: NECommonUIKit.PagingMenuFocusViewAnimationCoordinator)
+  func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, willDisplay cell: NECommonUIKit.NEPagingMenuViewCell, forItemAt index: Swift.Int)
+}
+extension NECommonUIKit.PagingMenuViewDelegate {
+  public func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, didSelectItemAt index: Swift.Int)
+  public func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, willAnimateFocusViewTo index: Swift.Int, with coordinator: NECommonUIKit.PagingMenuFocusViewAnimationCoordinator)
+  public func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, willDisplay cell: NECommonUIKit.NEPagingMenuViewCell, forItemAt index: Swift.Int)
+}
+@objc @_inheritsConvenienceInitializers @_Concurrency.MainActor(unsafe) open class PagingMenuView : UIKit.UIScrollView {
+  public enum Alignment {
+    case center
+    case left
+    case right
+    public static func == (a: NECommonUIKit.PagingMenuView.Alignment, b: NECommonUIKit.PagingMenuView.Alignment) -> Swift.Bool
+    public func hash(into hasher: inout Swift.Hasher)
+    public var hashValue: Swift.Int {
+      get
+    }
+  }
+  @_Concurrency.MainActor(unsafe) final public let focusView: NECommonUIKit.PagingMenuFocusView
+  @_Concurrency.MainActor(unsafe) open var visibleCells: [NECommonUIKit.NEPagingMenuViewCell] {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) open var cellAlignment: NECommonUIKit.PagingMenuView.Alignment
+  @_Concurrency.MainActor(unsafe) open var cellSpacing: CoreFoundation.CGFloat
+  @_Concurrency.MainActor(unsafe) open var totalSpacing: CoreFoundation.CGFloat {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) weak open var dataSource: NECommonUIKit.PagingMenuViewDataSource?
+  @_Concurrency.MainActor(unsafe) weak open var menuDelegate: NECommonUIKit.PagingMenuViewDelegate?
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder aDecoder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) open var numberOfItem: Swift.Int
+  @_Concurrency.MainActor(unsafe) open func indexForItem(at point: CoreFoundation.CGPoint) -> Swift.Int?
+  @_Concurrency.MainActor(unsafe) open func cellForItem(at index: Swift.Int) -> NECommonUIKit.NEPagingMenuViewCell?
+  @_Concurrency.MainActor(unsafe) open func reloadData(with index: Swift.Int = 0, completion: ((Swift.Bool) -> Swift.Void)? = nil)
+  @_Concurrency.MainActor(unsafe) open func register(nib: UIKit.UINib?, with identifier: Swift.String)
+  @_Concurrency.MainActor(unsafe) open func register(type: NECommonUIKit.NEPagingMenuViewCell.Type, with identifier: Swift.String)
+  @_Concurrency.MainActor(unsafe) open func registerFocusView(view: UIKit.UIView, isBehindCell: Swift.Bool = false)
+  @_Concurrency.MainActor(unsafe) open func registerFocusView(nib: UIKit.UINib, isBehindCell: Swift.Bool = false)
+  @_Concurrency.MainActor(unsafe) open func dequeue(with identifier: Swift.String) -> NECommonUIKit.NEPagingMenuViewCell
+  @_Concurrency.MainActor(unsafe) open func rectForItem(at index: Swift.Int) -> CoreFoundation.CGRect
+  @_Concurrency.MainActor(unsafe) open func invalidateLayout()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func observeValue(forKeyPath keyPath: Swift.String?, of object: Any?, change: [Foundation.NSKeyValueChangeKey : Any]?, context: Swift.UnsafeMutableRawPointer?)
+  @_Concurrency.MainActor(unsafe) open func scroll(index: Swift.Int, percent: CoreFoundation.CGFloat = 0)
+  @_Concurrency.MainActor(unsafe) open func scroll(index: Swift.Int, completeHandler: @escaping (Swift.Bool) -> Swift.Void)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func layoutSubviews()
+  @available(iOS 11.0, *)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func safeAreaInsetsDidChange()
+  @objc deinit
+}
+extension NECommonUIKit.PagingMenuView {
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func touchesBegan(_ touches: Swift.Set<UIKit.UITouch>, with event: UIKit.UIEvent?)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func touchesEnded(_ touches: Swift.Set<UIKit.UITouch>, with event: UIKit.UIEvent?)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func touchesCancelled(_ touches: Swift.Set<UIKit.UITouch>, with event: UIKit.UIEvent?)
+}
+public protocol NEPagingMenuViewControllerDelegate : AnyObject {
+  func menuViewController(viewController: NECommonUIKit.NEPagingMenuViewController, focusViewDidEndTransition focusView: NECommonUIKit.PagingMenuFocusView)
+  func menuViewController(viewController: NECommonUIKit.NEPagingMenuViewController, didSelect page: Swift.Int, previousPage: Swift.Int)
+  func menuViewController(viewController: NECommonUIKit.NEPagingMenuViewController, willAnimateFocusViewTo index: Swift.Int, with coordinator: NECommonUIKit.PagingMenuFocusViewAnimationCoordinator)
+  func menuViewController(viewController: NECommonUIKit.NEPagingMenuViewController, willDisplay cell: NECommonUIKit.NEPagingMenuViewCell, forItemAt index: Swift.Int)
+}
+extension NECommonUIKit.NEPagingMenuViewControllerDelegate {
+  public func menuViewController(viewController: NECommonUIKit.NEPagingMenuViewController, focusViewDidEndTransition focusView: NECommonUIKit.PagingMenuFocusView)
+  public func menuViewController(viewController: NECommonUIKit.NEPagingMenuViewController, willAnimateFocusViewTo index: Swift.Int, with coordinator: NECommonUIKit.PagingMenuFocusViewAnimationCoordinator)
+  public func menuViewController(viewController: NECommonUIKit.NEPagingMenuViewController, willDisplay cell: NECommonUIKit.NEPagingMenuViewCell, forItemAt index: Swift.Int)
+}
+public protocol NEPagingMenuViewControllerDataSource : AnyObject {
+  func numberOfItemsForMenuViewController(viewController: NECommonUIKit.NEPagingMenuViewController) -> Swift.Int
+  func menuViewController(viewController: NECommonUIKit.NEPagingMenuViewController, cellForItemAt index: Swift.Int) -> NECommonUIKit.NEPagingMenuViewCell
+  func menuViewController(viewController: NECommonUIKit.NEPagingMenuViewController, widthForItemAt index: Swift.Int) -> CoreFoundation.CGFloat
+}
+@objc @_inheritsConvenienceInitializers @_Concurrency.MainActor(unsafe) public class NEPagingMenuViewController : UIKit.UIViewController {
+  @_Concurrency.MainActor(unsafe) weak public var delegate: NECommonUIKit.NEPagingMenuViewControllerDelegate?
+  @_Concurrency.MainActor(unsafe) weak public var dataSource: NECommonUIKit.NEPagingMenuViewControllerDataSource?
+  @_Concurrency.MainActor(unsafe) final public let menuView: NECommonUIKit.PagingMenuView
+  @_Concurrency.MainActor(unsafe) public var focusView: NECommonUIKit.PagingMenuFocusView {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var focusPointerOffset: CoreFoundation.CGPoint {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var percentOffset: CoreFoundation.CGFloat {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var cellAlignment: NECommonUIKit.PagingMenuView.Alignment {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var cellSpacing: CoreFoundation.CGFloat {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var contentInset: UIKit.UIEdgeInsets {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public func scroll(index: Swift.Int, percent: CoreFoundation.CGFloat = 0, animated: Swift.Bool = true)
+  @_Concurrency.MainActor(unsafe) public var visibleCells: [NECommonUIKit.NEPagingMenuViewCell] {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var currentFocusedCell: NECommonUIKit.NEPagingMenuViewCell? {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var currentFocusedIndex: Swift.Int? {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public func cellForItem(at index: Swift.Int) -> NECommonUIKit.NEPagingMenuViewCell?
+  @_Concurrency.MainActor(unsafe) public func registerFocusView(view: UIKit.UIView, isBehindCell: Swift.Bool = false)
+  @_Concurrency.MainActor(unsafe) public func registerFocusView(nib: UIKit.UINib, isBehindCell: Swift.Bool = false)
+  @_Concurrency.MainActor(unsafe) public func register(nib: UIKit.UINib?, forCellWithReuseIdentifier identifier: Swift.String)
+  @_Concurrency.MainActor(unsafe) public func register(type: NECommonUIKit.NEPagingMenuViewCell.Type, forCellWithReuseIdentifier identifier: Swift.String)
+  @_Concurrency.MainActor(unsafe) public func dequeueReusableCell(withReuseIdentifier identifier: Swift.String, for index: Swift.Int) -> NECommonUIKit.NEPagingMenuViewCell
+  @_Concurrency.MainActor(unsafe) public func reloadData(with preferredFocusIndex: Swift.Int? = nil, completionHandler: ((Swift.Bool) -> Swift.Void)? = nil)
+  @_Concurrency.MainActor(unsafe) public func invalidateLayout()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewDidLoad()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewDidLayoutSubviews()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func didReceiveMemoryWarning()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewWillTransition(to size: CoreFoundation.CGSize, with coordinator: UIKit.UIViewControllerTransitionCoordinator)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(nibName nibNameOrNil: Swift.String?, bundle nibBundleOrNil: Foundation.Bundle?)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+extension NECommonUIKit.NEPagingMenuViewController : UIKit.UIScrollViewDelegate {
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewDidEndDecelerating(_ scrollView: UIKit.UIScrollView)
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewDidEndDragging(_ scrollView: UIKit.UIScrollView, willDecelerate decelerate: Swift.Bool)
+}
+extension NECommonUIKit.NEPagingMenuViewController : NECommonUIKit.PagingMenuViewDelegate {
+  @_Concurrency.MainActor(unsafe) public func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, willDisplay cell: NECommonUIKit.NEPagingMenuViewCell, forItemAt index: Swift.Int)
+  @_Concurrency.MainActor(unsafe) public func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, willAnimateFocusViewTo index: Swift.Int, with coordinator: NECommonUIKit.PagingMenuFocusViewAnimationCoordinator)
+  @_Concurrency.MainActor(unsafe) public func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, didSelectItemAt index: Swift.Int)
+}
+extension NECommonUIKit.NEPagingMenuViewController : NECommonUIKit.PagingMenuViewDataSource {
+  @_Concurrency.MainActor(unsafe) public func numberOfItemForPagingMenuView() -> Swift.Int
+  @_Concurrency.MainActor(unsafe) public func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, widthForItemAt index: Swift.Int) -> CoreFoundation.CGFloat
+  @_Concurrency.MainActor(unsafe) public func pagingMenuView(pagingMenuView: NECommonUIKit.PagingMenuView, cellForItemAt index: Swift.Int) -> NECommonUIKit.NEPagingMenuViewCell
+}
+@_inheritsConvenienceInitializers @available(iOSApplicationExtension, unavailable)
+@objc @_Concurrency.MainActor(unsafe) open class NEPreviousNextView : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+extension UIKit.UITextField {
+  @_Concurrency.MainActor(unsafe) public func removeAllAutoLayout()
+}
+@_inheritsConvenienceInitializers @available(iOSApplicationExtension, unavailable)
+@objc @_Concurrency.MainActor(unsafe) open class NETextView : UIKit.UITextView {
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder aDecoder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect, textContainer: UIKit.NSTextContainer?)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func awakeFromNib()
+  @objc deinit
+  @_Concurrency.MainActor(unsafe) public var placeholderLabel: UIKit.UILabel {
+    get
+    set
+  }
+  @objc @IBInspectable @_Concurrency.MainActor(unsafe) open var placeholderTextColor: UIKit.UIColor? {
+    @objc get
+    @objc set
+  }
+  @objc @IBInspectable @_Concurrency.MainActor(unsafe) open var placeholder: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) open var attributedPlaceholder: Foundation.NSAttributedString? {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func layoutSubviews()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open var text: Swift.String! {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open var attributedText: Foundation.NSAttributedString! {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open var font: UIKit.UIFont? {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open var textAlignment: UIKit.NSTextAlignment {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override weak dynamic open var delegate: UIKit.UITextViewDelegate? {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open var intrinsicContentSize: CoreFoundation.CGSize {
+    @objc get
+  }
+  @_Concurrency.MainActor(unsafe) public func removeAllAutoLayout()
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @available(iOSApplicationExtension, unavailable)
+@_Concurrency.MainActor(unsafe) open class NETitleBarButtonItem : NECommonUIKit.NEBarButtonItem {
+  @objc @_Concurrency.MainActor(unsafe) open var titleFont: UIKit.UIFont? {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open var title: Swift.String? {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) open var titleColor: UIKit.UIColor? {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) open var selectableTitleColor: UIKit.UIColor? {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override open var invocation: NECommonUIKit.NEInvocation? {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) convenience public init(title: Swift.String?)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder aDecoder: Foundation.NSCoder)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_Concurrency.MainActor(unsafe) public class NETitleLabelMenuViewCell : NECommonUIKit.NEPagingMenuViewCell {
+  @_Concurrency.MainActor(unsafe) public var focusColor: UIKit.UIColor {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var normalColor: UIKit.UIColor {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var labelWidth: CoreFoundation.CGFloat {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) final public let titleLabel: UIKit.UILabel
+  @_Concurrency.MainActor(unsafe) public func setImage(_ image: UIKit.UIImage?)
+  @_Concurrency.MainActor(unsafe) public var spacing: CoreFoundation.CGFloat {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public func calcIntermediateLabelSize(with currentCell: NECommonUIKit.NETitleLabelMenuViewCell, percent: CoreFoundation.CGFloat) -> CoreFoundation.CGFloat
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder aDecoder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) override public var isSelected: Swift.Bool {
+    get
+    set
+  }
+  @objc deinit
+}
+extension UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) public func makeToast(_ message: Swift.String?, duration: Foundation.TimeInterval = NEToastManager.shared.duration, position: NECommonUIKit.ToastPosition = NEToastManager.shared.position, title: Swift.String? = nil, image: UIKit.UIImage? = nil, style: NECommonUIKit.ToastStyle = NEToastManager.shared.style, completion: ((_ didTap: Swift.Bool) -> Swift.Void)? = nil)
+  @_Concurrency.MainActor(unsafe) public func makeToast(_ message: Swift.String?, duration: Foundation.TimeInterval = NEToastManager.shared.duration, point: CoreFoundation.CGPoint, title: Swift.String?, image: UIKit.UIImage?, style: NECommonUIKit.ToastStyle = NEToastManager.shared.style, completion: ((_ didTap: Swift.Bool) -> Swift.Void)?)
+  @_Concurrency.MainActor(unsafe) public func showToast(_ toast: UIKit.UIView, duration: Foundation.TimeInterval = NEToastManager.shared.duration, position: NECommonUIKit.ToastPosition = NEToastManager.shared.position, completion: ((_ didTap: Swift.Bool) -> Swift.Void)? = nil)
+  @_Concurrency.MainActor(unsafe) public func showToast(_ toast: UIKit.UIView, duration: Foundation.TimeInterval = NEToastManager.shared.duration, point: CoreFoundation.CGPoint, completion: ((_ didTap: Swift.Bool) -> Swift.Void)? = nil)
+  @_Concurrency.MainActor(unsafe) public func hideToast()
+  @_Concurrency.MainActor(unsafe) public func hideToast(_ toast: UIKit.UIView)
+  @_Concurrency.MainActor(unsafe) public func hideAllToasts(includeActivity: Swift.Bool = false, clearQueue: Swift.Bool = true)
+  @_Concurrency.MainActor(unsafe) public func clearToastQueue()
+  @_Concurrency.MainActor(unsafe) public func makeToastActivity(_ position: NECommonUIKit.ToastPosition)
+  @_Concurrency.MainActor(unsafe) public func makeToastActivity(_ point: CoreFoundation.CGPoint)
+  @_Concurrency.MainActor(unsafe) public func hideToastActivity()
+  @_Concurrency.MainActor(unsafe) public func toastViewForMessage(_ message: Swift.String?, title: Swift.String?, image: UIKit.UIImage?, style: NECommonUIKit.ToastStyle) throws -> UIKit.UIView
+}
+public struct ToastStyle {
+  public init()
+  public var backgroundColor: UIKit.UIColor
+  public var titleColor: UIKit.UIColor
+  public var messageColor: UIKit.UIColor
+  public var maxWidthPercentage: CoreFoundation.CGFloat {
+    get
+    set
+  }
+  public var maxHeightPercentage: CoreFoundation.CGFloat {
+    get
+    set
+  }
+  public var horizontalPadding: CoreFoundation.CGFloat
+  public var verticalPadding: CoreFoundation.CGFloat
+  public var cornerRadius: CoreFoundation.CGFloat
+  public var titleFont: UIKit.UIFont
+  public var messageFont: UIKit.UIFont
+  public var titleAlignment: UIKit.NSTextAlignment
+  public var messageAlignment: UIKit.NSTextAlignment
+  public var titleNumberOfLines: Swift.Int
+  public var messageNumberOfLines: Swift.Int
+  public var displayShadow: Swift.Bool
+  public var shadowColor: UIKit.UIColor
+  public var shadowOpacity: Swift.Float {
+    get
+    set
+  }
+  public var shadowRadius: CoreFoundation.CGFloat
+  public var shadowOffset: CoreFoundation.CGSize
+  public var imageSize: CoreFoundation.CGSize
+  public var activitySize: CoreFoundation.CGSize
+  public var fadeDuration: Swift.Double
+  public var activityIndicatorColor: UIKit.UIColor
+  public var activityBackgroundColor: UIKit.UIColor
+}
+@_hasMissingDesignatedInitializers public class NEToastManager {
+  public static let shared: NECommonUIKit.NEToastManager
+  public var style: NECommonUIKit.ToastStyle
+  public var isTapToDismissEnabled: Swift.Bool
+  public var isQueueEnabled: Swift.Bool
+  public var duration: Swift.Double
+  public var position: NECommonUIKit.ToastPosition
+  @objc deinit
+}
+public enum ToastPosition {
+  case top
+  case center
+  case bottom
+  public static func == (a: NECommonUIKit.ToastPosition, b: NECommonUIKit.ToastPosition) -> Swift.Bool
+  public func hash(into hasher: inout Swift.Hasher)
+  public var hashValue: Swift.Int {
+    get
+  }
+}
+@_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @available(iOSApplicationExtension, unavailable)
+@objc @_Concurrency.MainActor(unsafe) open class NEToolbar : UIKit.UIToolbar, UIKit.UIInputViewAudioFeedback {
+  @objc @_Concurrency.MainActor(unsafe) open var previousBarButton: NECommonUIKit.NEBarButtonItem {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) open var nextBarButton: NECommonUIKit.NEBarButtonItem {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) open var titleBarButton: NECommonUIKit.NETitleBarButtonItem {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) open var doneBarButton: NECommonUIKit.NEBarButtonItem {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) open var fixedSpaceBarButton: NECommonUIKit.NEBarButtonItem {
+    @objc get
+    @objc set(newValue)
+  }
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder aDecoder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func sizeThatFits(_ size: CoreFoundation.CGSize) -> CoreFoundation.CGSize
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open var tintColor: UIKit.UIColor! {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func layoutSubviews()
+  @_Concurrency.MainActor(unsafe) @objc open var enableInputClicksWhenVisible: Swift.Bool {
+    @objc get
+  }
+  @objc deinit
+}
+@available(iOSApplicationExtension, unavailable)
+@objc extension UIKit.UIScrollView {
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var shouldIgnoreScrollingAdjustment: Swift.Bool {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var shouldIgnoreContentInsetAdjustment: Swift.Bool {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var shouldRestoreScrollViewContentOffset: Swift.Bool {
+    @objc get
+    @objc set(newValue)
+  }
+}
+@available(iOSApplicationExtension, unavailable)
+public let kNEUseDefaultKeyboardDistance: CoreFoundation.CGFloat
+@available(iOSApplicationExtension, unavailable)
+@objc extension UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var keyboardDistanceFromTextField: CoreFoundation.CGFloat {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var ignoreSwitchingByNextPrevious: Swift.Bool {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var enableMode: NECommonUIKit.NEEnableMode {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var shouldResignOnTouchOutsideMode: NECommonUIKit.NEEnableMode {
+    @objc get
+    @objc set(newValue)
+  }
+}
+@available(iOSApplicationExtension, unavailable)
+@objc extension UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func viewContainingController() -> UIKit.UIViewController?
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func topMostController() -> UIKit.UIViewController?
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func parentContainerViewController() -> UIKit.UIViewController?
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func superviewOfClassType(_ classType: UIKit.UIView.Type, belowView: UIKit.UIView? = nil) -> UIKit.UIView?
+}
+@available(iOSApplicationExtension, unavailable)
+@objc final public class NEBarButtonItemConfiguration : ObjectiveC.NSObject {
+  @objc public init(barButtonSystemItem: UIKit.UIBarButtonItem.SystemItem, action: ObjectiveC.Selector)
+  @objc public init(image: UIKit.UIImage, action: ObjectiveC.Selector)
+  @objc public init(title: Swift.String, action: ObjectiveC.Selector)
+  final public let barButtonSystemItem: UIKit.UIBarButtonItem.SystemItem?
+  @objc final public let image: UIKit.UIImage?
+  @objc final public let title: Swift.String?
+  @objc final public let action: ObjectiveC.Selector?
+  @objc deinit
+}
+@available(iOSApplicationExtension, unavailable)
+@objc extension UIKit.UIImage {
+  @objc public static func keyboardLeftImage() -> UIKit.UIImage?
+  @objc public static func keyboardRightImage() -> UIKit.UIImage?
+  @objc public static func keyboardUpImage() -> UIKit.UIImage?
+  @objc public static func keyboardDownImage() -> UIKit.UIImage?
+  @objc public static func keyboardPreviousImage() -> UIKit.UIImage?
+  @objc public static func keyboardNextImage() -> UIKit.UIImage?
+}
+@available(iOSApplicationExtension, unavailable)
+@objc extension UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var keyboardToolbar: NECommonUIKit.NEToolbar {
+    @objc get
+  }
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var shouldHideToolbarPlaceholder: Swift.Bool {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var toolbarPlaceholder: Swift.String? {
+    @objc get
+    @objc set(newValue)
+  }
+  @objc @_Concurrency.MainActor(unsafe) dynamic public var drawingToolbarPlaceholder: Swift.String? {
+    @objc get
+  }
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addKeyboardToolbarWithTarget(target: Swift.AnyObject?, titleText: Swift.String?, rightBarButtonConfiguration: NECommonUIKit.NEBarButtonItemConfiguration?, previousBarButtonConfiguration: NECommonUIKit.NEBarButtonItemConfiguration? = nil, nextBarButtonConfiguration: NECommonUIKit.NEBarButtonItemConfiguration? = nil)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addDoneOnKeyboardWithTarget(_ target: Swift.AnyObject?, action: ObjectiveC.Selector, shouldShowPlaceholder: Swift.Bool = false)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addDoneOnKeyboardWithTarget(_ target: Swift.AnyObject?, action: ObjectiveC.Selector, titleText: Swift.String?)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addRightButtonOnKeyboardWithImage(_ image: UIKit.UIImage, target: Swift.AnyObject?, action: ObjectiveC.Selector, shouldShowPlaceholder: Swift.Bool = false)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addRightButtonOnKeyboardWithImage(_ image: UIKit.UIImage, target: Swift.AnyObject?, action: ObjectiveC.Selector, titleText: Swift.String?)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addRightButtonOnKeyboardWithText(_ text: Swift.String, target: Swift.AnyObject?, action: ObjectiveC.Selector, shouldShowPlaceholder: Swift.Bool = false)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addRightButtonOnKeyboardWithText(_ text: Swift.String, target: Swift.AnyObject?, action: ObjectiveC.Selector, titleText: Swift.String?)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addCancelDoneOnKeyboardWithTarget(_ target: Swift.AnyObject?, cancelAction: ObjectiveC.Selector, doneAction: ObjectiveC.Selector, shouldShowPlaceholder: Swift.Bool = false)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addRightLeftOnKeyboardWithTarget(_ target: Swift.AnyObject?, leftButtonTitle: Swift.String, rightButtonTitle: Swift.String, leftButtonAction: ObjectiveC.Selector, rightButtonAction: ObjectiveC.Selector, shouldShowPlaceholder: Swift.Bool = false)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addRightLeftOnKeyboardWithTarget(_ target: Swift.AnyObject?, leftButtonImage: UIKit.UIImage, rightButtonImage: UIKit.UIImage, leftButtonAction: ObjectiveC.Selector, rightButtonAction: ObjectiveC.Selector, shouldShowPlaceholder: Swift.Bool = false)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addCancelDoneOnKeyboardWithTarget(_ target: Swift.AnyObject?, cancelAction: ObjectiveC.Selector, doneAction: ObjectiveC.Selector, titleText: Swift.String?)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addRightLeftOnKeyboardWithTarget(_ target: Swift.AnyObject?, leftButtonTitle: Swift.String, rightButtonTitle: Swift.String, leftButtonAction: ObjectiveC.Selector, rightButtonAction: ObjectiveC.Selector, titleText: Swift.String?)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addRightLeftOnKeyboardWithTarget(_ target: Swift.AnyObject?, leftButtonImage: UIKit.UIImage, rightButtonImage: UIKit.UIImage, leftButtonAction: ObjectiveC.Selector, rightButtonAction: ObjectiveC.Selector, titleText: Swift.String?)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addPreviousNextDoneOnKeyboardWithTarget(_ target: Swift.AnyObject?, previousAction: ObjectiveC.Selector, nextAction: ObjectiveC.Selector, doneAction: ObjectiveC.Selector, shouldShowPlaceholder: Swift.Bool = false)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addPreviousNextRightOnKeyboardWithTarget(_ target: Swift.AnyObject?, rightButtonImage: UIKit.UIImage, previousAction: ObjectiveC.Selector, nextAction: ObjectiveC.Selector, rightButtonAction: ObjectiveC.Selector, shouldShowPlaceholder: Swift.Bool = false)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addPreviousNextRightOnKeyboardWithTarget(_ target: Swift.AnyObject?, rightButtonTitle: Swift.String, previousAction: ObjectiveC.Selector, nextAction: ObjectiveC.Selector, rightButtonAction: ObjectiveC.Selector, shouldShowPlaceholder: Swift.Bool = false)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addPreviousNextDoneOnKeyboardWithTarget(_ target: Swift.AnyObject?, previousAction: ObjectiveC.Selector, nextAction: ObjectiveC.Selector, doneAction: ObjectiveC.Selector, titleText: Swift.String?)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addPreviousNextRightOnKeyboardWithTarget(_ target: Swift.AnyObject?, rightButtonImage: UIKit.UIImage, previousAction: ObjectiveC.Selector, nextAction: ObjectiveC.Selector, rightButtonAction: ObjectiveC.Selector, titleText: Swift.String?)
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func addPreviousNextRightOnKeyboardWithTarget(_ target: Swift.AnyObject?, rightButtonTitle: Swift.String, previousAction: ObjectiveC.Selector, nextAction: ObjectiveC.Selector, rightButtonAction: ObjectiveC.Selector, titleText: Swift.String?)
+}
+@available(iOSApplicationExtension, unavailable)
+@objc extension UIKit.UIViewController {
+  @objc @_Concurrency.MainActor(unsafe) dynamic open func parentNEContainerViewController() -> UIKit.UIViewController?
+  @objc @available(*, deprecated, message: "Due to change in core-logic of handling distance between textField and keyboard distance, this layout contraint tweak is no longer needed and things will just work out of the box regardless of constraint pinned with safeArea/layoutGuide/superview.")
+  @IBOutlet @_Concurrency.MainActor(unsafe) dynamic public var NELayoutGuideConstraint: UIKit.NSLayoutConstraint? {
+    @objc get
+    @objc set(newValue)
+  }
+}
+@objc @_inheritsConvenienceInitializers @_Concurrency.MainActor(unsafe) public class NEUnderlineFocusView : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) public var underlineColor: UIKit.UIColor {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var underlineHeight: CoreFoundation.CGFloat {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var underlineWidth: CoreFoundation.CGFloat? {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var masksToBounds: Swift.Bool {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var cornerRadius: CoreFoundation.CGFloat {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder aDecoder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @objc deinit
+}
+@objc @objcMembers @_Concurrency.MainActor(unsafe) open class NEUserHeaderView : UIKit.UIImageView {
+  @objc @_Concurrency.MainActor(unsafe) public var titleLabel: UIKit.UILabel {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc @_Concurrency.MainActor(unsafe) public func configHeadData(headUrl: Swift.String?, name: Swift.String, uid: Swift.String)
+  @objc @_Concurrency.MainActor(unsafe) public func setTitle(_ name: Swift.String)
+  @objc deinit
+}
+extension UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) public var left: CoreFoundation.CGFloat {
+    get
+    set(newLeft)
+  }
+  @_Concurrency.MainActor(unsafe) public var top: CoreFoundation.CGFloat {
+    get
+    set(newTop)
+  }
+  @_Concurrency.MainActor(unsafe) public var width: CoreFoundation.CGFloat {
+    get
+    set(newWidth)
+  }
+  @_Concurrency.MainActor(unsafe) public var height: CoreFoundation.CGFloat {
+    get
+    set(newHeight)
+  }
+  @_Concurrency.MainActor(unsafe) public var right: CoreFoundation.CGFloat {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var bottom: CoreFoundation.CGFloat {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) public var centerX: CoreFoundation.CGFloat {
+    get
+    set(newCenterX)
+  }
+  @_Concurrency.MainActor(unsafe) public var centerY: CoreFoundation.CGFloat {
+    get
+    set(newCenterY)
+  }
+  @_Concurrency.MainActor(unsafe) public func addCorner(conrners: UIKit.UIRectCorner, radius: CoreFoundation.CGFloat)
+}
+extension UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) public func getLayoutConstraint(firstItem: UIKit.UIView, seconedItem: UIKit.UIView?, attribute: UIKit.NSLayoutConstraint.Attribute) -> UIKit.NSLayoutConstraint?
+  @_Concurrency.MainActor(unsafe) public func updateLayoutConstraint(firstItem: UIKit.UIView, seconedItem: UIKit.UIView?, attribute: UIKit.NSLayoutConstraint.Attribute, constant: CoreFoundation.CGFloat)
+  @_Concurrency.MainActor(unsafe) public func removeLayoutConstraint(firstItem: UIKit.UIView, seconedItem: UIKit.UIView?, attribute: UIKit.NSLayoutConstraint.Attribute)
+}
+extension UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) public func findLabel(with string: Swift.String?) -> UIKit.UILabel?
+}
+@objc @_Concurrency.MainActor(unsafe) open class PhotoBrowserBigImgBackView : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) public init(urlArr: [Swift.String], number: Swift.Int)
+  @_Concurrency.MainActor(unsafe) public init(imgArr: [UIKit.UIImage], number: Swift.Int)
+  @_Concurrency.MainActor(unsafe) public func currentIndex() -> Swift.Int
+  @_Concurrency.MainActor(unsafe) public func currentImageData()
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder aDecoder: Foundation.NSCoder)
+  @objc deinit
+}
+extension NECommonUIKit.PhotoBrowserBigImgBackView : UIKit.UICollectionViewDelegate, UIKit.UICollectionViewDataSource {
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func collectionView(_ collectionView: UIKit.UICollectionView, numberOfItemsInSection section: Swift.Int) -> Swift.Int
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func collectionView(_ collectionView: UIKit.UICollectionView, cellForItemAt indexPath: Foundation.IndexPath) -> UIKit.UICollectionViewCell
+  @_Concurrency.MainActor(unsafe) public func dismissPhotoBrowser()
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewDidEndDecelerating(_ scrollView: UIKit.UIScrollView)
+}
+extension NECommonUIKit.PhotoBrowserBigImgBackView {
+  @_Concurrency.MainActor(unsafe) public func transformAnimation()
+}
+extension NECommonUIKit.PhotoBrowserBigImgBackView : QuartzCore.CAAnimationDelegate {
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func animationDidStop(_ anim: QuartzCore.CAAnimation, finished flag: Swift.Bool)
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class PhotoBrowserCell : UIKit.UICollectionViewCell {
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+extension NECommonUIKit.PhotoBrowserCell : UIKit.UIScrollViewDelegate {
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func viewForZooming(in scrollView: UIKit.UIScrollView) -> UIKit.UIView?
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewDidEndZooming(_ scrollView: UIKit.UIScrollView, with view: UIKit.UIView?, atScale scale: CoreFoundation.CGFloat)
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewWillBeginZooming(_ scrollView: UIKit.UIScrollView, with view: UIKit.UIView?)
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewDidZoom(_ scrollView: UIKit.UIScrollView)
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func scrollViewDidEndDecelerating(_ scrollView: UIKit.UIScrollView)
+}
+extension NECommonUIKit.PhotoBrowserCell : UIKit.UIGestureRecognizerDelegate {
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIKit.UIGestureRecognizer) -> Swift.Bool
+}
+@objc @objcMembers @_Concurrency.MainActor(unsafe) open class PhotoBrowserController : UIKit.UIViewController {
+  @objc @_Concurrency.MainActor(unsafe) public var toolsBar: NECommonUIKit.BrowserToolsBar {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var successView: NECommonUIKit.ToastImageView {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public init(imgs: [UIKit.UIImage], img: UIKit.UIImage)
+  @objc @_Concurrency.MainActor(unsafe) public init(urls: [Swift.String], url: Swift.String)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func viewDidLoad()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewWillAppear(_ animated: Swift.Bool)
+  @objc deinit
+}
+extension NECommonUIKit.PhotoBrowserController : NECommonUIKit.BrowserToolsBarDelegate {
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func didCloseClick()
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func didPhotoClick()
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func didSaveClick()
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class PhotoBrowserFlowLayout : UIKit.UICollectionViewFlowLayout {
+  @objc @_Concurrency.MainActor(unsafe) public var lastOffset: CoreFoundation.CGPoint
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init()
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func prepare()
+  @objc deinit
+}
+extension NECommonUIKit.PhotoBrowserFlowLayout {
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func targetContentOffset(forProposedContentOffset proposedContentOffset: CoreFoundation.CGPoint, withScrollingVelocity velocity: CoreFoundation.CGPoint) -> CoreFoundation.CGPoint
+}
+public enum PopoverOption {
+  case arrowSize(CoreFoundation.CGSize)
+  case animationIn(Foundation.TimeInterval)
+  case animationOut(Foundation.TimeInterval)
+  case cornerRadius(CoreFoundation.CGFloat)
+  case sideEdge(CoreFoundation.CGFloat)
+  case blackOverlayColor(UIKit.UIColor)
+  case overlayBlur(UIKit.UIBlurEffect.Style)
+  case type(NECommonUIKit.PopoverType)
+  case color(UIKit.UIColor)
+  case dismissOnBlackOverlayTap(Swift.Bool)
+  case showBlackOverlay(Swift.Bool)
+  case springDamping(CoreFoundation.CGFloat)
+  case initialSpringVelocity(CoreFoundation.CGFloat)
+  case sideOffset(CoreFoundation.CGFloat)
+  case borderColor(UIKit.UIColor)
+}
+@objc public enum PopoverType : Swift.Int {
+  case up
+  case down
+  case left
+  case right
+  case auto
+  public init?(rawValue: Swift.Int)
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+@objc @objcMembers @_Concurrency.MainActor(unsafe) open class Popover : UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) open var arrowSize: CoreFoundation.CGSize
+  @objc @_Concurrency.MainActor(unsafe) open var animationIn: Swift.Double
+  @objc @_Concurrency.MainActor(unsafe) open var animationOut: Swift.Double
+  @objc @_Concurrency.MainActor(unsafe) open var cornerRadius: CoreFoundation.CGFloat
+  @objc @_Concurrency.MainActor(unsafe) open var sideEdge: CoreFoundation.CGFloat
+  @objc @_Concurrency.MainActor(unsafe) open var popoverType: NECommonUIKit.PopoverType
+  @objc @_Concurrency.MainActor(unsafe) open var blackOverlayColor: UIKit.UIColor
+  @objc @_Concurrency.MainActor(unsafe) open var overlayBlur: UIKit.UIBlurEffect?
+  @objc @_Concurrency.MainActor(unsafe) open var popoverColor: UIKit.UIColor
+  @objc @_Concurrency.MainActor(unsafe) open var dismissOnBlackOverlayTap: Swift.Bool
+  @objc @_Concurrency.MainActor(unsafe) open var showBlackOverlay: Swift.Bool
+  @objc @_Concurrency.MainActor(unsafe) open var highlightFromView: Swift.Bool
+  @objc @_Concurrency.MainActor(unsafe) open var highlightCornerRadius: CoreFoundation.CGFloat
+  @objc @_Concurrency.MainActor(unsafe) open var springDamping: CoreFoundation.CGFloat
+  @objc @_Concurrency.MainActor(unsafe) open var initialSpringVelocity: CoreFoundation.CGFloat
+  @objc @_Concurrency.MainActor(unsafe) open var sideOffset: CoreFoundation.CGFloat
+  @objc @_Concurrency.MainActor(unsafe) open var borderColor: UIKit.UIColor?
+  @objc @_Concurrency.MainActor(unsafe) open var willShowHandler: (() -> Swift.Void)?
+  @objc @_Concurrency.MainActor(unsafe) open var willDismissHandler: (() -> Swift.Void)?
+  @objc @_Concurrency.MainActor(unsafe) open var didShowHandler: (() -> Swift.Void)?
+  @objc @_Concurrency.MainActor(unsafe) open var didDismissHandler: (() -> Swift.Void)?
+  @objc @_Concurrency.MainActor(unsafe) public var blackOverlay: UIKit.UIControl {
+    get
+  }
+  @_Concurrency.MainActor(unsafe) @objc dynamic public init()
+  @objc @_Concurrency.MainActor(unsafe) public init(showHandler: (() -> Swift.Void)?, dismissHandler: (() -> Swift.Void)?)
+  @_Concurrency.MainActor(unsafe) public init(options: [NECommonUIKit.PopoverOption]?, showHandler: (() -> Swift.Void)? = nil, dismissHandler: (() -> Swift.Void)? = nil)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder aDecoder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func layoutSubviews()
+  @objc @_Concurrency.MainActor(unsafe) open func showAsDialog(_ contentView: UIKit.UIView)
+  @objc @_Concurrency.MainActor(unsafe) open func showAsDialog(_ contentView: UIKit.UIView, inView: UIKit.UIView)
+  @objc @_Concurrency.MainActor(unsafe) open func show(_ contentView: UIKit.UIView, fromView: UIKit.UIView)
+  @objc @_Concurrency.MainActor(unsafe) open func show(_ contentView: UIKit.UIView, fromView: UIKit.UIView, inView: UIKit.UIView)
+  @objc @_Concurrency.MainActor(unsafe) open func show(_ contentView: UIKit.UIView, point: CoreFoundation.CGPoint)
+  @objc @_Concurrency.MainActor(unsafe) open func show(_ contentView: UIKit.UIView, point: CoreFoundation.CGPoint, inView: UIKit.UIView)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func accessibilityPerformEscape() -> Swift.Bool
+  @objc @_Concurrency.MainActor(unsafe) open func dismiss()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic open func draw(_ rect: CoreFoundation.CGRect)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class RedAngleLabel : UIKit.UILabel {
+  @objc @_Concurrency.MainActor(unsafe) public var textInsets: UIKit.UIEdgeInsets
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func drawText(in rect: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func textRect(forBounds bounds: CoreFoundation.CGRect, limitedToNumberOfLines numberOfLines: Swift.Int) -> CoreFoundation.CGRect
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class SearchTextField : UIKit.UITextField {
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func leftViewRect(forBounds bounds: CoreFoundation.CGRect) -> CoreFoundation.CGRect
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func placeholderRect(forBounds bounds: CoreFoundation.CGRect) -> CoreFoundation.CGRect
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func editingRect(forBounds bounds: CoreFoundation.CGRect) -> CoreFoundation.CGRect
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func textRect(forBounds bounds: CoreFoundation.CGRect) -> CoreFoundation.CGRect
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+extension UIKit.UITabBar {
+  @_Concurrency.MainActor(unsafe) public func showBadgOn(index itemIndex: Swift.Int, tabbarItemNums: CoreFoundation.CGFloat = 4.0)
+  @_Concurrency.MainActor(unsafe) public func setRedDotView(index ItemIndex: Swift.Int)
+  @_Concurrency.MainActor(unsafe) public func hideRedDocView(index ItemIndex: Swift.Int)
+  @_Concurrency.MainActor(unsafe) public func hideBadg(on itemIndex: Swift.Int)
+  @_Concurrency.MainActor(unsafe) public func setServerBadge(count: Swift.String?)
+}
+@objc public protocol TabNavigationViewDelegate {
+  @objc func didClickAddBtn()
+  @objc func searchAction()
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class TabNavigationView : UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) weak public var delegate: NECommonUIKit.TabNavigationViewDelegate?
+  @objc @_Concurrency.MainActor(unsafe) public var titleBarBottomLineHeight: Swift.Double
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(frame: CoreFoundation.CGRect)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc @_Concurrency.MainActor(unsafe) open func setupSubviews()
+  @objc @_Concurrency.MainActor(unsafe) public var brandBtn: UIKit.UIButton {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var navigationTitle: UIKit.UILabel {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var searchBtn: UIKit.UIButton {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var addBtn: NECommonUIKit.ExpandButton {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var titleBarView: UIKit.UIView {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var titleBarBottomLine: UIKit.UIView {
+    @objc get
+    @objc set
+  }
+  @objc deinit
+}
+extension NECommonUIKit.TabNavigationView {
+  @objc @_Concurrency.MainActor(unsafe) dynamic open func searchBtnClick(sender: UIKit.UIButton)
+  @objc @_Concurrency.MainActor(unsafe) dynamic open func addBtnClick(sender: UIKit.UIButton)
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class TextBaseCell : UIKit.UITableViewCell {
+  @objc @_Concurrency.MainActor(unsafe) public var titleLabelTopAnchor: UIKit.NSLayoutConstraint?
+  @objc @_Concurrency.MainActor(unsafe) public var titleLabelCenterYAnchor: UIKit.NSLayoutConstraint?
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func awakeFromNib()
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func setSelected(_ selected: Swift.Bool, animated: Swift.Bool)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(style: UIKit.UITableViewCell.CellStyle, reuseIdentifier: Swift.String?)
+  @objc @_Concurrency.MainActor(unsafe) open func setupSubviews()
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc @_Concurrency.MainActor(unsafe) public var headImge: NECommonUIKit.NEUserHeaderView {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var titleLabel: UIKit.UILabel {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var subTitleLabel: UIKit.UILabel {
+    @objc get
+    @objc set
+  }
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class ToastImageView : UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) public var imageView: UIKit.UIImageView
+  @objc @_Concurrency.MainActor(unsafe) public var contentLabel: UIKit.UILabel
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc deinit
+}
+extension UIKit.UIAlertController {
+  @_Concurrency.MainActor(unsafe) public func fixIpadAction()
+}
+@objc @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class CornerView : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func draw(_ rect: CoreFoundation.CGRect)
+  @objc deinit
+}
+extension UIKit.UIImageView {
+  @_Concurrency.MainActor(unsafe) public func addCustomCorner(conrners: UIKit.UIRectCorner, radius: CoreFoundation.CGFloat, backcolor: UIKit.UIColor)
+  @_Concurrency.MainActor(unsafe) public func removeAllCustomCorner()
+}
+@objc @_inheritsConvenienceInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class VideoPlayerViewController : UIKit.UIViewController {
+  @objc @_Concurrency.MainActor(unsafe) public var videoUrl: Foundation.URL?
+  @_Concurrency.MainActor(unsafe) public var totalTime: Swift.Int?
+  @objc @_Concurrency.MainActor(unsafe) public var playBtn: NECommonUIKit.ExpandButton {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var toolsBar: NECommonUIKit.BrowserToolsBar {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var successView: NECommonUIKit.ToastImageView {
+    @objc get
+    @objc set
+  }
+  @objc @_Concurrency.MainActor(unsafe) public var videoToolBar: NECommonUIKit.VideoToolBar {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public func viewDidLoad()
+  @objc deinit
+  @_Concurrency.MainActor(unsafe) @objc override dynamic public init(nibName nibNameOrNil: Swift.String?, bundle nibBundleOrNil: Foundation.Bundle?)
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+}
+extension NECommonUIKit.VideoPlayerViewController : NECommonUIKit.BrowserToolsBarDelegate, UIKit.UINavigationControllerDelegate {
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func didCloseClick()
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func didPhotoClick()
+  @_Concurrency.MainActor(unsafe) @objc dynamic public func didSaveClick()
+  @objc @_Concurrency.MainActor(unsafe) dynamic public func endPlay()
+}
+@objc public enum VideoState : Swift.Int {
+  case VideoPlay = 1
+  case VideoDownload
+  public init?(rawValue: Swift.Int)
+  public typealias RawValue = Swift.Int
+  public var rawValue: Swift.Int {
+    get
+  }
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @objcMembers @_Concurrency.MainActor(unsafe) open class VideoStateView : UIKit.UIView {
+  @objc @_Concurrency.MainActor(unsafe) public var state: NECommonUIKit.VideoState {
+    @objc get
+    @objc set
+  }
+  @_Concurrency.MainActor(unsafe) @objc required dynamic public init?(coder: Foundation.NSCoder)
+  @objc @_Concurrency.MainActor(unsafe) public func setProgress(_ progress: Swift.Float)
+  @objc deinit
+}
+@objc @_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @_Concurrency.MainActor(unsafe) public class VideoToolBar : UIKit.UIView {
+  @_Concurrency.MainActor(unsafe) public var playBtn: NECommonUIKit.ExpandButton {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var currentTime: UIKit.UILabel {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var totalTime: UIKit.UILabel {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var progressSlider: UIKit.UISlider {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public func resetState()
+  @objc deinit
+}
+public typealias AlertCallBack = () -> Swift.Void
+extension UIKit.UIViewController : UIKit.UIImagePickerControllerDelegate {
+  @_Concurrency.MainActor(unsafe) public var rightNavBtn: NECommonUIKit.ExpandButton {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public var leftNavBtn: NECommonUIKit.ExpandButton {
+    get
+    set
+  }
+  @_Concurrency.MainActor(unsafe) public func addLeftAction(_ image: UIKit.UIImage?, _ selector: ObjectiveC.Selector, _ target: Any?, _ tintColor: UIKit.UIColor = .ne_greyText)
+  @_Concurrency.MainActor(unsafe) public func addLeftAction(_ title: Swift.String, _ selector: ObjectiveC.Selector, _ target: Any?, _ tintColor: UIKit.UIColor = .ne_blueText)
+  @_Concurrency.MainActor(unsafe) public func addRightAction(_ image: UIKit.UIImage?, _ selector: ObjectiveC.Selector, _ target: Any?, _ tintColor: UIKit.UIColor = .ne_greyText)
+  @_Concurrency.MainActor(unsafe) public func addRightAction(_ title: Swift.String, _ selector: ObjectiveC.Selector, _ target: Any?, _ tintColor: UIKit.UIColor = .ne_blueText)
+  @_Concurrency.MainActor(unsafe) public func showAlert(title: Swift.String = commonLocalizable("tip"), message: Swift.String?, sureText: Swift.String = commonLocalizable("sure"), cancelText: Swift.String = commonLocalizable("cancel"), sureTextColor: UIKit.UIColor? = nil, canceTextColor: UIKit.UIColor? = nil, _ sureBack: @escaping NECommonUIKit.AlertCallBack, cancelBack: NECommonUIKit.AlertCallBack? = nil)
+  @_Concurrency.MainActor(unsafe) public func showSingleAlert(title: Swift.String = commonLocalizable("tip"), message: Swift.String?, sureText: Swift.String = commonLocalizable("sure"), _ sureBack: @escaping NECommonUIKit.AlertCallBack)
+  @_Concurrency.MainActor(unsafe) public func showToast(_ message: Swift.String, _ position: NECommonUIKit.ToastPosition = .center)
+  @_Concurrency.MainActor(unsafe) public func showToastInWindow(_ message: Swift.String)
+  @_Concurrency.MainActor(unsafe) public func showActionSheet(_ actions: [UIKit.UIAlertAction])
+  @_Concurrency.MainActor(unsafe) public func showCustomActionSheet(_ actions: [NECommonUIKit.NECustomAlertAction])
+  @_Concurrency.MainActor(unsafe) public func showBottomVideoAction(_ delegate: UIKit.UIImagePickerControllerDelegate & UIKit.UINavigationControllerDelegate, _ editing: Swift.Bool = true)
+  @_Concurrency.MainActor(unsafe) public func showCustomBottomVideoAction(_ delegate: UIKit.UIImagePickerControllerDelegate & UIKit.UINavigationControllerDelegate, _ editing: Swift.Bool = true)
+  @_Concurrency.MainActor(unsafe) public func showBottomFileAction(_ delegate: UIKit.UIDocumentPickerDelegate & UIKit.UIImagePickerControllerDelegate & UIKit.UINavigationControllerDelegate)
+  @_Concurrency.MainActor(unsafe) public func showCustomBottomFileAction(_ delegate: UIKit.UIDocumentPickerDelegate & UIKit.UIImagePickerControllerDelegate & UIKit.UINavigationControllerDelegate)
+  @_Concurrency.MainActor(unsafe) public func fixAlertOnIpad(_ alertViewController: UIKit.UIAlertController)
+  @_Concurrency.MainActor(unsafe) public func showBottomAlert(_ delegate: UIKit.UIImagePickerControllerDelegate & UIKit.UINavigationControllerDelegate, _ editing: Swift.Bool = true, _ checkNetwork: Swift.Bool = true, _ clickedAction: (() -> Swift.Void)? = nil, _ presentCompletion: (() -> Swift.Void)? = nil)
+  @_Concurrency.MainActor(unsafe) public func showCustomBottomAlert(_ delegate: UIKit.UIImagePickerControllerDelegate & UIKit.UINavigationControllerDelegate, _ editing: Swift.Bool = true, _ checkNetwork: Swift.Bool = true)
+  @_Concurrency.MainActor(unsafe) public func showBottomSelectAlert(firstContent: Swift.String, secondContent: Swift.String, selectValue: @escaping ((_ value: ObjectiveC.NSInteger) -> Swift.Void))
+  @_Concurrency.MainActor(unsafe) public func goCamera(_ delegate: UIKit.UIImagePickerControllerDelegate & UIKit.UINavigationControllerDelegate, _ editing: Swift.Bool, _ isVideo: Swift.Bool = false)
+  @_Concurrency.MainActor(unsafe) public func goPhotoAlbum(_ delegate: UIKit.UIImagePickerControllerDelegate & UIKit.UINavigationControllerDelegate, _ editing: Swift.Bool, _ isVideo: Swift.Bool = false)
+  @_Concurrency.MainActor(unsafe) public func showPicker(_ delegate: UIKit.UIImagePickerControllerDelegate & UIKit.UINavigationControllerDelegate, _ isVideo: Swift.Bool, _ editing: Swift.Bool)
+  @_Concurrency.MainActor(unsafe) public func goPhotoAlbumWithVideo(_ delegate: UIKit.UIImagePickerControllerDelegate & UIKit.UINavigationControllerDelegate, _ completion: (() -> Swift.Void)? = nil)
+  @_Concurrency.MainActor(unsafe) public func goICloudDocument(_ delegate: UIKit.UIDocumentPickerDelegate & UIKit.UINavigationControllerDelegate)
+}
+extension NECommonUIKit.FileState : Swift.Equatable {}
+extension NECommonUIKit.FileState : Swift.Hashable {}
+extension NECommonUIKit.FileState : Swift.RawRepresentable {}
+extension NECommonUIKit.ButtonStyle : Swift.Equatable {}
+extension NECommonUIKit.ButtonStyle : Swift.Hashable {}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.IQAutoToolbarManageBehaviour : Swift.Equatable {}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.IQAutoToolbarManageBehaviour : Swift.Hashable {}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.IQAutoToolbarManageBehaviour : Swift.RawRepresentable {}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.IQPreviousNextDisplayMode : Swift.Equatable {}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.IQPreviousNextDisplayMode : Swift.Hashable {}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.IQPreviousNextDisplayMode : Swift.RawRepresentable {}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.NEEnableMode : Swift.Equatable {}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.NEEnableMode : Swift.Hashable {}
+@available(iOSApplicationExtension, unavailable)
+extension NECommonUIKit.NEEnableMode : Swift.RawRepresentable {}
+extension NECommonUIKit.PagingMenuView.Alignment : Swift.Equatable {}
+extension NECommonUIKit.PagingMenuView.Alignment : Swift.Hashable {}
+extension NECommonUIKit.ToastPosition : Swift.Equatable {}
+extension NECommonUIKit.ToastPosition : Swift.Hashable {}
+extension NECommonUIKit.PopoverType : Swift.Equatable {}
+extension NECommonUIKit.PopoverType : Swift.Hashable {}
+extension NECommonUIKit.PopoverType : Swift.RawRepresentable {}
+extension NECommonUIKit.VideoState : Swift.Equatable {}
+extension NECommonUIKit.VideoState : Swift.Hashable {}
+extension NECommonUIKit.VideoState : Swift.RawRepresentable {}

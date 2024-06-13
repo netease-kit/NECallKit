@@ -1,0 +1,6 @@
+framework module NERtcCallUIKit {
+  umbrella header "NERtcCallUIKit-umbrella.h"
+
+  export *
+  module * { export * }
+}
