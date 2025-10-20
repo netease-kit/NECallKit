@@ -2,7 +2,7 @@
 	<div>
 		<div class="call-container">
 			<div class="user-info">
-				<div class="account">当前账号：{{ userConfig.account }}</div>
+				<div class="account">当前账号：{{ userConfig.accountId }}</div>
 			</div>
 
 			<div class="form-section">
@@ -180,7 +180,7 @@
 		onLoad() {
 			// 获取用户配置
 			const config = uni.getStorageSync('userConfig');
-			if (!config || !config.account) {
+			if (!config || !config.accountId) {
 				// 未登录，跳转到登录页
 				uni.redirectTo({
 					url: '/pages/login/login'

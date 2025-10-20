@@ -2,8 +2,11 @@
 	<div class="login-container">
 		<div class="form-section">
 			<div class="form-grid">
-				<label for="account">账号：</label>
-				<input type="text" id="account" v-model="account" class="input-field" placeholder="请输入账号">
+				<label for="accountId">账号：</label>
+				<input type="text" id="accountId" v-model="accountId" class="input-field" placeholder="请输入账号">
+
+				<label for="token">Token：</label>
+				<input type="text" id="token" v-model="token" class="input-field" placeholder="请输入token">
 
 				<label for="apnsCername">APNs证书名：</label>
 				<input type="text" id="apnsCername" v-model="apnsCername" class="input-field" placeholder="APNs证书名（可选）">
@@ -266,8 +269,8 @@
 	export default {
 		data() {
 			return {
-				account: "",
-				currentToken: "", // 将自动获取
+					accountId: "",
+					token: "",
 				apnsCername: "",
 				pkCername: "",
 				language: "",
@@ -284,11 +287,11 @@
 		},
 
 
-		computed: {
-			canLogin() {
-				return this.account; // 只需要account即可
-			}
-		},
+			computed: {
+				canLogin() {
+					return this.accountId && this.token;
+				}
+			},
 
 		methods: {
 			enableFloatingWindowRadioChange: function(evt) {
@@ -330,54 +333,15 @@
 				this.isCallConfigExpanded = !this.isCallConfigExpanded;
 			},
 
-			// 获取Nemo账号信息
-			async getNemoAccount(accountId) {
-				return new Promise((resolve) => {
-					uni.request({
-						url: AppConfig.nemoServerUrl,
-						method: 'POST',
-						header: {
-							'Content-Type': 'application/json',
-							'deviceId': AppConfig.deviceInfo.deviceId,
-							'clientType': AppConfig.deviceInfo.clientType,
-							'appkey': AppConfig.appKey,
-							'AppSecret': AppConfig.appSecret
-						},
-						data: {
-							sceneType: 2,
-							userUuid: accountId
-						},
-						success: (res) => {
-							console.log("result: ", res.data);
-							resolve({
-								success: res.statusCode === 200 && res.data && res.data.code === 200,
-								data: res.data && res.data.code === 200 ? {
-									userUuid: res.data.data.userUuid || '',
-									userName: res.data.data.userName || '',
-									userToken: res.data.data.userToken || '',
-									icon: res.data.data.icon || null
-								} : null,
-								message: res.data && res.data.code !== 200 ? res.data.msg || '账号创建失败' : null
-							});
-						},
-						fail: (error) => {
-							resolve({
-								success: false,
-								data: null,
-								message: '网络请求失败：' + (error.errMsg || '未知错误')
-							});
-						}
-					});
-				});
-			},
+			
 
 			async loginAPI() {
 				return new Promise((resolve) => {
-					console.log("loginAPI: ", this.account, this.currentToken);
+					console.log("loginAPI: ", this.accountId, this.token);
 					callKit.login({
 						appKey: AppConfig.appKey,
-						account: this.account,
-						token: this.currentToken,
+						account: this.accountId,
+						token: this.token,
 						rtcUid: this.rtcUid ? Number(this.rtcUid) : undefined,
 						apnsCername: this.apnsCername,
 						pkCername: this.pkCername,
@@ -398,38 +362,16 @@
 			async login() {
 				if (!this.canLogin) {
 					uni.showToast({
-						title: '请填写账号',
+						title: '请填写账号与token',
 						icon: "none"
 					});
 					return;
 				}
 
-				uni.showLoading({
-					title: '获取账号信息中...'
-				});
-
-				// 先获取Nemo账号信息
-				const nemoResult = await this.getNemoAccount(this.account);
-				console.log("nemoResult: ", nemoResult);
-				
-				if (!nemoResult.success) {
-					uni.hideLoading();
-					uni.showToast({
-						title: '账号创建失败(请更换账号后重试)\n错误信息：' + nemoResult.message,
-						icon: "none"
-					});
-					return;
-				}
-
-				const nemoAccount = nemoResult.data;
-				this.currentToken = nemoAccount.userToken;
-				console.log("currentToken: ", this.currentToken);
-				
 				uni.showLoading({
 					title: '登录中...'
 				});
 
-				// 再登录
 				const loginResult = await this.loginAPI();
 				uni.hideLoading();
 
@@ -444,8 +386,8 @@
 				// 保存用户配置到本地存储（包含获取到的Token）
 				uni.setStorageSync('userConfig', {
 					appkey: AppConfig.appKey,
-					account: this.account,
-					currentToken: this.currentToken,
+					accountId: this.accountId,
+					token: this.token,
 					rtcUid: this.rtcUid,
 					apnsCername: this.apnsCername,
 					pkCername: this.pkCername,
@@ -456,9 +398,7 @@
 					enableAudio2Video: this.enableAudio2Video,
 					enableVideo2Audio: this.enableVideo2Audio,
 					audio2VideoConfirm: this.audio2VideoConfirm,
-					video2AudioConfirm: this.video2AudioConfirm,
-					// 保存Nemo账号信息
-					nemoAccount: nemoAccount
+					video2AudioConfirm: this.video2AudioConfirm
 				});
 
 				uni.showToast({

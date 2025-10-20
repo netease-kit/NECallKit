@@ -43,12 +43,10 @@
 	npm install
 ```
   
-3. 配置 appKey 和 appSecret 在 `NEVideoCall-1to1/NLiteAVDemo-uni-app/debug/AppConfig.js` 文件中填写 appKey 和 appSecret。
+3. 配置 appKey 和 appSecret 在 `NEVideoCall-1to1/NLiteAVDemo-uni-app/debug/AppConfig.js` 文件中填写 appKey。
 ```javascript
     // 应用Key - - 请替换为你的实际appKey
 	appKey: "your_app_key",
-	// 应用Secret - 请替换为你的实际appSecret
-	appSecret: "your_app_secret",
 ```
   
 ## 步骤二：导入插件

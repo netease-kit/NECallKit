@@ -1,7 +1,7 @@
 <template>
 	<div class="home-container">
 		<div class="user-info">
-			<div class="welcome">欢迎，{{ userConfig.account }}</div>
+			<div class="welcome">欢迎，{{ userConfig.accountId }}</div>
 			<button class="logout-button" @click="logout">退出登录</button>
 		</div>
 		<div class="title">选择通话类型</div>
@@ -82,7 +82,7 @@
 		onLoad() {
 			// 检查是否已登录
 			const config = uni.getStorageSync('userConfig');
-			if (!config || !config.account) {
+			if (!config || !config.accountId) {
 				// 未登录，跳转到登录页
 				uni.redirectTo({
 					url: '/pages/login/login'
