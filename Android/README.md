@@ -16,19 +16,17 @@
 
 2. 在控制台中【appkey管理】获取appkey。
 
-3. 下载[场景Demo](https://github.com/netease-im/NEVideoCall-1to1/tree/develop/NLiteAVDemo-Android-Java)，app module 下 build.gradle 的如下内容替换自己的appkey，并将 key 同步给对应的 so 人员在后台添加应用体验权限；
+3. 下载[Demo源码](https://github.com/netease-kit/NECallKit/tree/main/Android)，通过 Android Studio 打开项目，在 app\src\main\java\com\netease\yunxin\app\videocall\config\AppConfig.java 文件中配置应用的 AppKey。
 
-   ```groovy
-   def appKey = "Here, please fill your appKey!!!"
+   ```java
+   public static String APP_KEY = "your appKey";
    ```
-
-   
 
 ### <span id="运行示例项目">运行示例项目</span>
 
 
 ### <span id="功能实现">功能实现</span>
-可参考[NERtcCallKit-Android](https://github.com/netease-kit/documents/tree/main/业务组件/呼叫组件)。
+可参考[NECallKit-Android](https://github.com/netease-kit/documents/tree/main/业务组件/呼叫组件)。
 
 NERtcVideoCall组件：
 

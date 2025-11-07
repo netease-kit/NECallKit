@@ -26,7 +26,7 @@ glideTransformations = "4.3.0"
 nertcVersion = "5.9.10"
 v2NimVersion = "10.9.45"
 alog = "1.1.1"
-commonUiVersion = "1.0.0"
+commonUiVersion = "1.9.0"
 
 [libraries]
 # Android & Kotlin
@@ -55,6 +55,7 @@ glide-transformations = { group = "jp.wasabeef", name = "glide-transformations",
 
 # NetEase SDKs
 yunxin-kit-alog = { group = "com.netease.yunxin.kit", name = "alog", version.ref = "alog" }
+yunxin-common-ui = { group = "com.netease.yunxin.kit.common", name = "common-ui", version.ref = "commonUiVersion" }
 
 [bundles]
 # Optional bundles for commonly used dependency groups

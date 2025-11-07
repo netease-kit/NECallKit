@@ -71,6 +71,14 @@
             android:src="@drawable/cam_on" />
 
         <ImageView
+            android:id="@+id/ivMuteSpeaker"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="30dp"
+            android:src="@drawable/speaker_on" />
+
+        <ImageView
             android:id="@+id/ivHangUp"
             android:layout_width="32dp"
             android:layout_height="32dp"

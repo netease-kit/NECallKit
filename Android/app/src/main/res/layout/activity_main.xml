@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2022 NetEase, Inc. All rights reserved. -->
+<!-- Use of this source code is governed by a MIT license that can be -->
+<!-- found in the LICENSE file. -->
+
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -28,76 +32,146 @@
         android:layout_marginTop="30dp"
         android:src="@drawable/account_circle" />
 
-    <RelativeLayout
-        android:id="@+id/rly_video_call"
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/iv_top_logo"
-        android:layout_margin="20dp"
-        android:padding="20dp"
-        android:background="@drawable/item_call_bg"
-        app:layout_constraintLeft_toLeftOf="parent">
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/btn"
+        app:layout_constraintTop_toBottomOf="@+id/iv_top_logo">
 
-        <ImageView
-            android:id="@+id/iv_call"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/video_call_icon" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/iv_call"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="14dp"
-            android:text="@string/video_call"
-            android:textColor="@color/colorWhite"
-            android:textSize="18sp" />
+            <RelativeLayout
+                android:id="@+id/rly_video_call"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                android:layout_margin="20dp"
+                android:padding="20dp"
+                android:background="@drawable/item_call_bg"
+                app:layout_constraintLeft_toLeftOf="parent">
 
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_alignParentEnd="true"
-            android:textColor="@color/colorWhite"
-            android:layout_centerVertical="true"
-            android:src="@drawable/light_right_arrow" />
-    </RelativeLayout>
+                <ImageView
+                    android:id="@+id/iv_call"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/video_call_icon" />
 
-    <RelativeLayout
-        android:id="@+id/rly_group_call"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/rly_video_call"
-        android:layout_margin="20dp"
-        android:padding="20dp"
-        android:background="@drawable/item_call_bg"
-        app:layout_constraintLeft_toLeftOf="parent">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_toRightOf="@+id/iv_call"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:text="@string/one_on_one_video_call"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="18sp" />
 
-        <ImageView
-            android:id="@+id/iv_group_call"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/video_call_icon" />
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:textColor="@color/colorWhite"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/light_right_arrow" />
+            </RelativeLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="14dp"
-            android:layout_toRightOf="@+id/iv_group_call"
-            android:text="@string/group_call"
-            android:textColor="@color/colorWhite"
-            android:textSize="18sp" />
+            <RelativeLayout
+                android:id="@+id/rly_group_call"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@+id/rly_video_call"
+                android:layout_margin="20dp"
+                android:padding="20dp"
+                android:background="@drawable/item_call_bg"
+                app:layout_constraintLeft_toLeftOf="parent">
 
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:layout_alignParentEnd="true"
-            android:textColor="@color/colorWhite"
-            android:layout_centerVertical="true"
-            android:src="@drawable/light_right_arrow" />
-    </RelativeLayout>
+                <ImageView
+                    android:id="@+id/iv_group_call"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/video_call_icon" />
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="14dp"
+                    android:layout_toRightOf="@+id/iv_group_call"
+                    android:text="@string/group_call"
+                    android:textColor="@color/colorWhite"
+                    android:textSize="18sp" />
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_alignParentEnd="true"
+                    android:textColor="@color/colorWhite"
+                    android:layout_centerVertical="true"
+                    android:src="@drawable/light_right_arrow" />
+            </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="20dp"
+                android:padding="20dp"
+                android:background="@drawable/item_call_bg"
+                android:orientation="vertical"
+                app:layout_constraintTop_toBottomOf="@+id/rly_group_call">
+
+                <RelativeLayout
+                    android:id="@+id/rl_goto_permission_setting"
+                    android:layout_width="wrap_content"
+                    android:visibility="visible"
+                    android:layout_height="40dp">
+
+                    <TextView
+                        android:id="@+id/tv_permission"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:text="@string/apply_floating_window_permission"
+                        android:textColor="@android:color/white"
+                        android:textSize="14dp" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_alignParentRight="true"
+                        android:layout_centerVertical="true"
+                        android:src="@drawable/light_right_arrow"
+                        android:textColor="@color/colorWhite" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:visibility="gone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp">
+
+                    <TextView
+                        android:id="@+id/tv_battery"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:text="@string/current_battery_optimization_status"
+                        android:textColor="@android:color/white"
+                        android:textSize="14dp" />
+
+                    <TextView
+                        android:id="@+id/tv_battery_optimize"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_alignParentRight="true"
+                        tools:text="开"
+                        android:textSize="14dp"
+                        android:textColor="#ff0000" />
+                </RelativeLayout>
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <TextView
         android:id="@+id/tv_version"
@@ -108,7 +182,7 @@
         app:layout_constraintRight_toRightOf="parent"
         android:textColor="@color/colorWhite"
         android:gravity="center_horizontal"
-        android:text="version"
+        android:text="@string/version"
         android:layout_marginBottom="15dp" />
 
     <TextView
@@ -119,7 +193,25 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         android:textColor="@color/colorWhite"
-        android:text="本APP仅用于展示网易云信实时音视频各类功能"
+        android:text="@string/app_description"
         android:layout_marginBottom="50dp" />
 
+    <Button
+        android:id="@+id/btn"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:textSize="10dp"
+        android:layout_marginBottom="200dp"
+        android:text="@string/start_dump_button"
+        android:layout_width="match_parent"
+        android:layout_height="44dp" />
+    <Button
+        android:id="@+id/btn2"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:textSize="10dp"
+        android:text="@string/end_dump_button"
+        android:layout_marginBottom="150dp"
+        android:layout_width="match_parent"
+        android:layout_height="44dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

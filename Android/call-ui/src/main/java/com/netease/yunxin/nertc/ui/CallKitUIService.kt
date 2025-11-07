@@ -25,7 +25,7 @@ class CallKitUIService : XKitService {
         get() = "CallUIKit"
 
     override val versionName: String
-        get() = BuildConfig.versionName
+        get() = "3.8.0"
 
     override val appKey: String?
         get() = null

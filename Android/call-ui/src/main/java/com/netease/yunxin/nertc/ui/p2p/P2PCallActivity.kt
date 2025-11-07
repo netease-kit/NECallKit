@@ -30,7 +30,6 @@ import com.netease.yunxin.kit.call.p2p.model.NECallInfo
 import com.netease.yunxin.kit.call.p2p.model.NECallInitRtcMode
 import com.netease.yunxin.kit.call.p2p.model.NECallType
 import com.netease.yunxin.kit.call.p2p.model.NECallTypeChangeInfo
-import com.netease.yunxin.kit.call.p2p.model.NEHangupReasonCode
 import com.netease.yunxin.nertc.nertcvideocall.bean.CommonResult
 import com.netease.yunxin.nertc.nertcvideocall.model.SwitchCallState
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState
@@ -43,6 +42,7 @@ import com.netease.yunxin.nertc.ui.base.fetchNickname
 import com.netease.yunxin.nertc.ui.base.loadAvatarByAccId
 import com.netease.yunxin.nertc.ui.databinding.ActivityP2PcallBinding
 import com.netease.yunxin.nertc.ui.utils.CallUILog
+import com.netease.yunxin.nertc.ui.utils.CallUIUtils
 import com.netease.yunxin.nertc.ui.utils.PermissionTipDialog
 import com.netease.yunxin.nertc.ui.utils.dip2Px
 import com.netease.yunxin.nertc.ui.utils.formatSecondTime
@@ -170,31 +170,8 @@ open class P2PCallActivity : CommonCallActivity() {
     override fun onCallEnd(info: NECallEndInfo) {
         super.onCallEnd(info)
         configTimeTick(null)
-        when (info.reasonCode) {
-            NEHangupReasonCode.CALLER_REJECTED -> if (!isFinishing && !callParam.isCalled) {
-                getString(R.string.tip_reject_by_other).toastShort(this@P2PCallActivity)
-            }
-
-            NEHangupReasonCode.BUSY -> if (!isFinishing && !callParam.isCalled) {
-                getString(R.string.tip_busy_by_other).toastShort(this@P2PCallActivity)
-            }
-
-            NEHangupReasonCode.CALLEE_CANCELED -> if (!isFinishing && callParam.isCalled) {
-                getString(R.string.tip_cancel_by_other).toastShort(this@P2PCallActivity)
-            }
-
-            NEHangupReasonCode.TIME_OUT ->
-                if (!callParam.isCalled) {
-                    getString(R.string.tip_timeout_by_other).toastShort(this@P2PCallActivity)
-                }
-
-            NEHangupReasonCode.OTHER_REJECTED -> getString(R.string.tip_other_client_other_reject).toastShort(
-                this@P2PCallActivity
-            )
-
-            NEHangupReasonCode.OTHER_ACCEPTED -> getString(R.string.tip_other_client_other_accept).toastShort(
-                this@P2PCallActivity
-            )
+        if (!isFinishing) {
+            CallUIUtils.showToastWithCallEndReason(this@P2PCallActivity, info.reasonCode)
         }
         releaseAndFinish(false)
     }

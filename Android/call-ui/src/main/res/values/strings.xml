@@ -65,7 +65,7 @@
     <string name="ui_microphone">麦克风</string>
     <string name="ui_speaker">扬声器</string>
     <string name="ui_tip_close_camera_by_other">对方关闭了摄像头</string>
-    <string name="ui_tip_close_camera_by_self">我方关闭了摄像头</string>
+    <string name="ui_tip_close_camera_by_self">你关闭了摄像头</string>
     <string name="ui_tip_waiting_to_accept_for_audio">正在等待对方接受邀请…</string>
     <string name="ui_tip_waiting_to_accept_for_video">等待对方接听…</string>
     <string name="ui_tip_virtual_blur_success">虚化开启</string>

@@ -200,8 +200,6 @@ object CallKitUI {
             NECallEngine.sharedInstance().setup(context.applicationContext, setupConfig)
 
             if (enableGroup) {
-                // 设置推送服务
-                NEGroupCall.instance().setPushConfigProviderForGroup(pushConfigProviderForGroup)
                 // 群组呼叫 初始化
                 NEGroupCall.instance().init(
                     GroupConfigParam.Builder()

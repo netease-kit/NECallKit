@@ -17,6 +17,7 @@ import com.netease.yunxin.kit.call.p2p.model.NECallEndInfo
 import com.netease.yunxin.kit.call.p2p.model.NECallEngineDelegateAbs
 import com.netease.yunxin.kit.call.p2p.model.NECallType
 import com.netease.yunxin.kit.call.p2p.model.NECallTypeChangeInfo
+import com.netease.yunxin.kit.call.p2p.model.NEHangupReasonCode
 import com.netease.yunxin.nertc.nertcvideocall.model.SwitchCallState
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState
 import com.netease.yunxin.nertc.ui.CallKitUI
@@ -26,6 +27,7 @@ import com.netease.yunxin.nertc.ui.base.launchTask
 import com.netease.yunxin.nertc.ui.floating.FloatingTouchEventStrategy
 import com.netease.yunxin.nertc.ui.floating.FloatingWindowWrapper
 import com.netease.yunxin.nertc.ui.utils.CallUILog
+import com.netease.yunxin.nertc.ui.utils.CallUIUtils
 import com.netease.yunxin.nertc.ui.utils.SwitchCallTypeConfirmDialog
 
 /**
@@ -94,6 +96,13 @@ object CallUIFloatingWindowMgr {
 
         override fun onCallEnd(info: NECallEndInfo?) {
             super.onCallEnd(info)
+            floatingWindowWrapper?.let {
+                CallUIUtils.showToastWithCallEndReason(
+                    it.context,
+                    info?.reasonCode ?: NEHangupReasonCode.NORMAL
+                )
+            }
+
             innerRelease(true)
         }
     }
