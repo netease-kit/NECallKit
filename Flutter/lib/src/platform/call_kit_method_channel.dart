@@ -66,7 +66,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
         'selfUser': CallState.instance.selfUser.toJson(),
         'remoteUserList': remoteUserList.isNotEmpty ? remoteUserList : [],
         'scene': CallState.instance.scene.index,
-        'mediaType': CallState.instance.mediaType.index,
+        'mediaType': CallState.instance.callType.index,
         'startTime': CallState.instance.startTime,
         'camera': CallState.instance.camera.index,
         'isCameraOpen': CallState.instance.isCameraOpen,
@@ -103,6 +103,15 @@ class MethodChannelNECallKit extends NECallKitPlatform {
     if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
       await methodChannel.invokeMethod('requestFloatPermission', {});
     }
+  }
+
+  @override
+  Future<bool> hasBackgroundStartPermission() async {
+    if (!kIsWeb && Platform.isAndroid) {
+      return await methodChannel
+          .invokeMethod('hasBackgroundStartPermission', {});
+    }
+    return false;
   }
 
   @override
@@ -232,6 +241,38 @@ class MethodChannelNECallKit extends NECallKitPlatform {
   }
 
   @override
+  Future<bool> setupPIP() async {
+    if (!kIsWeb && Platform.isIOS) {
+      final result = await methodChannel.invokeMethod('setupPIP', {});
+      return result as bool? ?? false;
+    }
+    return false;
+  }
+
+  @override
+  Future<void> disposePIP() async {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      await methodChannel.invokeMethod('disposePIP', {});
+    }
+  }
+
+  @override
+  Future<bool> startPIP() async {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      final result = await methodChannel.invokeMethod('startPIP', {});
+      return result as bool? ?? false;
+    }
+    return false;
+  }
+
+  @override
+  Future<void> stopPIP() async {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      await methodChannel.invokeMethod('stopPIP', {});
+    }
+  }
+
+  @override
   Future<bool> isScreenLocked() async {
     if (!kIsWeb && (Platform.isAndroid)) {
       return await methodChannel.invokeMethod('isScreenLocked', {});
@@ -247,6 +288,13 @@ class MethodChannelNECallKit extends NECallKitPlatform {
     return false;
   }
 
+  @override
+  Future<void> startToPermissionSetting() async {
+    if (!kIsWeb && Platform.isAndroid) {
+      await methodChannel.invokeMethod('startToPermissionSetting', {});
+    }
+  }
+
   void _handleNativeCall(MethodCall call) {
     debugPrint(
         "CallHandler method:${call.method}, arguments:${call.arguments}");
@@ -259,6 +307,9 @@ class MethodChannelNECallKit extends NECallKitPlatform {
         break;
       case "appEnterForeground":
         _appEnterForeground();
+        break;
+      case "appEnterBackground":
+        _appEnterBackground();
         break;
       case "voipChangeMute":
         _handleVoipChangeMute(call);
@@ -291,6 +342,10 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   void _appEnterForeground() {
     CallManager.instance.handleAppEnterForeground();
+  }
+
+  void _appEnterBackground() {
+    CallManager.instance.handleAppEnterBackground();
   }
 
   void _handleVoipChangeMute(MethodCall call) {

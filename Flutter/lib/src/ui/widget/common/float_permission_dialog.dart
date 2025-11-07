@@ -5,16 +5,20 @@
 import 'package:flutter/material.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 import 'package:netease_callkit_ui/src/impl/call_manager.dart';
+import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
 
 class FloatPermissionDialog extends StatelessWidget {
-  const FloatPermissionDialog({Key? key}) : super(key: key);
+  final bool isBackgroundStart;
+  const FloatPermissionDialog({Key? key, this.isBackgroundStart = false})
+      : super(key: key);
 
-  static Future<void> show(BuildContext context) {
+  static Future<void> show(BuildContext context,
+      {bool isBackgroundStart = false}) {
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return const FloatPermissionDialog();
+        return FloatPermissionDialog(isBackgroundStart: isBackgroundStart);
       },
     );
   }
@@ -31,7 +35,9 @@ class FloatPermissionDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              NECallKitUI.localizations.noFloatWindowPermission,
+              isBackgroundStart
+                  ? NECallKitUI.localizations.noBackgroundStartPermission
+                  : NECallKitUI.localizations.noFloatWindowPermission,
               style: const TextStyle(
                 fontSize: 18.0,
                 fontWeight: FontWeight.w500,
@@ -40,7 +46,9 @@ class FloatPermissionDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16.0),
             Text(
-              NECallKitUI.localizations.needFloatWindowPermission,
+              isBackgroundStart
+                  ? NECallKitUI.localizations.needBackgroundStartPermission
+                  : NECallKitUI.localizations.needFloatWindowPermission,
               style: const TextStyle(
                 fontSize: 14.0,
                 color: Color(0xFF666666),
@@ -76,7 +84,11 @@ class FloatPermissionDialog extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      CallManager.instance.requestFloatPermission();
+                      if (isBackgroundStart) {
+                        NECallKitPlatform.instance.startToPermissionSetting();
+                      } else {
+                        CallManager.instance.requestFloatPermission();
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF07C160),
@@ -86,13 +98,8 @@ class FloatPermissionDialog extends StatelessWidget {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      '去设置',
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: const Text('去设置',
+                        style: TextStyle(fontSize: 16.0, color: Colors.white)),
                   ),
                 ),
               ],

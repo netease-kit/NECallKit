@@ -55,6 +55,13 @@ class CallKitClientLocalizationsZh extends CallKitClientLocalizations {
   String get needFloatWindowPermission => '你的手机没有授权应用获得浮窗权限,通话最小化不能正常使用';
 
   @override
+  String get noBackgroundStartPermission => '后台弹出界面权限未获取';
+
+  @override
+  String get needBackgroundStartPermission =>
+      '你的手机没有授权应用获得后台弹出界面的权限，通话最小化不能正常使用';
+
+  @override
   String get accept => '接听';
 
   @override
@@ -94,5 +101,17 @@ class CallKitClientLocalizationsZh extends CallKitClientLocalizations {
   String get userInCall => '用户已在通话中';
 
   @override
-  String get remoteUserReject => '对方已拒绝';
+  String get answerOnOtherDevice => '其他端已经接听';
+
+  @override
+  String get rejectOnOtherDevice => '其他端已经拒绝';
+
+  @override
+  String get remoteUserReject => '对方已经拒绝';
+
+  @override
+  String get remoteTimeout => '对方超时未响应';
+
+  @override
+  String get remoteCancel => '对方取消';
 }

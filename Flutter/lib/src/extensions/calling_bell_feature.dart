@@ -8,8 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:netease_callkit_ui/src/call_define.dart';
-import 'package:netease_callkit_ui/src/impl/call_state.dart';
 import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
 import 'package:netease_callkit_ui/src/utils/preference.dart';
 

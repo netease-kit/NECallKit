@@ -143,6 +143,12 @@ public class CallKitUIHandler {
     //        NECallState.getInstance().mScene = ObjectParse.getSceneType(sceneIndex);
 
     int mediaTypeIndex = MethodCallUtils.getMethodParams(call, "mediaType");
+    CallUILog.i(
+        TAG,
+        "updateCallStateToNative mediaType now="
+            + CallState.getInstance().mMediaType
+            + " new="
+            + ObjectParse.getMediaType(mediaTypeIndex));
     if (CallState.getInstance().mMediaType != ObjectParse.getMediaType(mediaTypeIndex)) {
       needRefreshView = true;
       CallState.getInstance().mMediaType = ObjectParse.getMediaType(mediaTypeIndex);
@@ -180,11 +186,26 @@ public class CallKitUIHandler {
 
   public void hasFloatPermission(MethodCall call, MethodChannel.Result result) {
     CallUILog.i(TAG, "hasFloatPermission");
-    if (FloatWindowsPermission.hasPermission(FloatWindowsPermission.FLOAT_PERMISSION)) {
+    if (FloatWindowsPermission.hasOverlayPermission()) {
       result.success(true);
     } else {
       result.success(false);
     }
+  }
+
+  public void hasBackgroundStartPermission(MethodCall call, MethodChannel.Result result) {
+    CallUILog.i(TAG, "hasBackgroundStartPermission");
+    if (FloatWindowsPermission.hasBackgroundStartPermission()) {
+      result.success(true);
+    } else {
+      result.success(false);
+    }
+  }
+
+  public void startToPermissionSetting(MethodCall call, MethodChannel.Result result) {
+    CallUILog.i(TAG, "startToPermissionSetting");
+    FloatWindowsPermission.startToPermissionSetting(mApplicationContext);
+    result.success(true);
   }
 
   public void requestFloatPermission(MethodCall call, MethodChannel.Result result) {
@@ -386,6 +407,37 @@ public class CallKitUIHandler {
           @Override
           public void notImplemented() {
             CallUILog.e(CallKitUIPlugin.TAG, "appEnterForeground notImplemented");
+          }
+        });
+  }
+
+  public void appEnterBackground() {
+    CallUILog.i(TAG, "appEnterBackground");
+    mChannel.invokeMethod(
+        "appEnterBackground",
+        new HashMap<>(),
+        new MethodChannel.Result() {
+          @Override
+          public void success(@Nullable Object result) {
+            CallUILog.e(CallKitUIPlugin.TAG, "appEnterBackground success");
+          }
+
+          @Override
+          public void error(
+              @NonNull String code, @Nullable String message, @Nullable Object details) {
+            CallUILog.e(
+                CallKitUIPlugin.TAG,
+                "appEnterBackground error code: "
+                    + code
+                    + " message:"
+                    + message
+                    + "details:"
+                    + details);
+          }
+
+          @Override
+          public void notImplemented() {
+            CallUILog.e(CallKitUIPlugin.TAG, "appEnterBackground notImplemented");
           }
         });
   }

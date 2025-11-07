@@ -45,11 +45,11 @@ class NECallObserver {
   /// [callId]        Unique identifier for this call
   /// [callerId]      Caller
   /// [calleeIdList]  List of callees
-  /// [mediaType]     Call type，eg: audio、video
+  /// [callType]     Call type，eg: audio、video
   /// [info]          Callback extension information
   ///
   final void Function(String callId, String callerId, List<String> calleeIdList,
-      NECallType mediaType, CallObserverExtraInfo info)? onCallReceived;
+      NECallType callType, CallObserverExtraInfo info)? onCallReceived;
 
   /// A user who cancel the call (Deprecated)
   ///
@@ -64,31 +64,31 @@ class NECallObserver {
   /// The call was not connected on the current device
   ///
   /// [callId]        Unique identifier for this call
-  /// [mediaType]     Call type，eg: audio、video
+  /// [callType]     Call type，eg: audio、video
   /// [reason]        Call end reason.
   /// [userId]        Which user ended the call
   /// [info]          Callback extension information
-  final void Function(String callId, NECallType mediaType, CallEndReason reason,
+  final void Function(String callId, NECallType callType, CallEndReason reason,
       String userId, CallObserverExtraInfo info)? onCallNotConnected;
 
   /// Call start(received by both caller and callee)
   ///
   /// [callId]        Unique identifier for this call
-  /// [mediaType]     Call type，eg: audio、video
+  /// [callType]     Call type，eg: audio、video
   /// [info]          Callback extension information
   final void Function(
-          String callId, NECallType mediaType, CallObserverExtraInfo info)?
+          String callId, NECallType callType, CallObserverExtraInfo info)?
       onCallBegin;
 
   /// Call end(received by both caller and callee)
   ///
   /// [callId]        Unique identifier for this call
-  /// [mediaType]     Call type，eg: audio、video
+  /// [callType]     Call type，eg: audio、video
   /// [reason]        Call end reason.
   /// [userId]        Which user ended the call
   /// [totalTime ]    Total time of the call
   /// [info]          Callback extension information
-  final void Function(String callId, NECallType mediaType, CallEndReason reason,
+  final void Function(String callId, NECallType callType, CallEndReason reason,
       String userId, double totalTime, CallObserverExtraInfo info)? onCallEnd;
 
   /// call type change

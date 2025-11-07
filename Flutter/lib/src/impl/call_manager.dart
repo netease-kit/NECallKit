@@ -47,7 +47,7 @@ class CallManager {
           Platform.isIOS) {
         NECallKitNavigatorObserver.getInstance().enterCallingPage();
         var permissionResult =
-            await Permission.request(CallState.instance.mediaType);
+            await Permission.request(CallState.instance.callType);
         if (PermissionResult.granted == permissionResult) {
         } else {
           CallManager.instance.reject();
@@ -115,14 +115,15 @@ class CallManager {
 
         CallState.instance.remoteUserList.add(user);
         _getUserInfo();
-        CallState.instance.mediaType = callMediaType;
+        CallState.instance.callType = callMediaType;
         CallState.instance.scene = NECallScene.singleCall;
         CallState.instance.selfUser.callRole = NECallRole.caller;
         CallState.instance.selfUser.callStatus = NECallStatus.waiting;
         CallingBellFeature.startRing();
         launchCallingPage();
         CallManager.instance.enableWakeLock(true);
-      } else if (callResult.code == 20002) {
+      } else if (callResult.code == NECallError.stateCallCalling ||
+          callResult.code == NECallError.stateCallOnTheCall) {
         CallManager.instance.showToast(NECallKitUI.localizations.userInCall);
       } else {
         CallKitUILog.i(_tag,
@@ -326,6 +327,13 @@ class CallManager {
     CallState.instance.enableFloatWindow = enable;
   }
 
+  /// 启用/禁用应用外悬浮窗（画中画）
+  /// 前提：需要先调用 enableFloatWindow(true)
+  Future<void> enableFloatWindowOutOfApp(bool enable) async {
+    CallKitUILog.i(_tag, 'CallManager enableFloatWindowOutOfApp($enable)');
+    CallState.instance.enableFloatWindowOutOfApp = enable;
+  }
+
   Future<void> enableVirtualBackground(bool enable) async {
     CallState.instance.showVirtualBackgroundButton = enable;
   }
@@ -335,7 +343,7 @@ class CallManager {
   }
 
   void initAudioPlayDeviceAndCamera() {
-    if (NECallType.audio == CallState.instance.mediaType) {
+    if (NECallType.audio == CallState.instance.callType) {
       CallState.instance.isEnableSpeaker = false;
       CallState.instance.isCameraOpen = false;
     } else {
@@ -372,12 +380,71 @@ class CallManager {
         'isOpenFloatWindow = ${CallState.instance.isOpenFloatWindow},'
         'isInNativeIncomingBanner = ${CallState.instance.isInNativeIncomingBanner},'
         'isScreenLocked = ${await CallManager.instance.isScreenLocked()}');
+
+    // 如果启用了应用外悬浮窗，且在通话中，则停止画中画
+    if (Platform.isIOS &&
+        CallState.instance.enableFloatWindowOutOfApp &&
+        CallState.instance.isIOSOpenFloatWindowOutOfApp &&
+        CallState.instance.callType == NECallType.video &&
+        CallState.instance.selfUser.callStatus != NECallStatus.none) {
+      await NECallKitPlatform.instance.disposePIP();
+      if (!CallState.instance.isOpenFloatWindow) {
+        backCallingPageFormFloatWindow();
+      } else {
+        NECallKitPlatform.instance.startFloatWindow();
+        CallState.instance.isIOSOpenFloatWindowOutOfApp = false;
+      }
+      // 重新设置画中画
+      NECallKitPlatform.instance.setupPIP();
+    }
+
     if (CallState.instance.selfUser.callStatus != NECallStatus.none &&
         NECallKitNavigatorObserver.currentPage == CallPage.none &&
         CallState.instance.isOpenFloatWindow == false &&
         CallState.instance.isInNativeIncomingBanner == false &&
         !(await CallManager.instance.isScreenLocked())) {
       launchCallingPage();
+    }
+  }
+
+  void handleAppEnterBackground() async {
+    CallKitUILog.i(
+        _tag,
+        'CallManager handleAppEnterBackground() '
+        'callStatus = ${CallState.instance.selfUser.callStatus},'
+        'currentPage = ${NECallKitNavigatorObserver.currentPage},'
+        'isOpenFloatWindow = ${CallState.instance.isOpenFloatWindow},'
+        'isIOSOpenFloatWindowOutOfApp = ${CallState.instance.isIOSOpenFloatWindowOutOfApp}');
+
+    // 如果启用了应用外悬浮窗，且在通话中，则启动画中画
+    if (Platform.isAndroid &&
+        CallState.instance.enableFloatWindowOutOfApp &&
+        CallState.instance.enableFloatWindow &&
+        CallState.instance.selfUser.callStatus == NECallStatus.accept) {
+      openFloatWindowWithPageState();
+    }
+    // 进入后台启动画中画
+    if (Platform.isIOS &&
+        CallState.instance.enableFloatWindowOutOfApp &&
+        CallState.instance.enableFloatWindow &&
+        CallState.instance.callType == NECallType.video &&
+        CallState.instance.selfUser.callStatus == NECallStatus.accept) {
+      final success = await NECallKitPlatform.instance.startPIP();
+      CallState.instance.isIOSOpenFloatWindowOutOfApp = success;
+      CallKitUILog.i(_tag,
+          'CallManager handleAppEnterBackground: startPIP result = $success');
+    }
+  }
+
+  Future<void> openFloatWindowWithPageState() async {
+    CallKitUILog.i(_tag, 'CallManager openFloatWindowWithState()');
+    if ((Platform.isAndroid &&
+            await NECallKitPlatform.instance.hasFloatPermission()) ||
+        Platform.isIOS) {
+      openFloatWindow();
+      if (NECallKitNavigatorObserver.currentPage == CallPage.callingPage) {
+        NECallKitNavigatorObserver.getInstance().exitCallingPage();
+      }
     }
   }
 
@@ -401,8 +468,25 @@ class CallManager {
   }
 
   void backCallingPageFormFloatWindow() {
-    NECallKitNavigatorObserver.getInstance().enterCallingPage();
-    CallState.instance.isOpenFloatWindow = false;
+    CallKitUILog.i(_tag,
+        'backCallingPageFormFloatWindow: currentPage = ${NECallKitNavigatorObserver.currentPage}, isClose = ${NECallKitNavigatorObserver.isClose}');
+
+    // 如果当前已经有通话页面，不需要再次 push，只需要刷新状态即可
+    if (NECallKitNavigatorObserver.currentPage == CallPage.callingPage &&
+        Platform.isIOS) {
+      CallKitUILog.i(_tag,
+          'backCallingPageFormFloatWindow: Already in calling page, just update state');
+      CallState.instance.isOpenFloatWindow = false;
+
+      // 通知刷新视频 view
+      NEEventNotify().notify('refreshVideoViews');
+    } else {
+      // 如果不在通话页面，则进入通话页面
+      CallKitUILog.i(
+          _tag, 'backCallingPageFormFloatWindow: Entering calling page');
+      NECallKitNavigatorObserver.getInstance().enterCallingPage();
+      CallState.instance.isOpenFloatWindow = false;
+    }
   }
 
   void showToast(String string) {
@@ -431,6 +515,23 @@ class CallManager {
   void openLockScreenApp() {
     CallKitUILog.i(_tag, 'CallManager openLockScreenApp');
     NECallKitPlatform.instance.openLockScreenApp();
+  }
+
+  void startForegroundService() {
+    if (!CallState.instance.isStartForegroundService) {
+      CallKitUILog.i(_tag, 'CallManager startForegroundService');
+      NECallKitPlatform.instance
+          .startForegroundService(CallState.instance.callType);
+      CallState.instance.isStartForegroundService = true;
+    }
+  }
+
+  void stopForegroundService() {
+    if (CallState.instance.isStartForegroundService) {
+      CallKitUILog.i(_tag, 'CallManager stopForegroundService');
+      NECallKitPlatform.instance.stopForegroundService();
+      CallState.instance.isStartForegroundService = false;
+    }
   }
 
   Future<bool> isScreenLocked() async {
