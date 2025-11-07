@@ -19,9 +19,21 @@
 			}
 		},
 		{
+			"path": "pages/single-call/settings",
+			"style": {
+				"navigationBarTitleText": "单呼设置"
+			}
+		},
+		{
 			"path": "pages/multi-call/multi-call",
 			"style": {
 				"navigationBarTitleText": "多人通话"
+			}
+		},
+		{
+			"path": "pages/multi-call/settings",
+			"style": {
+				"navigationBarTitleText": "群呼设置"
 			}
 		}
 	],

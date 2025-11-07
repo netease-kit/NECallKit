@@ -2,7 +2,10 @@
 	<div>
 		<div class="call-container">
 			<div class="user-info">
-				<div class="account">当前账号：{{ userConfig.accountId }}</div>
+				<div style="display:flex; justify-content:space-between; align-items:center;">
+					<div class="account">当前账号：{{ userConfig.accountId }}</div>
+					<button type="default" @click="goSettings">设置</button>
+				</div>
 			</div>
 			
 			<div class="form-section">
@@ -136,44 +139,30 @@
     background-color: #ccc;
     cursor: not-allowed;
 }
+
+.settings-btn {
+    height: 50px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    color: white;
+    font-weight: 500;
+    background-color: #17a2b8;
+}
 </style>
 
 <script>
 	// 首先需要通过 uni.requireNativePlugin("ModuleName") 获取 module
-	var testModule = uni.requireNativePlugin("netease-CallKit")
-	const callKitEvent = uni.requireNativePlugin('globalEvent');
+	var NECallKit = uni.requireNativePlugin("netease-CallKit")
+	const NECallKitEvent = uni.requireNativePlugin('globalEvent');
 
 
-	callKitEvent.addEventListener('onReceiveInvited', function(e) {
+	NECallKitEvent.addEventListener('onReceiveInvited', function(e) {
 	  console.log('onReceiveInvited' + JSON.stringify(e));
 	});
 	
-	callKitEvent.addEventListener('onCallConnected', function(e) {
+	NECallKitEvent.addEventListener('onCallConnected', function(e) {
 	  console.log('onCallConnected' + JSON.stringify(e));
-	  
-	  // this.YYChatKK();
-	  uni.request({
-	  	url: 'https://company.hzruange.com/driftBottle/server/server.php?action=YYChatKK',
-	  	method: "POST",
-	  	dataType: 'json',
-	  	header: {
-	  		'content-type': 'application/x-www-form-urlencoded'
-	  	},
-	  	data: {
-	  		user_id: uni.getStorageSync('user_id'),
-	  		extend_user_id: '100010',
-	  		expend: '400',
-	  		time: '2'
-	  	},
-	  	success: (res) => {
-	  		console.log(res.data)
-	  		if (res.data.code == 200) {
-	  
-	  		} else {
-	  
-	  		}
-	  	}
-	  })
 	  uni.showToast({
 	  	title: 'onCallConnected ' + JSON.stringify(e),
 	  	icon: "none"
@@ -185,7 +174,7 @@
 	  });
 	});
 	
-	callKitEvent.addEventListener('onCallTypeChange', function(e) {
+	NECallKitEvent.addEventListener('onCallTypeChange', function(e) {
 	  console.log('onCallTypeChange' + JSON.stringify(e));
 	  uni.showToast({
 	  	title: 'onCallTypeChange ' + JSON.stringify(e),
@@ -193,7 +182,7 @@
 	  });
 	});
 	
-	callKitEvent.addEventListener('onCallEnd', function(e) {
+	NECallKitEvent.addEventListener('onCallEnd', function(e) {
 	  console.log('onCallEnd' + JSON.stringify(e));
 	  uni.showToast({
 	  	title: 'onCallEnd ' + JSON.stringify(e),
@@ -201,7 +190,7 @@
 	  });
 	});
 	
-	callKitEvent.addEventListener('onVideoAvailable', function(e) {
+	NECallKitEvent.addEventListener('onVideoAvailable', function(e) {
 	  console.log('onVideoAvailable' + JSON.stringify(e));
 	  uni.showToast({
 	  	title: 'onVideoAvailable ' + JSON.stringify(e),
@@ -209,7 +198,7 @@
 	  });
 	});
 	
-	callKitEvent.addEventListener('onVideoMuted', function(e) {
+	NECallKitEvent.addEventListener('onVideoMuted', function(e) {
 	  console.log('onVideoMuted' + JSON.stringify(e));
 	  uni.showToast({
 	  	title: 'onVideoMuted ' + JSON.stringify(e),
@@ -217,7 +206,7 @@
 	  });
 	});
 	
-	callKitEvent.addEventListener('onAudioMuted', function(e) {
+	NECallKitEvent.addEventListener('onAudioMuted', function(e) {
 	  console.log('onAudioMuted' + JSON.stringify(e));
 	  uni.showToast({
 	  	title: 'onAudioMuted ' + JSON.stringify(e),
@@ -230,6 +219,8 @@
 			return {
 				userConfig: {},
 				calledAccount: "",
+					ainsMode: 1,
+					rtcChannelName: ""
 			};
 		},
 
@@ -244,6 +235,18 @@
 				return;
 			}
 			this.userConfig = config;
+			// 读取群呼设置（内存）
+			const app = getApp();
+			const saved = (app && app.globalData && app.globalData.multiCallSettings) || {};
+			this.rtcChannelName = saved.rtcChannelName || "";
+			if (typeof saved.ainsMode === 'number') this.ainsMode = saved.ainsMode;
+		},
+		onShow() {
+			// 返回页面时刷新设置（内存）
+			const app = getApp();
+			const saved = (app && app.globalData && app.globalData.multiCallSettings) || {};
+			this.rtcChannelName = saved.rtcChannelName || "";
+			if (typeof saved.ainsMode === 'number') this.ainsMode = saved.ainsMode;
 		},
 
 		computed: {
@@ -257,7 +260,32 @@
 			}
 		},
 
-		methods: {
+			methods: {
+				goSettings() {
+					uni.navigateTo({ url: '/pages/multi-call/settings' });
+				},
+				setAINSMode() {
+				if (this.ainsMode === -1) {
+					return;	
+				}
+				NECallKit.setAINSMode({
+					rtcAINSMode: this.ainsMode
+				}, (ret) => {
+					if (ret.code != 200) {
+						var msg = '设置失败\n错误码：' + ret.code + '\n错误信息：' + ret.message;
+						uni.showToast({
+							title: msg,
+							icon: "none"
+						})
+					} else {
+						uni.showToast({
+							title: '设置成功',
+							icon: "success"
+						})
+					}
+				})
+			},
+
 			startCall() {
 				if (!this.calledAccount) {
 					uni.showToast({
@@ -276,10 +304,18 @@
 					return;
 				}
 
-				testModule.toCallPage({
+				// AINS 再次设置 AINS 模式
+				this.setAINSMode();
+
+				NECallKit.toCallPage({
 					accountList: accounts,
 					isGroupCall: true,
-					type: 2
+					type: 2,
+					rtcChannelName: this.rtcChannelName || undefined,
+					// push settings (from memory)
+					needPush: (getApp().globalData && getApp().globalData.multiCallSettings && typeof getApp().globalData.multiCallSettings.needPush === 'boolean') ? getApp().globalData.multiCallSettings.needPush : false,
+					pushContent: (getApp().globalData && getApp().globalData.multiCallSettings && getApp().globalData.multiCallSettings.pushContent) || undefined,
+					pushPayload: (getApp().globalData && getApp().globalData.multiCallSettings && getApp().globalData.multiCallSettings.pushPayload) || undefined
 				}, (ret) => {
 					if (ret.code != 200) {
 						var msg = '多人视频呼叫失败\n错误码：' + ret.code + '\n错误信息：' + ret.message;
