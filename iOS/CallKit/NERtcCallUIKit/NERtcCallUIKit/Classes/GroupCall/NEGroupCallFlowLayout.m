@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #import "NEGroupCallFlowLayout.h"
-#import <YXAlog_iOS/YXAlog.h>
+#import <NEXKitBase/NEXKitBase.h>
 
 @implementation NEGroupCallFlowLayout {
   NSMutableArray<NSIndexPath *> *_deletingIndexPaths;
@@ -33,7 +33,7 @@
 
   if (!self.collectionView) return;
 
-  YXAlogInfo(
+  NEXKitBaseLogInfo(
       @"[GroupCallLayout] 🔄 prepareLayout 开始 - largeViewIndex: %ld, showLargeViewUserId: %@",
       (long)self.largeViewIndex, self.showLargeViewUserId);
 
@@ -48,22 +48,23 @@
   CGRect lastFrame =
       (count != 2 || self.largeViewIndex >= 0) ? CGRectZero : CGRectMake(0, cvWidth / 5, 0, 0);
 
-  YXAlogInfo(@"[GroupCallLayout] 📊 布局参数 - count: %ld, cvWidth: %.2f, lastFrame: %@",
-             (long)count, cvWidth, NSStringFromCGRect(lastFrame));
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 📊 布局参数 - count: %ld, cvWidth: %.2f, lastFrame: %@",
+                    (long)count, cvWidth, NSStringFromCGRect(lastFrame));
 
   while (currentIndex < count) {
     NSMutableArray<NSValue *> *segmentRects = [NSMutableArray array];
 
-    YXAlogInfo(@"[GroupCallLayout] 🔍 处理 currentIndex: %ld, segment: %ld, largeViewIndex: %ld",
-               (long)currentIndex, (long)segment, (long)self.largeViewIndex);
+    NEXKitBaseLogInfo(
+        @"[GroupCallLayout] 🔍 处理 currentIndex: %ld, segment: %ld, largeViewIndex: %ld",
+        (long)currentIndex, (long)segment, (long)self.largeViewIndex);
 
     switch (segment) {
       case NEGroupCallLayoutModeFullWidth: {
         CGRect rect =
             CGRectMake(0, lastFrame.origin.y + lastFrame.size.height + 1.0, cvWidth, cvWidth);
         [segmentRects addObject:[NSValue valueWithCGRect:rect]];
-        YXAlogInfo(@"[GroupCallLayout] 📐 FullWidth - currentIndex: %ld, rect: %@",
-                   (long)currentIndex, NSStringFromCGRect(rect));
+        NEXKitBaseLogInfo(@"[GroupCallLayout] 📐 FullWidth - currentIndex: %ld, rect: %@",
+                          (long)currentIndex, NSStringFromCGRect(rect));
         break;
       }
 
@@ -78,7 +79,7 @@
                        segmentFrame.size.width / 2, segmentFrame.size.height);
         [segmentRects addObject:[NSValue valueWithCGRect:leftRect]];
         [segmentRects addObject:[NSValue valueWithCGRect:rightRect]];
-        YXAlogInfo(
+        NEXKitBaseLogInfo(
             @"[GroupCallLayout] 📐 FiftyFifty - currentIndex: %ld, leftRect: %@, rightRect: %@",
             (long)currentIndex, NSStringFromCGRect(leftRect), NSStringFromCGRect(rightRect));
         break;
@@ -184,9 +185,9 @@
       attributes.frame = [rectValue CGRectValue];
 
       BOOL isLargeView = (currentIndex == self.largeViewIndex);
-      YXAlogInfo(@"[GroupCallLayout] 📍 创建布局属性 - index: %ld, frame: %@, 是否为大画面: %@",
-                 (long)currentIndex, NSStringFromCGRect(attributes.frame),
-                 isLargeView ? @"是" : @"否");
+      NEXKitBaseLogInfo(
+          @"[GroupCallLayout] 📍 创建布局属性 - index: %ld, frame: %@, 是否为大画面: %@",
+          (long)currentIndex, NSStringFromCGRect(attributes.frame), isLargeView ? @"是" : @"否");
 
       [_cachedAttributes addObject:attributes];
       _contentBounds = CGRectUnion(_contentBounds, lastFrame);
@@ -198,15 +199,15 @@
     segment = [self getSegmentForCount:count currentIndex:currentIndex];
   }
 
-  YXAlogInfo(@"[GroupCallLayout] ✅ prepareLayout 完成 - 缓存了 %ld 个布局属性",
-             (long)_cachedAttributes.count);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] ✅ prepareLayout 完成 - 缓存了 %ld 个布局属性",
+                    (long)_cachedAttributes.count);
 }
 
 - (CGSize)collectionViewContentSize {
   CGSize contentSize = _contentBounds.size;
   CGSize boundsSize = self.collectionView.bounds.size;
 
-  YXAlogInfo(
+  NEXKitBaseLogInfo(
       @"[GroupCallLayout] 📏 collectionViewContentSize - bounds: %@, contentBounds: %@, final: %@",
       NSStringFromCGSize(boundsSize), NSStringFromCGSize(_contentBounds.size),
       NSStringFromCGSize(contentSize));
@@ -296,9 +297,10 @@
       segment = NEGroupCallLayoutModeTwoThirdsOneThirdRight;
     }
 
-    YXAlogInfo(@"[GroupCallLayout] 🎯 getSegment - currentIndex: %ld, count: %ld, largeViewIndex: "
-               @"%ld, 选择segment: %ld",
-               (long)currentIndex, (long)count, (long)self.largeViewIndex, (long)segment);
+    NEXKitBaseLogInfo(
+        @"[GroupCallLayout] 🎯 getSegment - currentIndex: %ld, count: %ld, largeViewIndex: "
+        @"%ld, 选择segment: %ld",
+        (long)currentIndex, (long)count, (long)self.largeViewIndex, (long)segment);
     return segment;
   }
 
@@ -404,30 +406,31 @@
 #pragma mark - Large View Management
 
 - (void)setLargeViewUser:(NSString *)userId atIndex:(NSInteger)index {
-  YXAlogInfo(@"[GroupCallLayout] 🔄 设置大画面用户: %@, 索引: %ld (之前: %ld)", userId, (long)index,
-             (long)self.largeViewIndex);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 设置大画面用户: %@, 索引: %ld (之前: %ld)", userId,
+                    (long)index, (long)self.largeViewIndex);
   self.showLargeViewUserId = userId;
   self.largeViewIndex = index;
-  YXAlogInfo(@"[GroupCallLayout] 🔄 设置后 - largeViewIndex: %ld, showLargeViewUserId: %@",
-             (long)self.largeViewIndex, self.showLargeViewUserId);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 设置后 - largeViewIndex: %ld, showLargeViewUserId: %@",
+                    (long)self.largeViewIndex, self.showLargeViewUserId);
   [self invalidateLayout];
 }
 
 - (void)clearLargeView {
-  YXAlogInfo(@"[GroupCallLayout] 🔄 取消大画面模式");
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 取消大画面模式");
   self.showLargeViewUserId = @"";
   self.largeViewIndex = -1;
   [self invalidateLayout];
 }
 
 - (void)setParticipantCount:(NSInteger)participantCount {
-  YXAlogInfo(@"[GroupCallLayout] 🔧 设置 participantCount: %ld -> %ld", (long)_participantCount,
-             (long)participantCount);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔧 设置 participantCount: %ld -> %ld",
+                    (long)_participantCount, (long)participantCount);
 
   // 防止participantCount被意外重置为0或负数
   if (participantCount <= 0) {
-    YXAlogInfo(@"[GroupCallLayout] ⚠️ 警告：尝试设置无效的 participantCount: %ld，保持原值: %ld",
-               (long)participantCount, (long)_participantCount);
+    NEXKitBaseLogInfo(
+        @"[GroupCallLayout] ⚠️ 警告：尝试设置无效的 participantCount: %ld，保持原值: %ld",
+        (long)participantCount, (long)_participantCount);
     return;
   }
 

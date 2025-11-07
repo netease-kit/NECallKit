@@ -21,7 +21,6 @@ typedef void (^NEAccountActionBlock)(NEAccountAction action);
 
 @property(nonatomic, readonly, assign) BOOL hasLogin;
 @property(nonatomic, readonly, strong, nullable) NEUser *userModel;
-@property(nonatomic, readonly, copy, nullable) NSString *accessToken;
 /**
  获取账号实例
  */
@@ -74,20 +73,14 @@ typedef void (^NEAccountActionBlock)(NEAccountAction action);
 + (void)logoutWithCompletion:(_Nullable NEAccountComplete)completion;
 
 /**
- 手机验证码登录
- @param mobile      - 手机号
- @param smsCode     - 验证码
- @param completion  - 回调闭包
+ 账号ID和Token登录
+ @param accountId    - 账号ID
+ @param token        - Token
+ @param completion   - 回调闭包
  */
-+ (void)loginWithMobile:(NSString *)mobile
-                smsCode:(NSString *)smsCode
-             completion:(_Nullable NEAccountComplete)completion;
-
-/**
- 令牌刷新
- @param completion  - 回调闭包
- */
-+ (void)loginByTokenWithCompletion:(_Nullable NEAccountComplete)completion;
++ (void)loginWithAccountId:(NSString *)accountId
+                     token:(NSString *)token
+                completion:(_Nullable NEAccountComplete)completion;
 
 @end
 

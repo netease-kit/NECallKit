@@ -6,8 +6,8 @@
 #import <Masonry/Masonry.h>
 #import <NERtcCallKit/NERtcCallKit.h>
 #import <NERtcSDK/NERtcSDK.h>
+#import <NEXKitBase/NEXKitBase.h>
 #import <SDWebImage/SDWebImage.h>
-#import <YXAlog_iOS/YXAlog.h>
 #import "NECallUIKitMacro.h"
 #import "NEGroupUser.h"
 
@@ -150,7 +150,7 @@
     [[NERtcEngine sharedEngine] enableLocalVideo:YES];
     [NERtcEngine.sharedEngine setupLocalVideoCanvas:self.canvas];
     [NERtcEngine.sharedEngine startPreview];
-    YXAlogInfo(@"[NEUserInCallCell] 本地视频预览开始: %@", user.imAccid);
+    NEXKitBaseLogInfo(@"[NEUserInCallCell] 本地视频预览开始: %@", user.imAccid);
 
   } else if (user.isOpenVideo == YES) {
     // 远程用户开启视频
@@ -158,7 +158,8 @@
     if (user.uid > 0) {
       [NERtcEngine.sharedEngine setupRemoteVideoCanvas:self.canvas forUserID:user.uid];
     }
-    YXAlogInfo(@"[NEUserInCallCell] 远程视频订阅: userID=%llu, user=%@", user.uid, user.imAccid);
+    NEXKitBaseLogInfo(@"[NEUserInCallCell] 远程视频订阅: userID=%llu, user=%@", user.uid,
+                      user.imAccid);
 
   } else {
     // 关闭视频
@@ -167,7 +168,7 @@
       [NERtcEngine.sharedEngine setupLocalVideoCanvas:nil];
       [NERtcEngine.sharedEngine stopPreview];
       self.preview.hidden = YES;
-      YXAlogInfo(@"[NEUserInCallCell] 本地视频预览停止: %@", user.imAccid);
+      NEXKitBaseLogInfo(@"[NEUserInCallCell] 本地视频预览停止: %@", user.imAccid);
     } else {
       // 远程用户关闭视频
       if (user.uid > 0) {

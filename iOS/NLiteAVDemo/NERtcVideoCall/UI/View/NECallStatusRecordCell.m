@@ -84,7 +84,7 @@
 - (void)configure:(NECallStatusRecordModel *)model {
   NSMutableDictionary *dataDic = [self getShowData:model];
   self.callTypeImage.image = [UIImage imageNamed:[dataDic objectForKey:@"imageName"]];
-  self.phoneLabel.text = model.mobile;
+  self.phoneLabel.text = model.imAccid;
   self.phoneLabel.textColor = [dataDic objectForKey:@"phoneColor"];
   self.timeLabel.text = [dataDic objectForKey:@"time"];
   self.timeLabel.textColor = [dataDic objectForKey:@"timeColor"];

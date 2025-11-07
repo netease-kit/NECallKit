@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #import "NEGroupInCallViewController.h"
-#import <YXAlog_iOS/YXAlog.h>
+#import <NEXKitBase/NEXKitBase.h>
 #import "NEGroupCallFlowLayout.h"
 #import "NEGroupUser+Private.h"
 #import "NEUserInCallCell.h"
@@ -51,7 +51,7 @@
 }
 
 - (void)changeUsers:(NSArray<NSArray<NEGroupUser *> *> *)users {
-  YXAlogInfo(@"[GroupCallLayout] 🔄 changeUsers 被调用，输入数据: %@", users);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 changeUsers 被调用，输入数据: %@", users);
 
   // 记录之前的人数
   NSInteger previousCount = self.datas.count;
@@ -61,40 +61,41 @@
   // 将二维数组转换为一维数组，并设置原始位置
   NSInteger currentIndex = 0;
   for (NSArray<NEGroupUser *> *userGroup in users) {
-    YXAlogInfo(@"[GroupCallLayout] 📦 处理用户组: %@", userGroup);
+    NEXKitBaseLogInfo(@"[GroupCallLayout] 📦 处理用户组: %@", userGroup);
     for (NEGroupUser *user in userGroup) {
       // 设置用户的原始位置索引
       user.originalIndex = currentIndex;
-      YXAlogInfo(@"[GroupCallLayout] 👤 用户详情 - imAccid: %@, mobile: %@, isOpenVideo: %@, "
-                 @"isShowLocalVideo: %@, state: %ld, uid: %llu, originalIndex: %ld",
-                 user.imAccid, user.mobile, user.isOpenVideo ? @"YES" : @"NO",
-                 user.isShowLocalVideo ? @"YES" : @"NO", (long)user.state, user.uid,
-                 (long)user.originalIndex);
+      NEXKitBaseLogInfo(
+          @"[GroupCallLayout] 👤 用户详情 - imAccid: %@, mobile: %@, isOpenVideo: %@, "
+          @"isShowLocalVideo: %@, state: %ld, uid: %llu, originalIndex: %ld",
+          user.imAccid, user.mobile, user.isOpenVideo ? @"YES" : @"NO",
+          user.isShowLocalVideo ? @"YES" : @"NO", (long)user.state, user.uid,
+          (long)user.originalIndex);
       currentIndex++;
     }
     [self.datas addObjectsFromArray:userGroup];
   }
 
-  YXAlogInfo(@"[GroupCallLayout] 📊 转换后数据数量: %ld (之前: %ld)", (long)self.datas.count,
-             (long)previousCount);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 📊 转换后数据数量: %ld (之前: %ld)", (long)self.datas.count,
+                    (long)previousCount);
 
   // 更新FlowLayout的participantCount
   self.layout.participantCount = self.datas.count;
 
-  YXAlogInfo(@"[GroupCallLayout] 🔧 设置布局参数 - participantCount: %ld",
-             (long)self.layout.participantCount);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔧 设置布局参数 - participantCount: %ld",
+                    (long)self.layout.participantCount);
 
   // 判断是否需要重新布局
   if (previousCount != self.datas.count) {
     // 人数变化，需要重新布局
-    YXAlogInfo(@"[GroupCallLayout] 🔄 人数变化，重新布局 - 从 %ld 变为 %ld", (long)previousCount,
-               (long)self.datas.count);
+    NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 人数变化，重新布局 - 从 %ld 变为 %ld",
+                      (long)previousCount, (long)self.datas.count);
     [self.collection reloadData];
   } else {
     // 人数不变，只刷新可见的 cell 内容
-    YXAlogInfo(@"[GroupCallLayout] 🔄 人数不变，只刷新 cell 内容");
+    NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 人数不变，只刷新 cell 内容");
     [self refreshAllVisibleCells];
-    YXAlogInfo(@"[GroupCallLayout] ✅ cell 内容刷新完成");
+    NEXKitBaseLogInfo(@"[GroupCallLayout] ✅ cell 内容刷新完成");
   }
 }
 
@@ -119,10 +120,11 @@
     _collection.alwaysBounceVertical = NO;    // 禁用垂直弹跳
     _collection.alwaysBounceHorizontal = NO;  // 禁用水平弹跳
 
-    YXAlogInfo(@"[GroupCallLayout] 🔧 CollectionView 初始化 - scrollEnabled: %@, bounces: %@, "
-               @"alwaysBounceVertical: %@",
-               _collection.scrollEnabled ? @"YES" : @"NO", _collection.bounces ? @"YES" : @"NO",
-               _collection.alwaysBounceVertical ? @"YES" : @"NO");
+    NEXKitBaseLogInfo(
+        @"[GroupCallLayout] 🔧 CollectionView 初始化 - scrollEnabled: %@, bounces: %@, "
+        @"alwaysBounceVertical: %@",
+        _collection.scrollEnabled ? @"YES" : @"NO", _collection.bounces ? @"YES" : @"NO",
+        _collection.alwaysBounceVertical ? @"YES" : @"NO");
   }
   return _collection;
 }
@@ -142,9 +144,9 @@
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView
      numberOfItemsInSection:(NSInteger)section {
-  YXAlogInfo(@"[GroupCallLayout] 🔄 collectionView numberOfItemsInSection section: %ld "
-             @"self.datas.count: %ld",
-             (long)section, (long)self.datas.count);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 collectionView numberOfItemsInSection section: %ld "
+                    @"self.datas.count: %ld",
+                    (long)section, (long)self.datas.count);
   return self.datas.count;
 }
 
@@ -156,8 +158,8 @@
   NEGroupUser *user = [self.datas objectAtIndex:indexPath.row];
   [cell configure:user];  // 直接配置单个用户
 
-  YXAlogInfo(@"[GroupCallLayout] 🔄 collectionView cellForItemAtIndexPath indexPath: %ld",
-             (long)indexPath.row);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 collectionView cellForItemAtIndexPath indexPath: %ld",
+                    (long)indexPath.row);
 
   return cell;
 }
@@ -166,13 +168,14 @@
                     layout:(UICollectionViewLayout *)collectionViewLayout
     sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
   // 使用自定义布局，不需要在这里设置size
-  YXAlogInfo(@"[GroupCallLayout] 🔄 sizeForItemAtIndexPath indexPath: %ld", (long)indexPath.row);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 sizeForItemAtIndexPath indexPath: %ld",
+                    (long)indexPath.row);
   return CGSizeZero;
 }
 
 - (void)collectionView:(UICollectionView *)collectionView
     didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-  YXAlogInfo(@"[GroupCallLayout] 🔄 用户点击了第 %ld 个用户", (long)indexPath.row);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 用户点击了第 %ld 个用户", (long)indexPath.row);
 
   if (indexPath.row < self.datas.count) {
     [self updateCollectionViewWithIndexPath:indexPath];
@@ -203,22 +206,22 @@
   NSInteger count = self.datas.count;
   NSArray *remoteUpdates = [self getRemoteUpdatesWithIndexPath:indexPath];
 
-  YXAlogInfo(@"[GroupCallLayout] 🔄 updateCollectionView - count: %ld, row: %ld, "
-             @"currentLargeViewIndex: %ld",
-             (long)count, (long)indexPath.row, (long)self.layout.largeViewIndex);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 updateCollectionView - count: %ld, row: %ld, "
+                    @"currentLargeViewIndex: %ld",
+                    (long)count, (long)indexPath.row, (long)self.layout.largeViewIndex);
 
   // 检查是否需要设置第一个用户为大画面（2-4人情况）
   BOOL firstBigFlag = NO;
   if (count >= 2 && count <= 4 && indexPath.row != self.layout.largeViewIndex) {
     firstBigFlag = YES;
-    YXAlogInfo(@"[GroupCallLayout] 🔄 设置 firstBigFlag = YES");
+    NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 设置 firstBigFlag = YES");
   }
 
   // 切换大画面用户 - 完全按照 Swift 版本
   self.layout.largeViewIndex = (self.layout.largeViewIndex == indexPath.row) ? -1 : indexPath.row;
   if (firstBigFlag) {
     self.layout.largeViewIndex = 0;
-    YXAlogInfo(@"[GroupCallLayout] 🔄 firstBigFlag 生效，设置第一个用户为大画面");
+    NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 firstBigFlag 生效，设置第一个用户为大画面");
   }
 
   // 设置显示大画面的用户ID
@@ -228,8 +231,9 @@
           : @"";
   [self setShowLargeViewUserId:showLargeViewUserId];
 
-  YXAlogInfo(@"[GroupCallLayout] 🔄 设置大画面 - largeViewIndex: %ld, showLargeViewUserId: %@",
-             (long)self.layout.largeViewIndex, showLargeViewUserId);
+  NEXKitBaseLogInfo(
+      @"[GroupCallLayout] 🔄 设置大画面 - largeViewIndex: %ld, showLargeViewUserId: %@",
+      (long)self.layout.largeViewIndex, showLargeViewUserId);
 
   // 取消交互式移动
   [self.collection cancelInteractiveMovement];
@@ -240,8 +244,8 @@
         NSMutableArray<NSNumber *> *deletes = [NSMutableArray array];
         NSMutableArray<NSDictionary *> *inserts = [NSMutableArray array];
 
-        YXAlogInfo(@"[GroupCallLayout] 🔄 处理 remoteUpdates，数量: %ld",
-                   (long)remoteUpdates.count);
+        NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 处理 remoteUpdates，数量: %ld",
+                          (long)remoteUpdates.count);
 
         // 完全按照 Swift 版本处理所有操作
         for (NSDictionary *update in remoteUpdates) {
@@ -251,7 +255,7 @@
             [self.collection deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:index
                                                                             inSection:0] ]];
             [deletes addObject:@(index)];
-            YXAlogInfo(@"[GroupCallLayout] 🔄 删除项目: %ld", (long)index);
+            NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 删除项目: %ld", (long)index);
 
           } else if ([updateType isEqualToString:@"insert"]) {
             NEGroupUser *user = update[@"user"];
@@ -259,7 +263,8 @@
             [self.collection insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:index
                                                                             inSection:0] ]];
             [inserts addObject:@{@"user" : user, @"index" : @(index)}];
-            YXAlogInfo(@"[GroupCallLayout] 🔄 插入项目: %@ at %ld", user.imAccid, (long)index);
+            NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 插入项目: %@ at %ld", user.imAccid,
+                              (long)index);
 
           } else if ([updateType isEqualToString:@"move"]) {
             NSInteger fromIndex = [update[@"fromIndex"] integerValue];
@@ -272,8 +277,8 @@
               @"user" : [self.datas objectAtIndex:fromIndex],
               @"index" : @(toIndex)
             }];
-            YXAlogInfo(@"[GroupCallLayout] 🔄 移动项目: %ld -> %ld", (long)fromIndex,
-                       (long)toIndex);
+            NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 移动项目: %ld -> %ld", (long)fromIndex,
+                              (long)toIndex);
           }
         }
 
@@ -287,7 +292,7 @@
           NSInteger index = [deletedIndex integerValue];
           if (index >= 0 && index < self.datas.count) {
             [self.datas removeObjectAtIndex:index];
-            YXAlogInfo(@"[GroupCallLayout] 🔄 从数据源删除用户: %ld", (long)index);
+            NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 从数据源删除用户: %ld", (long)index);
           }
         }
 
@@ -304,13 +309,13 @@
           NSInteger index = [insertion[@"index"] integerValue];
           if (index >= 0 && index <= self.datas.count) {
             [self.datas insertObject:user atIndex:index];
-            YXAlogInfo(@"[GroupCallLayout] 🔄 向数据源插入用户: %@ at %ld", user.imAccid,
-                       (long)index);
+            NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 向数据源插入用户: %@ at %ld", user.imAccid,
+                              (long)index);
           }
         }
       }
       completion:^(BOOL finished) {
-        YXAlogInfo(
+        NEXKitBaseLogInfo(
             @"[GroupCallLayout] ✅ 批量更新完成 - largeViewIndex: %ld, showLargeViewUserId: %@",
             (long)self.layout.largeViewIndex, self.layout.showLargeViewUserId);
         [self.collection endInteractiveMovement];
@@ -319,19 +324,20 @@
 
 - (void)setShowLargeViewUserId:(NSString *)userId {
   self.layout.showLargeViewUserId = userId;
-  YXAlogInfo(@"[GroupCallLayout] 🔄 setShowLargeViewUserId: %@", userId);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 setShowLargeViewUserId: %@", userId);
 }
 
 - (NSArray *)getRemoteUpdatesWithIndexPath:(NSIndexPath *)indexPath {
   NSInteger count = self.datas.count;
   NSInteger row = indexPath.row;
 
-  YXAlogInfo(@"[GroupCallLayout] 🔄 getRemoteUpdates - count: %ld, row: %ld, largeViewIndex: %ld",
-             (long)count, (long)row, (long)self.layout.largeViewIndex);
+  NEXKitBaseLogInfo(
+      @"[GroupCallLayout] 🔄 getRemoteUpdates - count: %ld, row: %ld, largeViewIndex: %ld",
+      (long)count, (long)row, (long)self.layout.largeViewIndex);
 
   // 完全按照 Swift 版本的逻辑
   if (count < 2 || count > 4 || row >= count) {
-    YXAlogInfo(@"[GroupCallLayout] 🔄 getRemoteUpdates - 条件不满足，返回空数组");
+    NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 getRemoteUpdates - 条件不满足，返回空数组");
     return @[];
   }
 
@@ -344,16 +350,16 @@
 
     NSDictionary *moveUpdate =
         @{@"type" : @"move", @"fromIndex" : @(0), @"toIndex" : @(originalIndex)};
-    YXAlogInfo(@"[GroupCallLayout] 🔄 getRemoteUpdates - 移动第一个用户到原始位置: 0 -> %ld",
-               (long)originalIndex);
+    NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 getRemoteUpdates - 移动第一个用户到原始位置: 0 -> %ld",
+                      (long)originalIndex);
     return @[ moveUpdate ];
   }
 
   if (count == 2 || [self isFirstUserAtOriginalPosition]) {
     // 2人情况或第一个用户已在原始位置，移动点击的用户到第一个位置
     NSDictionary *moveUpdate = @{@"type" : @"move", @"fromIndex" : @(row), @"toIndex" : @(0)};
-    YXAlogInfo(@"[GroupCallLayout] 🔄 getRemoteUpdates - 移动用户到第一个位置: %ld -> 0",
-               (long)row);
+    NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 getRemoteUpdates - 移动用户到第一个位置: %ld -> 0",
+                      (long)row);
     return @[ moveUpdate ];
   }
 
@@ -364,7 +370,7 @@
   NSDictionary *moveFirstUpdate =
       @{@"type" : @"move", @"fromIndex" : @(0), @"toIndex" : @(firstUserOriginalIndex)};
   NSDictionary *moveClickUpdate = @{@"type" : @"move", @"fromIndex" : @(row), @"toIndex" : @(0)};
-  YXAlogInfo(
+  NEXKitBaseLogInfo(
       @"[GroupCallLayout] 🔄 getRemoteUpdates - 复杂移动: 第一个用户 %ld -> %ld, 点击用户 %ld -> 0",
       (long)0, (long)firstUserOriginalIndex, (long)row);
   return @[ moveFirstUpdate, moveClickUpdate ];
@@ -376,8 +382,9 @@
   if (self.datas.count > 0) {
     NEGroupUser *firstUser = [self.datas objectAtIndex:0];
     BOOL isAtOriginalPosition = (firstUser.originalIndex == 0);
-    YXAlogInfo(@"[GroupCallLayout] 🔄 isFirstUserAtOriginalPosition: %@ (originalIndex: %ld)",
-               isAtOriginalPosition ? @"YES" : @"NO", (long)firstUser.originalIndex);
+    NEXKitBaseLogInfo(
+        @"[GroupCallLayout] 🔄 isFirstUserAtOriginalPosition: %@ (originalIndex: %ld)",
+        isAtOriginalPosition ? @"YES" : @"NO", (long)firstUser.originalIndex);
     return isAtOriginalPosition;
   }
   return YES;
@@ -387,13 +394,14 @@
   // 获取用户的原始位置
   // 在 Swift 版本中，这相当于 user.multiCallCellViewIndex
   NSInteger originalIndex = user.originalIndex;
-  YXAlogInfo(@"[GroupCallLayout] 🔄 getOriginalIndexForUser: %@, originalIndex: %ld", user.imAccid,
-             (long)originalIndex);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 getOriginalIndexForUser: %@, originalIndex: %ld",
+                    user.imAccid, (long)originalIndex);
   return originalIndex;
 }
 
 - (void)switchToLargeViewUser:(NEGroupUser *)user atIndex:(NSInteger)index {
-  YXAlogInfo(@"[GroupCallLayout] 🔄 切换大画面用户: %@, 索引: %ld", user.imAccid, (long)index);
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 切换大画面用户: %@, 索引: %ld", user.imAccid,
+                    (long)index);
 
   // 如果点击的是当前大画面用户，则取消大画面
   if (self.layout.largeViewIndex == index) {
@@ -410,12 +418,12 @@
         // 这里可以添加更多的动画逻辑
       }
       completion:^(BOOL finished) {
-        YXAlogInfo(@"[GroupCallLayout] ✅ 大画面切换完成");
+        NEXKitBaseLogInfo(@"[GroupCallLayout] ✅ 大画面切换完成");
       }];
 }
 
 - (void)clearLargeView {
-  YXAlogInfo(@"[GroupCallLayout] 🔄 取消大画面模式");
+  NEXKitBaseLogInfo(@"[GroupCallLayout] 🔄 取消大画面模式");
 
   [self.layout clearLargeView];
 
@@ -425,7 +433,7 @@
         // 这里可以添加更多的动画逻辑
       }
       completion:^(BOOL finished) {
-        YXAlogInfo(@"[GroupCallLayout] ✅ 取消大画面完成");
+        NEXKitBaseLogInfo(@"[GroupCallLayout] ✅ 取消大画面完成");
       }];
 }
 

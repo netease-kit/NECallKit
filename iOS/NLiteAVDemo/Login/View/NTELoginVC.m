@@ -3,12 +3,10 @@
 // found in the LICENSE file.
 
 #import "NTELoginVC.h"
+#import "NEAccount.h"
 #import "NELoginOptions.h"
 #import "NENavigator.h"
-#import "NESendSmsCodeTask.h"
-#import "NEService.h"
 #import "NSMacro.h"
-#import "NTFInputSmsVC.h"
 #import "UIColor+NTES.h"
 #import "UIImage+NTES.h"
 #import "UIView+NTES.h"
@@ -16,12 +14,13 @@
 @interface NTELoginVC () <UITextFieldDelegate>
 
 @property(nonatomic, strong) UILabel *titleLab;
-@property(nonatomic, strong) UILabel *areaLab;
-@property(nonatomic, strong) UIView *verLine;
-@property(nonatomic, strong) UITextField *phoneNumField;
-@property(nonatomic, strong) UIView *horLine;
+@property(nonatomic, strong) UILabel *linkLab;
+@property(nonatomic, strong) UITextField *accountIdField;
+@property(nonatomic, strong) UIView *horLine1;
+@property(nonatomic, strong) UITextField *tokenField;
+@property(nonatomic, strong) UIView *horLine2;
 @property(nonatomic, strong) UILabel *tipLab;
-@property(nonatomic, strong) UIButton *getSmsBtn;
+@property(nonatomic, strong) UIButton *loginBtn;
 @property(nonatomic, strong) UITextView *protocolView;
 @property(nonatomic, strong) UIButton *cancelBtn;
 
@@ -60,33 +59,40 @@
 - (void)setupSubviews {
   [self.view addSubview:self.cancelBtn];
   [self.view addSubview:self.titleLab];
-  [self.view addSubview:self.areaLab];
-  [self.view addSubview:self.verLine];
-  [self.view addSubview:self.phoneNumField];
-  [self.view addSubview:self.horLine];
+  [self.view addSubview:self.linkLab];
+  [self.view addSubview:self.accountIdField];
+  [self.view addSubview:self.horLine1];
+  [self.view addSubview:self.tokenField];
+  [self.view addSubview:self.horLine2];
   [self.view addSubview:self.tipLab];
-  [self.view addSubview:self.getSmsBtn];
+  [self.view addSubview:self.loginBtn];
   [self.view addSubview:self.protocolView];
+
   self.cancelBtn.frame = CGRectMake(self.view.width - 60, 80, 30, 30);
   self.titleLab.frame = CGRectMake(30, 130, self.view.width - 60, 40);
-  self.areaLab.frame = CGRectMake(self.titleLab.left, self.titleLab.bottom + 30, 40, 44);
-  self.verLine.frame = CGRectMake(self.areaLab.right + 4, self.areaLab.top + 11, 1, 22);
-  self.phoneNumField.frame = CGRectMake(self.verLine.right + 10, self.areaLab.top,
-                                        self.titleLab.width - self.verLine.right - 10, 44);
-  [self.phoneNumField becomeFirstResponder];
-  self.horLine.frame =
-      CGRectMake(self.titleLab.left, self.phoneNumField.bottom + 1, self.titleLab.width, 1);
+  self.linkLab.frame =
+      CGRectMake(self.titleLab.left, self.titleLab.bottom + 20, self.titleLab.width, 20);
+  self.accountIdField.frame =
+      CGRectMake(self.titleLab.left, self.linkLab.bottom + 30, self.titleLab.width, 44);
+  [self.accountIdField becomeFirstResponder];
+  self.horLine1.frame =
+      CGRectMake(self.titleLab.left, self.accountIdField.bottom + 1, self.titleLab.width, 1);
+  self.tokenField.frame =
+      CGRectMake(self.titleLab.left, self.horLine1.bottom + 20, self.titleLab.width, 44);
+  self.horLine2.frame =
+      CGRectMake(self.titleLab.left, self.tokenField.bottom + 1, self.titleLab.width, 1);
   self.tipLab.frame =
-      CGRectMake(self.titleLab.left, self.horLine.bottom + 10, self.titleLab.width, 18);
-  self.getSmsBtn.frame =
+      CGRectMake(self.titleLab.left, self.horLine2.bottom + 10, self.titleLab.width, 18);
+  self.loginBtn.frame =
       CGRectMake(self.titleLab.left, self.tipLab.bottom + 36, self.titleLab.width, 50);
+
   CGFloat safeAreaHeight = 0;
   if (@available(iOS 11.0, *)) {
     safeAreaHeight =
         [[UIApplication sharedApplication] delegate].window.safeAreaInsets.bottom > 0.0 ? 34 : 0;
   }
   self.protocolView.frame =
-      CGRectMake(self.titleLab.left, self.getSmsBtn.bottom + 30, self.titleLab.width, 30);
+      CGRectMake(self.titleLab.left, self.loginBtn.bottom + 30, self.titleLab.width, 30);
 
   self.protocolView.attributedText = [self protocolText];
   self.protocolView.textAlignment = NSTextAlignmentCenter;
@@ -100,26 +106,40 @@
   [self.view endEditing:YES];
 }
 
-- (void)getSmsAction {
-  NESendSmsCodeTask *task = [NESendSmsCodeTask taskWithSubURL:@"/auth/sendLoginSmsCode"];
-  task.req_mobile = _phoneNumField.text;
-  [[NEService shared] runTask:task
-                   completion:^(NSDictionary *_Nullable data, NSError *_Nullable error) {
-                     ntes_main_async_safe(^{
-                       if (error) {
-                         NSString *msg = [error localizedDescription] ?: @"请求错误";
-                         [self.view ne_makeToast:msg];
-                       } else {
-                         NTFInputSmsVC *vc =
-                             [[NTFInputSmsVC alloc] initWithMobile:self.phoneNumField.text
-                                                           options:self.options];
-                         //            UINavigationController *nav = [[UINavigationController alloc]
-                         //            initWithRootViewController:vc]; vc.modalPresentationStyle =
-                         //            UIModalPresentationOverFullScreen;
-                         [self.navigationController pushViewController:vc animated:YES];
-                       }
-                     });
-                   }];
+- (void)openYunxinDoc {
+  NSURL *url = [NSURL URLWithString:@"https://doc.yunxin.163.com/messaging2/guide/"
+                                    @"jU0Mzg0MTU?platform=client#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E6%B3%"
+                                    @"A8%E5%86%8C-im-%E8%B4%A6%E5%8F%B7"];
+  if ([[UIApplication sharedApplication] canOpenURL:url]) {
+    [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+  }
+}
+
+- (void)loginAction {
+  NSString *accountId = self.accountIdField.text;
+  NSString *token = self.tokenField.text;
+
+  if (accountId.length == 0 || token.length == 0) {
+    [self.view ne_makeToast:@"请输入完整的账号ID和Token"];
+    return;
+  }
+
+  [NEAccount loginWithAccountId:accountId
+                          token:token
+                     completion:^(NSDictionary *_Nullable data, NSError *_Nullable error) {
+                       ntes_main_async_safe(^{
+                         if (error) {
+                           NSString *msg = [error localizedDescription] ?: @"登录失败";
+                           [self.view ne_makeToast:msg];
+                         } else {
+                           if (self.options.successBlock) {
+                             self.options.successBlock();
+                           }
+                           [[NENavigator shared] closeLoginWithCompletion:nil];
+                           [self.view ne_makeToast:@"登录成功"];
+                         }
+                       });
+                     }];
 }
 
 - (NSAttributedString *)protocolText {
@@ -154,34 +174,12 @@
 - (BOOL)textField:(UITextField *)textField
     shouldChangeCharactersInRange:(NSRange)range
                 replacementString:(NSString *)string {
-  if (textField != self.phoneNumField) {
-    return YES;
-  }
-
-  if ([string isEqualToString:@""]) {
-    return YES;
-  }
-  if (textField.text.length >= 11) {
-    return NO;
-  }
-  NSString *validRegEx = @"^[0-9]$";
-  NSPredicate *reg = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", validRegEx];
-  if (![reg evaluateWithObject:string]) {
-    return NO;
-  }
-
   return YES;
 }
 
 - (void)textFieldDidChange:(UITextField *)textField {
-  BOOL valid = [self validPhoneNum:textField.text];
-  self.getSmsBtn.enabled = valid;
-}
-
-- (BOOL)validPhoneNum:(NSString *)phoneNum {
-  NSString *validRegEx = @"^1[35789]\\d{9}$";
-  NSPredicate *reg = [NSPredicate predicateWithFormat:@"SELF MATCHES %@", validRegEx];
-  return [reg evaluateWithObject:phoneNum];
+  BOOL valid = self.accountIdField.text.length > 0 && self.tokenField.text.length > 0;
+  self.loginBtn.enabled = valid;
 }
 - (void)cancelBtnClick {
   [self.navigationController dismissViewControllerAnimated:YES completion:nil];
@@ -208,45 +206,63 @@
   return _titleLab;
 }
 
-- (UILabel *)areaLab {
-  if (!_areaLab) {
-    _areaLab = [[UILabel alloc] init];
-    _areaLab.font = [UIFont systemFontOfSize:17];
-    _areaLab.textColor = [UIColor colorWithHexString:@"#333333"];
-    _areaLab.text = @"+86";
+- (UILabel *)linkLab {
+  if (!_linkLab) {
+    _linkLab = [[UILabel alloc] init];
+    _linkLab.font = [UIFont systemFontOfSize:14];
+    _linkLab.textColor = [UIColor colorWithHexString:@"#337EFF"];
+    _linkLab.text = @"如何获取云信账号与Token";
+    _linkLab.userInteractionEnabled = YES;
+    UITapGestureRecognizer *tap =
+        [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(openYunxinDoc)];
+    [_linkLab addGestureRecognizer:tap];
   }
-  return _areaLab;
+  return _linkLab;
 }
 
-- (UIView *)verLine {
-  if (!_verLine) {
-    _verLine = [[UIView alloc] init];
-    _verLine.backgroundColor = [UIColor colorWithHexString:@"#DCDFE5"];
+- (UITextField *)accountIdField {
+  if (!_accountIdField) {
+    _accountIdField = [[UITextField alloc] init];
+    _accountIdField.placeholder = @"请输入账号ID";
+    _accountIdField.font = [UIFont systemFontOfSize:17];
+    _accountIdField.textColor = [UIColor colorWithHexString:@"#333333"];
+    _accountIdField.delegate = self;
+    [_accountIdField addTarget:self
+                        action:@selector(textFieldDidChange:)
+              forControlEvents:UIControlEventEditingChanged];
   }
-  return _verLine;
+  return _accountIdField;
 }
 
-- (UITextField *)phoneNumField {
-  if (!_phoneNumField) {
-    _phoneNumField = [[UITextField alloc] init];
-    _phoneNumField.placeholder = @"请输入手机号";
-    _phoneNumField.font = [UIFont systemFontOfSize:17];
-    _phoneNumField.textColor = [UIColor colorWithHexString:@"#333333"];
-    _phoneNumField.delegate = self;
-    _phoneNumField.keyboardType = UIKeyboardTypeNumberPad;
-    [_phoneNumField addTarget:self
-                       action:@selector(textFieldDidChange:)
-             forControlEvents:UIControlEventEditingChanged];
+- (UIView *)horLine1 {
+  if (!_horLine1) {
+    _horLine1 = [[UIView alloc] init];
+    _horLine1.backgroundColor = [UIColor colorWithHexString:@"#DCDFE5"];
   }
-  return _phoneNumField;
+  return _horLine1;
 }
 
-- (UIView *)horLine {
-  if (!_horLine) {
-    _horLine = [[UIView alloc] init];
-    _horLine.backgroundColor = [UIColor colorWithHexString:@"#DCDFE5"];
+- (UITextField *)tokenField {
+  if (!_tokenField) {
+    _tokenField = [[UITextField alloc] init];
+    _tokenField.placeholder = @"请输入Token";
+    _tokenField.font = [UIFont systemFontOfSize:17];
+    _tokenField.textColor = [UIColor colorWithHexString:@"#333333"];
+    _tokenField.delegate = self;
+    _tokenField.secureTextEntry = YES;
+    [_tokenField addTarget:self
+                    action:@selector(textFieldDidChange:)
+          forControlEvents:UIControlEventEditingChanged];
   }
-  return _horLine;
+  return _tokenField;
+}
+
+- (UIView *)horLine2 {
+  if (!_horLine2) {
+    _horLine2 = [[UIView alloc] init];
+    _horLine2.backgroundColor = [UIColor colorWithHexString:@"#DCDFE5"];
+  }
+  return _horLine2;
 }
 
 - (UILabel *)tipLab {
@@ -254,30 +270,30 @@
     _tipLab = [[UILabel alloc] init];
     _tipLab.font = [UIFont systemFontOfSize:12];
     _tipLab.textColor = [UIColor colorWithHexString:@"#B0B6BE"];
-    _tipLab.text = @"未注册的手机号验证通过后将自动注册";
+    _tipLab.text = @"请输入您的云信账号ID和Token进行登录";
   }
   return _tipLab;
 }
 
-- (UIButton *)getSmsBtn {
-  if (!_getSmsBtn) {
-    _getSmsBtn = [[UIButton alloc] init];
-    _getSmsBtn.enabled = NO;
-    [_getSmsBtn setTitle:@"获取验证码" forState:UIControlStateNormal];
-    [_getSmsBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+- (UIButton *)loginBtn {
+  if (!_loginBtn) {
+    _loginBtn = [[UIButton alloc] init];
+    _loginBtn.enabled = NO;
+    [_loginBtn setTitle:@"登录" forState:UIControlStateNormal];
+    [_loginBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     UIColor *activeCol = [UIColor colorWithHexString:@"#337EFF"];
-    [_getSmsBtn setBackgroundImage:[UIImage ne_imageWithColor:activeCol]
-                          forState:UIControlStateNormal];
+    [_loginBtn setBackgroundImage:[UIImage ne_imageWithColor:activeCol]
+                         forState:UIControlStateNormal];
     UIColor *disableCol = [UIColor colorWithHexString:@"#cccccc"];
-    [_getSmsBtn setBackgroundImage:[UIImage ne_imageWithColor:disableCol]
-                          forState:UIControlStateDisabled];
-    _getSmsBtn.layer.cornerRadius = 25;
-    _getSmsBtn.layer.masksToBounds = YES;
-    [_getSmsBtn addTarget:self
-                   action:@selector(getSmsAction)
-         forControlEvents:UIControlEventTouchUpInside];
+    [_loginBtn setBackgroundImage:[UIImage ne_imageWithColor:disableCol]
+                         forState:UIControlStateDisabled];
+    _loginBtn.layer.cornerRadius = 25;
+    _loginBtn.layer.masksToBounds = YES;
+    [_loginBtn addTarget:self
+                  action:@selector(loginAction)
+        forControlEvents:UIControlEventTouchUpInside];
   }
-  return _getSmsBtn;
+  return _loginBtn;
 }
 
 - (UITextView *)protocolView {

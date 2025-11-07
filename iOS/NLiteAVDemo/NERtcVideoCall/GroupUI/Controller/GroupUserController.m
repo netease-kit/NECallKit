@@ -156,15 +156,6 @@ navigation
 
 - (void)collectionView:(UICollectionView *)collectionView
     didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
-  if (self.disableCancelUser == YES) {
-    return;
-  }
-  NEUser *user = [self.datas objectAtIndex:indexPath.row];
-  [self.datas removeObjectAtIndex:indexPath.row];
-  [collectionView reloadData];
-  if (self.delegate != nil && [self.delegate respondsToSelector:@selector(didRemoveWithUser:)]) {
-    [self.delegate didRemoveWithUser:user];
-  }
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView
@@ -185,7 +176,7 @@ navigation
 - (CGSize)collectionView:(UICollectionView *)collectionView
                     layout:(UICollectionViewLayout *)collectionViewLayout
     sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-  return CGSizeMake(40, 40);
+  return CGSizeMake(80, 30);  // 调整尺寸以显示文本
 }
 
 @end

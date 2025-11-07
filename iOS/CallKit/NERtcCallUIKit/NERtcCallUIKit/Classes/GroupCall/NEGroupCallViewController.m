@@ -6,7 +6,7 @@
 #import <Masonry/Masonry.h>
 #import <NECommonUIKit/UIView+YXToast.h>
 #import <NERtcCallKit/NERtcCallKit.h>
-#import <YXAlog_iOS/YXAlog.h>
+#import <NEXKitBase/NEXKitBase.h>
 #import "NECallKitUtil.h"
 #import "NECallUIKitMacro.h"
 #import "NEDataManager.h"
@@ -46,6 +46,7 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
 
 @property(nonatomic, assign) BOOL isOpenLocalVideo;
 
+@property(nonatomic, assign) BOOL isPlaying;
 @end
 
 @implementation NEGroupCallViewController
@@ -59,6 +60,7 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
     self.factor = 1.0;
     self.timerCount = 0;
     self.showInviteButton = NO;  // 默认显示邀请按钮
+    self.isPlaying = NO;
   }
   return self;
 }
@@ -79,8 +81,10 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
     make.top.equalTo(self.view).offset(60 * self.factor);
   }];
   if (self.isCalled == YES) {
+    [self playRingWithType:CRTCalleeRing];
     [self setupCalledMaskUI];
   } else {
+    [self playRingWithType:CRTCallerRing];
     [self startTimer];
     GroupCallParam *param = [[GroupCallParam alloc] init];
     NSMutableArray *calleeList = [[NSMutableArray alloc] init];
@@ -92,17 +96,21 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
       [calleeList addObject:user.imAccid];
     }
     param.calleeList = calleeList;
-    NSString *uuid = [self getRandomString];
-    param.callId = uuid;
-    self.callId = uuid;
-    YXAlogInfo(@"call id : %@", param.callId);
-    YXAlogInfo(@"call id length : %lu", (unsigned long)param.callId.length);
+    if (self.callId) {
+      param.callId = self.callId;
+    } else {
+      NSString *uuid = [self getRandomString];
+      param.callId = uuid;
+      self.callId = uuid;
+    }
+    NEXKitBaseLogInfo(@"call id : %@", param.callId);
+    NEXKitBaseLogInfo(@"call id length : %lu", (unsigned long)param.callId.length);
 
     // 设置推送参数
     if (self.pushParam) {
       param.pushParam = self.pushParam;
-      YXAlogInfo(@"使用自定义推送参数 - pushMode: %ld, pushContent: %@",
-                 (long)self.pushParam.pushMode, self.pushParam.pushContent);
+      NEXKitBaseLogInfo(@"使用自定义推送参数 - pushMode: %ld, pushContent: %@",
+                        (long)self.pushParam.pushMode, self.pushParam.pushContent);
     }
 
     [[NEGroupCallKit sharedInstance]
@@ -114,7 +122,7 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
             [self didBack];
             return;
           }
-          YXAlogInfo(@"group call :%@  result : %@", error, result);
+          NEXKitBaseLogInfo(@"group call :%@  result : %@", error, result);
         }];
   }
 }
@@ -220,7 +228,7 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
   NSTimeInterval time = [date timeIntervalSince1970];
   int value = time - self.startTimestamp / 1000;
   self.timerCount = value;
-  YXAlogInfo(@"setCalledCount %d", self.timerCount);
+  NEXKitBaseLogInfo(@"setCalledCount %d", self.timerCount);
 }
 
 - (NSMutableArray<NSArray<NEGroupUser *> *> *)chunkArray:(NSArray<NEGroupUser *> *)array
@@ -245,12 +253,26 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
         [user.imAccid isEqualToString:[NIMSDK.sharedSDK.v2LoginService getLoginUser]]) {
       user.isOpenVideo = enable;
       user.isShowLocalVideo = enable;
-      YXAlogInfo(@"setLocalVideoEnable %d", enable);
-      YXAlogInfo(@"setLocalVideoEnable accid : %@", user.imAccid);
+      NEXKitBaseLogInfo(@"setLocalVideoEnable %d", enable);
+      NEXKitBaseLogInfo(@"setLocalVideoEnable accid : %@", user.imAccid);
       break;
     }
   }
   [self refreshCollection];
+}
+
+- (void)playRingWithType:(CallRingType)ringType {
+  self.isPlaying = YES;
+  [[NERingPlayerManager shareInstance] playRingWithRingType:ringType
+                                                  isRtcPlay:ringType == CRTCallerRing ? YES : NO];
+}
+
+- (void)stopCurrentPlaying {
+  if (!self.isPlaying) {
+    return;
+  }
+  self.isPlaying = NO;
+  [[NERingPlayerManager shareInstance] stopCurrentPlaying];
 }
 
 #pragma mark - delegate
@@ -265,12 +287,13 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
   [[NEGroupCallKit sharedInstance]
       groupAccept:param
        completion:^(NSError *_Nullable error, GroupAcceptResult *_Nullable result) {
+         [self stopCurrentPlaying];
          if (error != nil) {
            [UIApplication.sharedApplication.keyWindow ne_makeToast:error.localizedDescription];
            [weakSelf didBack];
            return;
          }
-         YXAlogInfo(@"call member user list : %@", result.groupCallInfo.calleeList);
+         NEXKitBaseLogInfo(@"call member user list : %@", result.groupCallInfo.calleeList);
          [NEDataManager.shareInstance
              fetchUserWithMembers:result.groupCallInfo.calleeList
                        completion:^(NSError *_Nullable error,
@@ -328,7 +351,7 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
 }
 
 - (void)refreshCollection {
-  YXAlogInfo(@"refreshCollection data count %lu", (unsigned long)self.datas.count);
+  NEXKitBaseLogInfo(@"refreshCollection data count %lu", (unsigned long)self.datas.count);
   [self.inCallController changeUsers:[self chunkArray:self.datas withSize:4]];
 }
 /*
@@ -356,7 +379,7 @@ navigation
     if (self.isOpenLocalVideo == NO) {
       [NERtcCallKit.sharedInstance enableLocalVideo:YES];
       self.isOpenLocalVideo = YES;
-      YXAlogInfo(@"open local video");
+      NEXKitBaseLogInfo(@"open local video");
     }
     [self setLocalVideoEnable:YES];
     [[NERtcCallKit sharedInstance] muteLocalVideo:NO];
@@ -368,7 +391,7 @@ navigation
 }
 
 - (void)hangupBtnClick:(UIButton *)button {
-  YXAlogInfo(@"hangup btn click");
+  NEXKitBaseLogInfo(@"hangup btn click");
   //[self dismissViewControllerAnimated:YES completion:nil];
   [self didBack];
   GroupHangupParam *param = [[GroupHangupParam alloc] init];
@@ -381,6 +404,12 @@ navigation
 }
 
 - (void)operationSpeakerClick:(UIButton *)btn {
+  int ret = [NERtcEngine.sharedEngine setLoudspeakerMode:btn.selected];
+  if (ret == 0) {
+    btn.selected = !btn.selected;
+  } else {
+    [self.view ne_makeToast:[NECallKitUtil localizableWithKey:@"operation_failed"]];
+  }
 }
 
 - (void)changeCameraFrontOrBack {
@@ -399,9 +428,9 @@ navigation
     }
   }
 
-  YXAlogInfo(@"🔄 NEGroupCallViewController 调用 inviteUsers，callId: %@, "
-             @"当前用户数: %ld",
-             callId, (long)inCallUserIds.count);
+  NEXKitBaseLogInfo(@"🔄 NEGroupCallViewController 调用 inviteUsers，callId: %@, "
+                    @"当前用户数: %ld",
+                    callId, (long)inCallUserIds.count);
 
   // 通过代理回调到 NERtcCallUIKit
   if (self.delegate &&
@@ -415,8 +444,8 @@ navigation
                        // 检查总人数是否超过限制
                        NSInteger totalUsers = inCallUserIds.count + userIds.count;
                        if (totalUsers > kGroupCallMaxUsers) {
-                         YXAlogInfo(@"⚠️ 邀请用户后总人数 %ld 超过限制 %ld", (long)totalUsers,
-                                    (long)kGroupCallMaxUsers);
+                         NEXKitBaseLogInfo(@"⚠️ 邀请用户后总人数 %ld 超过限制 %ld", (long)totalUsers,
+                                           (long)kGroupCallMaxUsers);
                          dispatch_async(dispatch_get_main_queue(), ^{
                            [NECallKitUtil
                                makeToast:[NECallKitUtil
@@ -425,8 +454,8 @@ navigation
                          return;
                        }
 
-                       YXAlogInfo(@"🔄 邀请用户回调，获得 %ld 个用户，总人数: %ld",
-                                  (long)userIds.count, (long)totalUsers);
+                       NEXKitBaseLogInfo(@"🔄 邀请用户回调，获得 %ld 个用户，总人数: %ld",
+                                         (long)userIds.count, (long)totalUsers);
                        GroupInviteParam *param = [[GroupInviteParam alloc] init];
                        param.callId = weakSelf.callId;
                        param.calleeList = userIds;
@@ -435,7 +464,7 @@ navigation
                            groupInvite:param
                             completion:^(NSError *_Nullable error,
                                          GroupInviteResult *_Nullable result) {
-                              YXAlogInfo(@"groupInvite : %@", error);
+                              NEXKitBaseLogInfo(@"groupInvite : %@", error);
                               if (error != nil) {
                                 [UIApplication.sharedApplication.keyWindow
                                     ne_makeToast:error.localizedDescription];
@@ -444,7 +473,7 @@ navigation
                             }];
 
                      } else {
-                       YXAlogInfo(@"⚠️ 邀请用户回调，未获得用户");
+                       NEXKitBaseLogInfo(@"⚠️ 邀请用户回调，未获得用户");
                      }
                    }];
   }
@@ -479,6 +508,7 @@ navigation
     [_operationView.speakerBtn addTarget:self
                                   action:@selector(operationSpeakerClick:)
                         forControlEvents:UIControlEventTouchUpInside];
+
     [_operationView setGroupStyle];
     _operationView.backgroundColor = [_operationView.backgroundColor colorWithAlphaComponent:0.7];
   }
@@ -518,7 +548,7 @@ navigation
 #pragma mark group call delegate
 
 - (void)onGroupHangupWithReason:(NSString *)reason {
-  YXAlogInfo(@"Group controller onGroupHangupWithReason %@", reason);
+  NEXKitBaseLogInfo(@"Group controller onGroupHangupWithReason %@", reason);
   if ([reason isEqualToString:kReasonPeerAccept]) {
     [UIApplication.sharedApplication.keyWindow ne_makeToast:@"其他端已接听"];
   }
@@ -526,15 +556,24 @@ navigation
 }
 
 - (void)onGroupUserDidChange:(NSArray<GroupCallMember *> *)members {
-  YXAlogInfo(@"onGroupUserDidChange member count %ld", [members count]);
+  NEXKitBaseLogInfo(@"onGroupUserDidChange member count %ld", [members count]);
   __weak typeof(self) weakSelf = self;
   NSMutableArray *filters = [[NSMutableArray alloc] init];
   for (GroupCallMember *member in members) {
-    YXAlogInfo(@"memmber state : %lu member video : %d", member.state, member.isOpenVideo);
+    NEXKitBaseLogInfo(@"memmber state : %lu member video : %d", member.state, member.isOpenVideo);
     if (member.state != GroupMemberStateHangup) {
       [filters addObject:member];
     }
   }
+
+  // 判断通话已经接通，如果有的话就停止铃声
+  for (GroupCallMember *member in members) {
+    if (member.state == GroupMemberStateAccept) {
+      [self stopCurrentPlaying];
+      break;
+    }
+  }
+
   [[NEDataManager shareInstance]
       fetchUserWithMembers:filters
                 completion:^(NSError *_Nullable error, NSArray<NEGroupUser *> *_Nonnull users) {
@@ -554,19 +593,20 @@ navigation
 - (void)onGroupEndCallWithReason:(NSInteger)reason
                          message:(NSString *)message
                           callId:(NSString *)callId {
-  YXAlogInfo(@"controller onGroupEndCallWithReason :%ld  parameter call id : %@ message : %@",
-             (long)reason, callId, message);
+  NEXKitBaseLogInfo(
+      @"controller onGroupEndCallWithReason :%ld  parameter call id : %@ message : %@",
+      (long)reason, callId, message);
   if ([self.callId isEqualToString:callId]) {
     [self didBack];
   }
 }
 
 - (void)onGroupRemoteUserOpenVideo:(uint64_t)uid withOpen:(BOOL)isOpen {
-  YXAlogInfo(@"controller onGroupRemoteUserOpenVideo %lld  open : %d", uid, isOpen);
+  NEXKitBaseLogInfo(@"controller onGroupRemoteUserOpenVideo %lld  open : %d", uid, isOpen);
   for (NEGroupUser *user in self.datas) {
-    YXAlogInfo(@"remote video mute change uid : %lld", user.uid);
+    NEXKitBaseLogInfo(@"remote video mute change uid : %lld", user.uid);
     if (user.uid == uid) {
-      YXAlogInfo(@"onGroupRemoteUserOpenVideo : %lld open: %d", uid, isOpen);
+      NEXKitBaseLogInfo(@"onGroupRemoteUserOpenVideo : %lld open: %d", uid, isOpen);
       user.isOpenVideo = isOpen;
       [self refreshCollection];
       return;
@@ -578,12 +618,13 @@ navigation
 }
 
 - (void)didBack {
+  [self stopCurrentPlaying];
   [[NEGroupCallKit sharedInstance] removeDelegate:self];
   [[NSNotificationCenter defaultCenter] postNotificationName:kGroupCallKitDismissNoti object:nil];
 
-  YXAlogInfo(@"didback : %@", self.presentedViewController);
+  NEXKitBaseLogInfo(@"didback : %@", self.presentedViewController);
   if (self.presentedViewController != nil) {
-    YXAlogInfo(@"didback NEGroupContactsController");
+    NEXKitBaseLogInfo(@"didback NEGroupContactsController");
     [self dismissViewControllerAnimated:YES completion:nil];
   }
   [self dismissViewControllerAnimated:YES completion:nil];

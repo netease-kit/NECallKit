@@ -385,40 +385,6 @@
     make.bottom.equalTo(self.view.mas_bottom).offset(-20);
     make.height.mas_equalTo(40);
   }];
-
-  UILabel *audioCallLabel = [[UILabel alloc] init];
-  [self.view addSubview:audioCallLabel];
-  [audioCallLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.left.equalTo(self.view).offset(20);
-    make.top.equalTo(self.remotePhotoSettingBtn.mas_bottom).offset(20);
-  }];
-  audioCallLabel.textColor = timeoutLabel.textColor;
-  audioCallLabel.font = timeoutLabel.font;
-  audioCallLabel.text = @"是否为音频呼叫";
-
-  UISwitch *audioCall = [[UISwitch alloc] init];
-  audioCall.on = [self isAudioCall];
-  [self.view addSubview:audioCall];
-  [audioCall addTarget:self
-                action:@selector(audioSwitch:)
-      forControlEvents:UIControlEventValueChanged];
-
-  [audioCall mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.centerY.equalTo(audioCallLabel);
-    make.right.equalTo(self.view).offset(-20);
-  }];
-}
-
-- (void)audioSwitch:(UISwitch *)on {
-  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-  [defaults setValue:[NSNumber numberWithBool:on.isOn] forKey:@"audio_call"];
-  [defaults synchronize];
-}
-
-- (BOOL)isAudioCall {
-  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-  NSNumber *number = [defaults objectForKey:@"audio_call"];
-  return number.boolValue;
 }
 
 - (void)saveSetting {

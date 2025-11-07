@@ -72,6 +72,7 @@ navigation
 - (NEVideoView *)bigVideoView {
   if (!_bigVideoView) {
     _bigVideoView = [[NEVideoView alloc] init];
+    _bigVideoView.titleLabel.font = [UIFont systemFontOfSize:20];
     _bigVideoView.backgroundColor = [UIColor darkGrayColor];
     _bigVideoView.translatesAutoresizingMaskIntoConstraints = NO;
   }
@@ -82,7 +83,7 @@ navigation
   if (!_smallVideoView) {
     _smallVideoView = [[NEVideoView alloc] init];
     _smallVideoView.backgroundColor = [UIColor darkGrayColor];
-
+    _smallVideoView.titleLabel.font = [UIFont systemFontOfSize:12];
     // 添加点击手势（切换大小画面）
     UITapGestureRecognizer *tap =
         [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(switchVideoView:)];
@@ -104,14 +105,22 @@ navigation
 - (void)switchVideoView:(UITapGestureRecognizer *)tap {
   self.mainController.showMyBigView = !self.mainController.showMyBigView;
   [self refreshVideoView];
+
   [self.mainController changeDefaultImage:self.operationView.cameraBtn.selected];
 
   if (self.mainController.showMyBigView) {
     [self.mainController changeRemoteMute:self.mainController.isRemoteMute
                                 videoView:self.smallVideoView];
+    [self.mainController changeTitle:self.mainController.isRemoteMute
+                           videoView:self.smallVideoView];
+    [self.mainController changeTitle:self.operationView.cameraBtn.selected
+                           videoView:self.bigVideoView];
   } else {
     [self.mainController changeRemoteMute:self.mainController.isRemoteMute
                                 videoView:self.bigVideoView];
+    [self.mainController changeTitle:self.mainController.isRemoteMute videoView:self.bigVideoView];
+    [self.mainController changeTitle:self.operationView.cameraBtn.selected
+                           videoView:self.smallVideoView];
   }
 }
 
@@ -501,20 +510,26 @@ navigation
   NSLog(@"show my big view : %d", self.mainController.showMyBigView);
   NSLog(@"self.operationView.cameraBtn.selected : %d", self.operationView.cameraBtn.selected);
 
+  BOOL localVideoEnabled = !self.operationView.cameraBtn.selected;
+  BOOL remoteVideoEnabled = !self.mainController.isRemoteMute;
   if (self.mainController.showMyBigView) {
-    [[NECallEngine sharedInstance] setupLocalView:self.bigVideoView.videoView];
-    [[NECallEngine sharedInstance] setupRemoteView:self.smallVideoView.videoView];
+    [[NECallEngine sharedInstance]
+        setupLocalView:localVideoEnabled ? self.bigVideoView.videoView : nil];
+    [[NECallEngine sharedInstance]
+        setupRemoteView:remoteVideoEnabled ? self.smallVideoView.videoView : nil];
     NSLog(@"show my big view");
-    self.smallVideoView.coverView.hidden = !self.mainController.isRemoteMute;
-    self.bigVideoView.coverView.hidden = !self.operationView.cameraBtn.selected;
+    self.smallVideoView.coverView.hidden = remoteVideoEnabled;
+    self.bigVideoView.coverView.hidden = localVideoEnabled;
     self.bigVideoView.userID = [[NIMSDK sharedSDK].v2LoginService getLoginUser];
     self.smallVideoView.userID = self.callParam.remoteUserAccid;
   } else {
-    [[NECallEngine sharedInstance] setupLocalView:self.smallVideoView.videoView];
-    [[NECallEngine sharedInstance] setupRemoteView:self.bigVideoView.videoView];
+    [[NECallEngine sharedInstance]
+        setupLocalView:localVideoEnabled ? self.smallVideoView.videoView : nil];
+    [[NECallEngine sharedInstance]
+        setupRemoteView:remoteVideoEnabled ? self.bigVideoView.videoView : nil];
     NSLog(@"show my small view");
-    self.bigVideoView.coverView.hidden = !self.mainController.isRemoteMute;
-    self.smallVideoView.coverView.hidden = !self.operationView.cameraBtn.selected;
+    self.bigVideoView.coverView.hidden = remoteVideoEnabled;
+    self.smallVideoView.coverView.hidden = localVideoEnabled;
     self.bigVideoView.userID = self.callParam.remoteUserAccid;
     self.smallVideoView.userID = [[NIMSDK sharedSDK].v2LoginService getLoginUser];
   }

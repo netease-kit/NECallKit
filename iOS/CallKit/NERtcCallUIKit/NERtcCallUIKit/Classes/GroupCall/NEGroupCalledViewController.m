@@ -67,10 +67,11 @@
     make.edges.equalTo(self.view);
   }];
 
-  UIToolbar *toolbar = [[UIToolbar alloc] init];
-  toolbar.barStyle = UIBarStyleBlackOpaque;
-  [self.view addSubview:toolbar];
-  [toolbar mas_makeConstraints:^(MASConstraintMaker *make) {
+  UIVisualEffectView *effectView = [[UIVisualEffectView alloc]
+      initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+  effectView.alpha = 1;
+  [self.view addSubview:effectView];
+  [effectView mas_makeConstraints:^(MASConstraintMaker *make) {
     make.edges.equalTo(self.view);
   }];
 
@@ -123,12 +124,7 @@
     make.size.mas_equalTo(buttonSize);
   }];
 
-  [self.bgImageView
-      sd_setImageWithURL:[NSURL URLWithString:nil]
-        placeholderImage:[UIImage imageNamed:@"avator"
-                                                  inBundle:[NSBundle bundleForClass:[NERtcCallUIKit
-                                                                                        class]]
-                             compatibleWithTraitCollection:nil]];
+  [self.bgImageView sd_setImageWithURL:[NSURL URLWithString:self.caller.avatar]];
   [self.callerImageView
       sd_setImageWithURL:[NSURL URLWithString:self.caller.avatar]
         placeholderImage:[UIImage imageNamed:@"avator"

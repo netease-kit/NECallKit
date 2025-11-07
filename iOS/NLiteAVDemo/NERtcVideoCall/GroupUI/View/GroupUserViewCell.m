@@ -8,7 +8,7 @@
 
 @interface GroupUserViewCell ()
 
-@property(nonatomic, strong) UIImageView *userHeader;
+@property(nonatomic, strong) UILabel *accountLabel;
 
 @end
 
@@ -23,18 +23,28 @@
 }
 
 - (void)setupUI {
-  self.userHeader = [[UIImageView alloc] init];
-  [self addSubview:self.userHeader];
-  self.userHeader.clipsToBounds = YES;
-  self.userHeader.layer.cornerRadius = 2.0;
-  [self.userHeader mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.center.equalTo(self);
-    make.width.height.mas_equalTo(self);
+  self.accountLabel = [[UILabel alloc] init];
+  self.accountLabel.textAlignment = NSTextAlignmentCenter;
+  self.accountLabel.textColor = [UIColor whiteColor];
+  self.accountLabel.font = [UIFont systemFontOfSize:10.0];
+  self.accountLabel.numberOfLines = 0;  // 支持多行显示
+  self.accountLabel.adjustsFontSizeToFitWidth = YES;
+  self.accountLabel.minimumScaleFactor = 0.8;
+  self.accountLabel.backgroundColor = [UIColor colorWithRed:0.22
+                                                      green:0.29
+                                                       blue:0.40
+                                                      alpha:1.0];  // 半透明背景
+  self.accountLabel.layer.cornerRadius = 4.0;
+  self.accountLabel.clipsToBounds = YES;
+  [self addSubview:self.accountLabel];
+  [self.accountLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.edges.equalTo(self).insets(UIEdgeInsetsMake(2, 2, 2, 2));
   }];
 }
 
 - (void)configureWithUser:(NEUser *)user {
-  [self.userHeader sd_setImageWithURL:[NSURL URLWithString:user.avatar]];
+  // 显示 accountId
+  self.accountLabel.text = user.imAccid ?: user.mobile ?: @"";
 }
 
 @end

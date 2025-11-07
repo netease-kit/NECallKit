@@ -42,3 +42,7 @@
 "connecting"="正在接通中...";
 
 "ui_member_exceed_limit"="暂支持最多10人通话";
+
+"you_closed_camera"="你关闭了摄像头";
+"remote_closed_camera"="对方关闭了摄像头";
+

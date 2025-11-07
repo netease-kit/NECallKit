@@ -79,7 +79,7 @@
 - (UIButton *)hangupBtn {
   if (!_hangupBtn) {
     _hangupBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    [_hangupBtn setImage:[UIImage imageNamed:@"hangup"
+    [_hangupBtn setImage:[UIImage imageNamed:@"call_hangup"
                                                   inBundle:self.bundle
                              compatibleWithTraitCollection:nil]
                 forState:UIControlStateNormal];
@@ -163,9 +163,7 @@
 
 - (void)setGroupStyle {
   [self.stack removeArrangedSubview:self.mediaBtn];
-  [self.stack removeArrangedSubview:self.speakerBtn];
   [self.mediaBtn removeFromSuperview];
-  [self.speakerBtn removeFromSuperview];
 }
 
 - (void)removeMediaBtn {

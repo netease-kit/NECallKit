@@ -49,6 +49,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, assign) SEL stopPipSEL;
 
+@property(nonatomic, assign) BOOL isReceiver;
+
 /// 只用于跟未接通原因(话单)相关的toast，可根据外部配置是否显示toast
 - (void)showToastWithContent:(NSString *)content;
 
@@ -69,6 +71,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 // 设置声音输出到扬声器
 - (void)setAudioOutputToSpeaker;
+
+- (void)setCurrentAudioOutputToRTC;
 
 // 获取非呼叫组件弹出的默认window
 - (UIWindow *)preiousWindow;
