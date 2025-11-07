@@ -26,6 +26,7 @@ import com.netease.yunxin.kit.call.p2p.model.NECallEndInfo
 import com.netease.yunxin.kit.call.p2p.model.NECallEngineDelegateAbs
 import com.netease.yunxin.kit.call.p2p.model.NECallType
 import com.netease.yunxin.kit.call.p2p.model.NECallTypeChangeInfo
+import com.netease.yunxin.nertc.nertcvideocall.model.SwitchCallState
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.NERtcCallbackExTemp
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.NERtcCallbackProxyMgr
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState
@@ -71,9 +72,9 @@ open class VideoOnTheCallFragment : BaseP2pCallFragment() {
             super.onCallTypeChange(info)
             info ?: return
 
-            if (info.callType == NECallType.AUDIO) {
+            if (info.callType == NECallType.AUDIO && info.state == SwitchCallState.ACCEPT) {
                 hideFloatingWindow()
-            } else if (info.callType == NECallType.VIDEO) {
+            } else if (info.callType == NECallType.VIDEO && info.state == SwitchCallState.ACCEPT) {
                 showFloatingWindow()
             }
         }

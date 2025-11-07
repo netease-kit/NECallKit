@@ -68,6 +68,8 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
      */
     protected var callerAccId: String? = null
 
+    protected var isSelfGroupInvited = false
+
     /**
      * 群组通话行为监听
      */
@@ -91,7 +93,7 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
 
     private val groupCallUIDelegate = object : GroupCallUIDelegate {
         override fun onLocalAction(actionId: Int) {
-            this@CallKitUIBridgeService.onLocalAction(actionId)
+            this@CallKitUIBridgeService.onGroupLocalAction(actionId)
         }
     }
 
@@ -99,7 +101,7 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
      * 点对点本地行为监听
      */
     private val localActionObserver = NECallLocalActionObserver { actionId, resultCode, _ ->
-        this@CallKitUIBridgeService.onLocalAction(actionId, resultCode)
+        this@CallKitUIBridgeService.onLocalAction(actionId = actionId, resultCode = resultCode)
     }
 
     /**
@@ -138,11 +140,21 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
     /**
      * 群组本地行为监听
      */
-    open fun onLocalAction(actionId: Int) {
+    open fun onGroupLocalAction(actionId: Int) {
         CallUILog.dApi(
             logTag,
-            ParameterMap("onLocalAction").append("actionId", actionId)
+            ParameterMap("onGroupLocalAction").append("actionId", actionId)
         )
+
+        isSelfGroupInvited = false
+        if (actionId == NEGroupConstants.ActionId.CALL_SUCCESS) {
+            AVChatSoundPlayer.play(context, AVChatSoundPlayer.RingerTypeEnum.CONNECTING)
+        } else if (actionId == NEGroupConstants.ActionId.HANGUP) {
+            AVChatSoundPlayer.stop(context)
+        } else if (actionId == NEGroupConstants.ActionId.ACCEPT) {
+            AVChatSoundPlayer.stop(context)
+        }
+
         if (bgGroupInvitedInfo != null) {
             incomingCallEx.onIncomingCallInvalid(bgGroupInvitedInfo)
             bgGroupInvitedInfo = null
@@ -154,6 +166,27 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
      * 群组通话人员变更
      */
     open fun onMemberChanged(callId: String?, userList: MutableList<GroupCallMember>?) {
+        CallUILog.dApi(
+            logTag,
+            ParameterMap("onMemberChanged").append("callId", callId).append("userList", userList)
+        )
+        userList?.forEach {
+            if (isSelfGroupInvited) {
+                if (it.accId == NIMClient.getCurrentAccount() &&
+                    (
+                        it.state == NEGroupConstants.UserState.JOINED ||
+                            it.state == NEGroupConstants.UserState.LEAVING
+                        )
+                ) {
+                    AVChatSoundPlayer.stop(context)
+                }
+            } else {
+                if (it.accId != NIMClient.getCurrentAccount() && it.state == NEGroupConstants.UserState.JOINED) {
+                    AVChatSoundPlayer.stop(context)
+                }
+            }
+        }
+
         if (bgGroupInvitedInfo != null && TextUtils.equals(
                 callId,
                 bgGroupInvitedInfo!!.callId
@@ -174,6 +207,9 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
      * 群组通话结束挂断
      */
     open fun onGroupCallHangup(callId: String) {
+        CallUILog.dApi(logTag, ParameterMap("onGroupCallHangup").append("callId", callId))
+        isSelfGroupInvited = false
+        AVChatSoundPlayer.stop(context)
         if (bgGroupInvitedInfo != null && TextUtils.equals(
                 callId,
                 bgGroupInvitedInfo!!.callId
@@ -190,11 +226,13 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
      */
     open fun onReceiveGroupInvitation(info: NEGroupCallInfo) {
         CallUILog.dApi(logTag, ParameterMap("onReceiveGroupInvitation").append("info", info))
+        isSelfGroupInvited = true
         // 检查参数合理性
         if (!isValidParam(info)) {
             CallUILog.d(logTag, "onIncomingCall for group, param is invalid.")
             return
         }
+        AVChatSoundPlayer.play(context, AVChatSoundPlayer.RingerTypeEnum.RING)
         if (!incomingCallEx.onIncomingCall(info)) {
             bgGroupInvitedInfo = info
         }

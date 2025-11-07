@@ -54,7 +54,10 @@ internal class GroupUserInfoFetcher {
                     exception: Throwable?
                 ) {
                     if (result == null || result.isEmpty()) {
-                        observer.onResult(null)
+                        // 如果获取不到用户信息，使用accountId作为默认显示名称
+                        val defaultInfo = GroupMemberInfo(accId, accId, null)
+                        localCache[accId] = defaultInfo
+                        observer.onResult(defaultInfo)
                     } else {
                         val info = result[0]
                         info.toGroupMemberInfo().run {
@@ -119,12 +122,25 @@ internal class GroupUserInfoFetcher {
                         }
                         resultList.addAll(resultFromServer)
                     }
+
+                    // 对于没有获取到信息的用户，使用accountId作为默认显示名称
+                    val missingAccIds = tempAccIdList.filter { accId ->
+                        result?.find { it?.account == accId } == null
+                    }
+                    for (accId in missingAccIds) {
+                        val defaultInfo = GroupMemberInfo(accId, accId, null)
+                        localCache[accId] = defaultInfo
+                        resultList.add(defaultInfo)
+                    }
+
                     observer.onResult(resultList)
                 }
             })
     }
 
     private fun NimUserInfo.toGroupMemberInfo(): GroupMemberInfo {
-        return GroupMemberInfo(account, name, avatar)
+        // 如果name为空，使用account作为显示名称
+        val displayName = if (name.isNullOrEmpty()) account else name
+        return GroupMemberInfo(account, displayName, avatar)
     }
 }

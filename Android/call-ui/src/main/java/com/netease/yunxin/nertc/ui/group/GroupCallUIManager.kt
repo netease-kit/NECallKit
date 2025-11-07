@@ -11,7 +11,6 @@ import com.netease.yunxin.kit.call.NEResultObserver
 import com.netease.yunxin.kit.call.group.NEGroupCall
 import com.netease.yunxin.kit.call.group.NEGroupCallInfo
 import com.netease.yunxin.kit.call.group.NEGroupConstants
-import com.netease.yunxin.kit.call.group.PushConfigProviderForGroup
 import com.netease.yunxin.kit.call.group.param.GroupAcceptParam
 import com.netease.yunxin.kit.call.group.param.GroupCallParam
 import com.netease.yunxin.kit.call.group.param.GroupConfigParam
@@ -102,7 +101,27 @@ class GroupCallUIManager private constructor() {
     fun groupCall(param: GroupCallParam, observer: NEResultObserver<GroupCallResult>? = null) {
         CallUILog.d(TAG, "groupCall: $param")
         groupCallUIDelegateList.forEach { it.onLocalAction(NEGroupConstants.ActionId.CALL) }
-        groupCall.groupCall(param, observer ?: createDefaultObserver("groupCall"))
+        groupCall.groupCall(
+            param
+        ) { result ->
+            if (result != null) {
+                if (result.isSuccessful) {
+                    CallUILog.i(TAG, "groupCall success callId:${result.callId}")
+                    groupCallUIDelegateList.forEach {
+                        it.onLocalAction(NEGroupConstants.ActionId.CALL_SUCCESS)
+                    }
+                } else {
+                    CallUILog.e(
+                        TAG,
+                        "groupCall failed callId:${result.callId}, sdkCode:${result.sdkCode}, dataCode:${result.dataCode}}"
+                    )
+                    groupCallUIDelegateList.forEach {
+                        it.onLocalAction(NEGroupConstants.ActionId.CALL_FAIL)
+                    }
+                }
+            }
+            observer?.onResult(result)
+        }
     }
 
     /**
@@ -189,15 +208,6 @@ class GroupCallUIManager private constructor() {
         val isFromKit = groupCall.ifMsgFromKit(notification)
         CallUILog.d(TAG, "isMsgFromKit: $isFromKit")
         return isFromKit
-    }
-
-    /**
-     * 设置群呼推送配置
-     * @param provider 推送配置提供者
-     */
-    fun setPushConfigProviderForGroup(provider: PushConfigProviderForGroup) {
-        CallUILog.d(TAG, "setPushConfigProviderForGroup: $provider")
-        groupCall.setPushConfigProviderForGroup(provider)
     }
 
     /**

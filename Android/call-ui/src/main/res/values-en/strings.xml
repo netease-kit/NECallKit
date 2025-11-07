@@ -65,7 +65,7 @@
     <string name="ui_microphone">Mic</string>
     <string name="ui_speaker">Speaker</string>
     <string name="ui_tip_close_camera_by_other">The other side turned off the camera.</string>
-    <string name="ui_tip_close_camera_by_self">The camera is turned off.</string>
+    <string name="ui_tip_close_camera_by_self">You turned off the camera</string>
     <string name="ui_tip_waiting_to_accept_for_audio">Waiting for the invitation…</string>
     <string name="ui_tip_waiting_to_accept_for_video">Waiting for the call…</string>
     <string name="ui_tip_virtual_blur_success">Blurring enabled</string>

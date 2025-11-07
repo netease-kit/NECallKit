@@ -13,7 +13,6 @@ import com.netease.lava.nertc.sdk.NERtcOption
 import com.netease.yunxin.kit.call.NEResultObserver
 import com.netease.yunxin.kit.call.group.NEGroupCallInfo
 import com.netease.yunxin.kit.call.group.NEGroupConstants
-import com.netease.yunxin.kit.call.group.PushConfigProviderForGroup
 import com.netease.yunxin.kit.call.p2p.model.NECallInitRtcMode
 import com.netease.yunxin.kit.call.p2p.model.NEInviteInfo
 import com.netease.yunxin.nertc.nertcvideocall.model.CallExtension
@@ -38,7 +37,6 @@ class CallKitUIOptions constructor(
     val userInfoHelper: UserInfoHelper? = null,
     val incomingCallEx: IncomingCallEx? = null,
     val callKitUIBridgeService: CallKitUIBridgeService? = null,
-    val pushConfigProviderForGroup: PushConfigProviderForGroup? = null,
     val callExtension: CallExtension? = null,
     val soundHelper: SoundHelper? = SoundHelper(),
     val enableOrder: Boolean = true,
@@ -71,8 +69,6 @@ class CallKitUIOptions constructor(
         private var incomingCallEx: IncomingCallEx? = null
 
         private var callKitUIBridgeService: CallKitUIBridgeService? = null
-
-        private var pushConfigProviderForGroup: PushConfigProviderForGroup? = null
 
         private var contactSelector: (
             (context: Context, groupId: String?, excludeUserList: List<String>?, observer: NEResultObserver<List<String>?>?) -> Unit
@@ -166,10 +162,6 @@ class CallKitUIOptions constructor(
             this.callKitUIBridgeService = callKitUIBridgeService
         }
 
-        fun pushConfigProviderForGroup(providerForGroup: PushConfigProviderForGroup) = apply {
-            this.pushConfigProviderForGroup = providerForGroup
-        }
-
         fun rtcCallExtension(callExtension: CallExtension) = apply {
             this.callExtension = callExtension
         }
@@ -260,7 +252,6 @@ class CallKitUIOptions constructor(
                 userInfoHelper = userInfoHelper,
                 incomingCallEx = incomingCallEx,
                 callKitUIBridgeService = callKitUIBridgeService,
-                pushConfigProviderForGroup = pushConfigProviderForGroup,
                 callExtension = callExtension,
                 soundHelper = soundHelper,
                 enableOrder = enableOrder,
@@ -279,7 +270,7 @@ class CallKitUIOptions constructor(
     }
 
     override fun toString(): String {
-        return "CallKitUIOptions(currentUserRtcUId=$currentUserRtcUId, timeOutMillisecond=$timeOutMillisecond, resumeBGInvitation=$resumeBGInvitation, rtcConfig=$rtcConfig, activityConfig=$activityConfig, uiHelper=$uiHelper, notificationConfigFetcher=$notificationConfigFetcher, notificationConfigFetcherForGroup=$notificationConfigFetcherForGroup, userInfoHelper=$userInfoHelper, incomingCallEx=$incomingCallEx, callKitUIBridgeService=$callKitUIBridgeService, pushConfigProviderForGroup=$pushConfigProviderForGroup, callExtension=$callExtension, soundHelper=$soundHelper, enableOrder=$enableOrder, enableAutoJoinWhenCalled=$enableAutoJoinWhenCalled, initRtcMode=$initRtcMode, joinRtcWhenCall=$joinRtcWhenCall, audio2Video=$audio2Video, video2Audio=$video2Audio, enableGroup=$enableGroup, enableInviteOthersWhenGroupCalling=$enableInviteOthersWhenGroupCalling, language=$language, framework=$framework, channel=$channel)"
+        return "CallKitUIOptions(currentUserRtcUId=$currentUserRtcUId, timeOutMillisecond=$timeOutMillisecond, resumeBGInvitation=$resumeBGInvitation, rtcConfig=$rtcConfig, activityConfig=$activityConfig, uiHelper=$uiHelper, notificationConfigFetcher=$notificationConfigFetcher, notificationConfigFetcherForGroup=$notificationConfigFetcherForGroup, userInfoHelper=$userInfoHelper, incomingCallEx=$incomingCallEx, callKitUIBridgeService=$callKitUIBridgeService, callExtension=$callExtension, soundHelper=$soundHelper, enableOrder=$enableOrder, enableAutoJoinWhenCalled=$enableAutoJoinWhenCalled, initRtcMode=$initRtcMode, joinRtcWhenCall=$joinRtcWhenCall, audio2Video=$audio2Video, video2Audio=$video2Audio, enableGroup=$enableGroup, enableInviteOthersWhenGroupCalling=$enableInviteOthersWhenGroupCalling, language=$language, framework=$framework, channel=$channel)"
     }
 }
 

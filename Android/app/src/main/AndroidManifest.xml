@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.netease.yunxin.app.videocall">
+<!-- Copyright (c) 2022 NetEase, Inc. All rights reserved. -->
+<!-- Use of this source code is governed by a MIT license that can be -->
+<!-- found in the LICENSE file. -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- 访问网络状态-->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -13,13 +16,9 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-    <uses-permission android:name="android.permission.BLUETOOTH" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
     <!-- 多媒体相关 -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <!-- 控制呼吸灯，振动器等，用于新消息提醒 -->
@@ -38,15 +37,13 @@
 
     <!-- 下面的 uses-permission 一起加入到你的 AndroidManifest 文件中。 -->
     <permission
-        android:name="com.netease.yunxin.app.videocall.permission.RECEIVE_MSG"
+        android:name="${applicationId}.permission.RECEIVE_MSG"
         android:protectionLevel="signature" />
 
-    <uses-permission android:name="com.netease.yunxin.app.videocall.permission.RECEIVE_MSG" />
-
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="${applicationId}.permission.RECEIVE_MSG" />
 
     <application
-        android:name="com.netease.yunxin.app.videocall.DemoApplication"
+        android:name=".DemoApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -55,8 +52,11 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/AppTheme">
 
+        <!--如果 Android targetSdkVersion 大于等于 31，需要添加以下标签，否则虚拟背景功能无法使用-->
+        <uses-native-library android:name="libOpenCL.so" android:required="false"/>
+
         <activity
-            android:name="com.netease.yunxin.app.videocall.SplashActivity"
+            android:name=".SplashActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:screenOrientation="portrait"
             android:exported="true"
@@ -69,10 +69,10 @@
         </activity>
 
         <activity
-            android:name="com.netease.yunxin.app.videocall.MainActivity"
+            android:name=".MainActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:screenOrientation="portrait"
-            android:exported="false"
+            android:exported="true"
             android:launchMode="singleTask">
 
             <intent-filter>
@@ -83,35 +83,53 @@
         </activity>
 
         <activity
-            android:name="com.netease.yunxin.app.videocall.login.ui.LoginActivity"
+            android:name=".login.ui.LoginActivity"
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:screenOrientation="portrait"
             android:launchMode="singleTop"/>
 
         <activity
-            android:name="com.netease.yunxin.app.videocall.login.ui.VerifyCodeActivity"
-            android:theme="@style/Theme.AppCompat.NoActionBar"
+            android:name=".call.SingleCallUserActivity"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait"
-            android:launchMode="singleTop"/>
+            android:windowSoftInputMode="adjustNothing"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
         <activity
-            android:name="com.netease.yunxin.app.videocall.nertc.ui.NERTCSelectCallUserActivity"
+            android:name=".call.MultiCallUserActivity"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustNothing"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
+
+        <activity
+            android:name=".TestActivity"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
         <activity
-            android:name=".TestActivity"
-            android:launchMode="singleTask"
+            android:name=".call.SettingActivity"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.NoActionBar" />
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
         <activity
-            android:name=".nertc.ui.SettingActivity"
-            android:launchMode="singleTask"
+            android:name=".call.SelfSignalActivity"
+            android:launchMode="singleTop"
             android:screenOrientation="portrait"
-            android:theme="@style/Theme.AppCompat.NoActionBar" />
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
+        <activity
+            android:name=".call.MultiCallSettingActivity"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
+
+        <service android:name="com.netease.lava.nertc.foreground.ForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            />
     </application>
 
 </manifest>

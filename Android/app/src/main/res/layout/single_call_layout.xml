@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2022 NetEase, Inc. All rights reserved. -->
+<!-- Use of this source code is governed by a MIT license that can be -->
+<!-- found in the LICENSE file. -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/video_call_bg"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/ll_title"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:padding="15dp">
+
+        <TextView
+            android:id="@+id/tv_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel"
+            android:textColor="@color/colorWhite"
+            android:textSize="16dp"
+            tools:ignore="SpUsage" />
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:text="@string/start_call"
+            android:textColor="@color/colorWhite"
+            android:textSize="17dp"
+            tools:ignore="SpUsage" />
+
+        <ImageView
+            android:id="@+id/iv_setting"
+            android:layout_width="20dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/seting" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tv_nickname"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/ll_title"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="6dp"
+        android:alpha="0.5"
+        android:textColor="@color/white"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tv_self_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_nickname"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="6dp"
+        android:alpha="0.5"
+        android:textColor="@color/white"
+        android:textSize="16sp" />
+
+    <LinearLayout
+        android:id="@+id/ll_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_self_id"
+        android:layout_margin="20dp"
+        android:background="@drawable/et_search_bg"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/edt_account_id"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="@string/please_input_account_id"
+            android:inputType="text"
+            android:textColorHint="#80FFFFFF"
+            android:textSize="16sp" />
+
+        <ImageView
+            android:id="@+id/iv_clear"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/nim_icon_edit_delete"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btn_call"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="7dp"
+            android:background="@drawable/btn_search_bg"
+            android:text="@string/call_button"
+            android:textColor="@color/colorWhite"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/ll_call_type"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ll_search"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="@string/call_type"
+            android:textColor="@color/white"
+            android:textSize="16sp" />
+
+        <RadioGroup
+            android:id="@+id/rg_call_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/rb_video_call"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="20dp"
+                android:checked="true"
+                android:text="@string/video_call"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
+
+            <RadioButton
+                android:id="@+id/rb_audio_call"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/audio_call"
+                android:textColor="@color/white"
+                android:textSize="14sp" />
+
+        </RadioGroup>
+
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ll_call_type"
+        android:layout_marginTop="15dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_recently_search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="16dp"
+                android:text="@string/recently_search"
+                android:textColor="@color/colorWhite"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_recent_user"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp" />
+
+            <TextView
+                android:id="@+id/tv_call_order"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="16dp"
+                android:text="@string/call_record"
+                android:textColor="@color/colorWhite"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tv_to_call_users"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/et_search_bg"
+                android:padding="15dp"
+                android:textColor="@color/colorWhite"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_call_order"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="10dp" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <TextView
+        android:id="@+id/tv_to_group_call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="30dp"
+        android:background="@drawable/btn_search_bg"
+        android:padding="15dp"
+        android:textColor="@color/colorWhite"
+        android:textSize="14dp"
+        android:visibility="gone"
+        tools:ignore="SpUsage" />
+
+</RelativeLayout>

@@ -68,5 +68,5 @@ dependencies {
     implementation libs.retrofit.core
     implementation libs.retrofit.converter.gson
 //    implementation project(':call-ui')
-    implementation 'com.netease.yunxin.kit.call:call-ui:3.7.0'
+     implementation 'com.netease.yunxin.kit.call:call-ui:3.8.0'
 }

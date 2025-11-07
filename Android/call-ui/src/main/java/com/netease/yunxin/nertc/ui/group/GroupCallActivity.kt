@@ -21,6 +21,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.netease.lava.nertc.sdk.NERtcConstants
 import com.netease.lava.nertc.sdk.NERtcEx
 import com.netease.nimlib.sdk.NIMClient
+import com.netease.yunxin.kit.alog.ParameterMap
 import com.netease.yunxin.kit.call.NEResultObserver
 import com.netease.yunxin.kit.call.group.GroupCallMember
 import com.netease.yunxin.kit.call.group.GroupHelperUtils
@@ -36,6 +37,7 @@ import com.netease.yunxin.nertc.ui.CallKitUI
 import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.CommonGroupCallActivity
 import com.netease.yunxin.nertc.ui.base.Constants
+import com.netease.yunxin.nertc.ui.p2p.CallUIOperationsMgr.isSpeakerOn
 import com.netease.yunxin.nertc.ui.service.UIServiceManager
 import com.netease.yunxin.nertc.ui.utils.CallUILog
 import com.netease.yunxin.nertc.ui.utils.SecondsTimer
@@ -59,6 +61,7 @@ open class GroupCallActivity : CommonGroupCallActivity() {
     protected var isMuteAudio = false
     protected var isMuteVideo = true
     protected var enableVideo = false
+    protected var isSpeakerOn = true
     private val videoEnableList = mutableListOf<Long>()
     private val userInfoFetcher = GroupUserInfoFetcher()
 
@@ -300,6 +303,18 @@ open class GroupCallActivity : CommonGroupCallActivity() {
                 enableVideo = !isMuteVideo
             )
         }
+
+        val ivMuteSpeaker = findViewById<ImageView>(R.id.ivMuteSpeaker)
+        ivMuteSpeaker.setImageResource(
+            if (isSpeakerOn) R.drawable.speaker_on else R.drawable.speaker_off
+        )
+        ivMuteSpeaker.setOnClickListener {
+            doConfigSpeaker(!isSpeakerOn)
+            ivMuteSpeaker.setImageResource(
+                if (isSpeakerOn) R.drawable.speaker_on else R.drawable.speaker_off
+            )
+        }
+
         val hangup = findViewById<View>(R.id.ivHangUp)
         hangup.setOnClickListener {
             hangup.isEnabled = false
@@ -533,6 +548,23 @@ open class GroupCallActivity : CommonGroupCallActivity() {
             videoEnableList.clear()
             gridAdapter?.release()
             gridAdapter = null
+        }
+    }
+
+    /**
+     * 配置麦克风/扬声器模式
+     */
+    @JvmOverloads
+    fun doConfigSpeaker(enableSpeaker: Boolean = !isSpeakerOn()) {
+        CallUILog.d(
+            TAG,
+            ParameterMap("doConfigSpeaker").append("enableSpeaker", enableSpeaker).toString()
+        )
+        NERtcEx.getInstance().setSpeakerphoneOn(enableSpeaker).apply {
+            CallUILog.d(TAG, "doConfigSpeaker result is $this.")
+            if (this == NERtcConstants.ErrorCode.OK) {
+                isSpeakerOn = enableSpeaker
+            }
         }
     }
 

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2022 NetEase, Inc. All rights reserved. -->
+<!-- Use of this source code is governed by a MIT license that can be -->
+<!-- found in the LICENSE file. -->
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/video_call_bg"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/ll_title"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:padding="15dp">
+
+        <TextView
+            android:id="@+id/tv_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/cancel"
+            android:textColor="@color/colorWhite"
+            android:textSize="16dp"
+            tools:ignore="SpUsage" />
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:text="@string/start_call"
+            android:textColor="@color/colorWhite"
+            android:textSize="17dp"
+            tools:ignore="SpUsage" />
+
+        <ImageView
+            android:id="@+id/iv_setting"
+            android:layout_width="20dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/seting" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tv_nickname"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/ll_title"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="6dp"
+        android:alpha="0.5"
+        android:textColor="@color/white"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/tv_self_id"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tv_nickname"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="6dp"
+        android:alpha="0.5"
+        android:textColor="@color/white"
+        android:textSize="16sp" />
+
+    <LinearLayout
+        android:id="@+id/ll_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/tv_self_id"
+        android:layout_margin="20dp"
+        android:background="@drawable/et_search_bg"
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/edt_account_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="10dp"
+            android:paddingVertical="10dp"
+            android:background="@null"
+            android:hint="@string/please_input_multiple_account_ids"
+            android:inputType="textMultiLine"
+            android:maxLines="5"
+            android:minLines="1"
+            android:scrollbars="vertical"
+            android:textColorHint="#80FFFFFF"
+            android:textSize="16sp"
+            android:gravity="top" />
+
+        <ImageView
+            android:id="@+id/iv_clear"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/nim_icon_edit_delete"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/ll_search"
+        android:layout_marginTop="15dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_call_order"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginTop="16dp"
+                android:text="@string/users_to_be_called"
+                android:textColor="@color/colorWhite"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/container_to_call_users"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="20dp"
+                android:layout_marginEnd="20dp"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal"
+                android:layoutDirection="locale"
+                android:gravity="start|center_vertical"
+                android:visibility="gone" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <TextView
+        android:id="@+id/tv_to_group_call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="30dp"
+        android:background="@drawable/btn_search_bg"
+        android:padding="15dp"
+        android:textColor="@color/colorWhite"
+        android:textSize="14dp"
+        android:visibility="gone"
+        tools:ignore="SpUsage" />
+
+</RelativeLayout>

@@ -5,10 +5,9 @@
 package com.netease.yunxin.app.videocall.user;
 
 import com.netease.nimlib.sdk.v2.user.V2NIMUser;
+import com.netease.yunxin.app.videocall.im.NimUserUtils;
 import com.netease.yunxin.kit.alog.ALog;
-import com.netease.yunxin.kit.call.common.NimUserWrapper;
 import com.netease.yunxin.kit.call.common.callback.Callback2;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +29,7 @@ public final class UserManager {
   }
 
   public void getUserList(List<String> accountIds, Callback2<List<UserModel>> callback) {
-    NimUserWrapper.getUserList(
+    NimUserUtils.getUserList(
         accountIds,
         new Callback2<List<V2NIMUser>>() {
           @Override
