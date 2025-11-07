@@ -34,22 +34,14 @@
 		C758CCEB24EB7F5F003C406A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C758CCEA24EB7F5F003C406A /* main.m */; };
 		C7664EC62511AE1E005E26A2 /* NEPSTNViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E772511AE1D005E26A2 /* NEPSTNViewController.m */; };
 		C7664EC72511AE1E005E26A2 /* NERtcContactsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E782511AE1D005E26A2 /* NERtcContactsViewController.m */; };
-		C7664EC82511AE1E005E26A2 /* NESearchTask.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E7D2511AE1D005E26A2 /* NESearchTask.m */; };
 		C7664EC92511AE1E005E26A2 /* NERtcVideoCallModel.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E832511AE1D005E26A2 /* NERtcVideoCallModel.m */; };
 		C7664ECA2511AE1E005E26A2 /* NEUser.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E842511AE1D005E26A2 /* NEUser.m */; };
-		C7664ECC2511AE1E005E26A2 /* NESendSmsCodeTask.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E8A2511AE1D005E26A2 /* NESendSmsCodeTask.m */; };
-		C7664ECD2511AE1E005E26A2 /* NEAccountTask.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E8B2511AE1D005E26A2 /* NEAccountTask.m */; };
-		C7664ECE2511AE1E005E26A2 /* NEAccountTask.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E8E2511AE1D005E26A2 /* NEAccountTask.m */; };
-		C7664ECF2511AE1E005E26A2 /* NTFInputSmsVC.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E912511AE1D005E26A2 /* NTFInputSmsVC.m */; };
 		C7664ED02511AE1E005E26A2 /* NELoginOptions.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E922511AE1D005E26A2 /* NELoginOptions.m */; };
 		C7664ED12511AE1E005E26A2 /* NTELoginVC.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E952511AE1D005E26A2 /* NTELoginVC.m */; };
 		C7664ED22511AE1E005E26A2 /* NECountDownButton.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E962511AE1D005E26A2 /* NECountDownButton.m */; };
-		C7664ED32511AE1E005E26A2 /* NTFSmsInputView.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E992511AE1D005E26A2 /* NTFSmsInputView.m */; };
 		C7664ED42511AE1E005E26A2 /* NEMenuCell.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E9C2511AE1D005E26A2 /* NEMenuCell.m */; };
 		C7664ED52511AE1E005E26A2 /* NEMenuViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E9D2511AE1D005E26A2 /* NEMenuViewController.m */; };
 		C7664ED62511AE1E005E26A2 /* NENavCustomView.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664E9E2511AE1D005E26A2 /* NENavCustomView.m */; };
-		C7664ED72511AE1E005E26A2 /* NETask.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664EA42511AE1D005E26A2 /* NETask.m */; };
-		C7664ED82511AE1E005E26A2 /* NEService.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664EA62511AE1D005E26A2 /* NEService.m */; };
 		C7664ED92511AE1E005E26A2 /* UIView+NTES.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664EAB2511AE1D005E26A2 /* UIView+NTES.m */; };
 		C7664EDA2511AE1E005E26A2 /* UIImage+NTES.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664EAE2511AE1D005E26A2 /* UIImage+NTES.m */; };
 		C7664EDB2511AE1E005E26A2 /* UIColor+NTES.m in Sources */ = {isa = PBXBuildFile; fileRef = C7664EB02511AE1D005E26A2 /* UIColor+NTES.m */; };
@@ -121,39 +113,22 @@
 		C7664E782511AE1D005E26A2 /* NERtcContactsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NERtcContactsViewController.m; sourceTree = "<group>"; };
 		C7664E792511AE1D005E26A2 /* NERtcContactsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NERtcContactsViewController.h; sourceTree = "<group>"; };
 		C7664E7A2511AE1D005E26A2 /* NEPSTNViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEPSTNViewController.h; sourceTree = "<group>"; };
-		C7664E7C2511AE1D005E26A2 /* NESearchTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESearchTask.h; sourceTree = "<group>"; };
-		C7664E7D2511AE1D005E26A2 /* NESearchTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESearchTask.m; sourceTree = "<group>"; };
 		C7664E7F2511AE1D005E26A2 /* NERtcVideoCallModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NERtcVideoCallModel.h; sourceTree = "<group>"; };
 		C7664E802511AE1D005E26A2 /* NEUser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEUser.h; sourceTree = "<group>"; };
 		C7664E832511AE1D005E26A2 /* NERtcVideoCallModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NERtcVideoCallModel.m; sourceTree = "<group>"; };
 		C7664E842511AE1D005E26A2 /* NEUser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NEUser.m; sourceTree = "<group>"; };
-		C7664E882511AE1D005E26A2 /* NEAccountTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEAccountTask.h; sourceTree = "<group>"; };
-		C7664E892511AE1D005E26A2 /* NESendSmsCodeTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NESendSmsCodeTask.h; sourceTree = "<group>"; };
-		C7664E8A2511AE1D005E26A2 /* NESendSmsCodeTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NESendSmsCodeTask.m; sourceTree = "<group>"; };
-		C7664E8B2511AE1D005E26A2 /* NEAccountTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NEAccountTask.m; sourceTree = "<group>"; };
-		C7664E8D2511AE1D005E26A2 /* NEAccountTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEAccountTask.h; sourceTree = "<group>"; };
-		C7664E8E2511AE1D005E26A2 /* NEAccountTask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NEAccountTask.m; sourceTree = "<group>"; };
 		C7664E902511AE1D005E26A2 /* NTELoginVC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NTELoginVC.h; sourceTree = "<group>"; };
-		C7664E912511AE1D005E26A2 /* NTFInputSmsVC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NTFInputSmsVC.m; sourceTree = "<group>"; };
 		C7664E922511AE1D005E26A2 /* NELoginOptions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NELoginOptions.m; sourceTree = "<group>"; };
 		C7664E932511AE1D005E26A2 /* NECountDownButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NECountDownButton.h; sourceTree = "<group>"; };
-		C7664E942511AE1D005E26A2 /* NTFSmsInputView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NTFSmsInputView.h; sourceTree = "<group>"; };
 		C7664E952511AE1D005E26A2 /* NTELoginVC.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NTELoginVC.m; sourceTree = "<group>"; };
 		C7664E962511AE1D005E26A2 /* NECountDownButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NECountDownButton.m; sourceTree = "<group>"; };
 		C7664E972511AE1D005E26A2 /* NELoginOptions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NELoginOptions.h; sourceTree = "<group>"; };
-		C7664E982511AE1D005E26A2 /* NTFInputSmsVC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NTFInputSmsVC.h; sourceTree = "<group>"; };
-		C7664E992511AE1D005E26A2 /* NTFSmsInputView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NTFSmsInputView.m; sourceTree = "<group>"; };
 		C7664E9C2511AE1D005E26A2 /* NEMenuCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NEMenuCell.m; sourceTree = "<group>"; };
 		C7664E9D2511AE1D005E26A2 /* NEMenuViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NEMenuViewController.m; sourceTree = "<group>"; };
 		C7664E9E2511AE1D005E26A2 /* NENavCustomView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NENavCustomView.m; sourceTree = "<group>"; };
 		C7664E9F2511AE1D005E26A2 /* NEMenuCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEMenuCell.h; sourceTree = "<group>"; };
 		C7664EA02511AE1D005E26A2 /* NENavCustomView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NENavCustomView.h; sourceTree = "<group>"; };
 		C7664EA12511AE1D005E26A2 /* NEMenuViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEMenuViewController.h; sourceTree = "<group>"; };
-		C7664EA32511AE1D005E26A2 /* NEService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEService.h; sourceTree = "<group>"; };
-		C7664EA42511AE1D005E26A2 /* NETask.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NETask.m; sourceTree = "<group>"; };
-		C7664EA52511AE1D005E26A2 /* NEServiceTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NEServiceTask.h; sourceTree = "<group>"; };
-		C7664EA62511AE1D005E26A2 /* NEService.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NEService.m; sourceTree = "<group>"; };
-		C7664EA72511AE1D005E26A2 /* NETask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NETask.h; sourceTree = "<group>"; };
 		C7664EAA2511AE1D005E26A2 /* UIColor+NTES.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIColor+NTES.h"; sourceTree = "<group>"; };
 		C7664EAB2511AE1D005E26A2 /* UIView+NTES.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+NTES.m"; sourceTree = "<group>"; };
 		C7664EAC2511AE1D005E26A2 /* UIImage+NTES.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+NTES.h"; sourceTree = "<group>"; };
@@ -292,7 +267,6 @@
 				C7664E862511AE1D005E26A2 /* Login */,
 				C7664E9A2511AE1D005E26A2 /* Menu */,
 				C7664E632511AE1D005E26A2 /* NERtcVideoCall */,
-				C7664EA22511AE1D005E26A2 /* Service */,
 				C7664EA82511AE1D005E26A2 /* Utils */,
 				C7B5068624F6439E00C4D992 /* NLiteAVDemo.entitlements */,
 				C758CCD824EB7F5A003C406A /* AppDelegate.h */,
@@ -315,7 +289,6 @@
 			children = (
 				01C0D03B2885019800B796BA /* GroupUI */,
 				C7664E642511AE1D005E26A2 /* UI */,
-				C7664E7B2511AE1D005E26A2 /* Task */,
 				C7664E7E2511AE1D005E26A2 /* Model */,
 			);
 			path = NERtcVideoCall;
@@ -345,15 +318,6 @@
 			path = ViewController;
 			sourceTree = "<group>";
 		};
-		C7664E7B2511AE1D005E26A2 /* Task */ = {
-			isa = PBXGroup;
-			children = (
-				C7664E7C2511AE1D005E26A2 /* NESearchTask.h */,
-				C7664E7D2511AE1D005E26A2 /* NESearchTask.m */,
-			);
-			path = Task;
-			sourceTree = "<group>";
-		};
 		C7664E7E2511AE1D005E26A2 /* Model */ = {
 			isa = PBXGroup;
 			children = (
@@ -370,31 +334,9 @@
 		C7664E862511AE1D005E26A2 /* Login */ = {
 			isa = PBXGroup;
 			children = (
-				C7664E872511AE1D005E26A2 /* Task */,
-				C7664E8C2511AE1D005E26A2 /* Model */,
 				C7664E8F2511AE1D005E26A2 /* View */,
 			);
 			path = Login;
-			sourceTree = "<group>";
-		};
-		C7664E872511AE1D005E26A2 /* Task */ = {
-			isa = PBXGroup;
-			children = (
-				C7664E882511AE1D005E26A2 /* NEAccountTask.h */,
-				C7664E892511AE1D005E26A2 /* NESendSmsCodeTask.h */,
-				C7664E8B2511AE1D005E26A2 /* NEAccountTask.m */,
-				C7664E8A2511AE1D005E26A2 /* NESendSmsCodeTask.m */,
-			);
-			path = Task;
-			sourceTree = "<group>";
-		};
-		C7664E8C2511AE1D005E26A2 /* Model */ = {
-			isa = PBXGroup;
-			children = (
-				C7664E8D2511AE1D005E26A2 /* NEAccountTask.h */,
-				C7664E8E2511AE1D005E26A2 /* NEAccountTask.m */,
-			);
-			path = Model;
 			sourceTree = "<group>";
 		};
 		C7664E8F2511AE1D005E26A2 /* View */ = {
@@ -406,10 +348,6 @@
 				C7664E922511AE1D005E26A2 /* NELoginOptions.m */,
 				C7664E902511AE1D005E26A2 /* NTELoginVC.h */,
 				C7664E952511AE1D005E26A2 /* NTELoginVC.m */,
-				C7664E982511AE1D005E26A2 /* NTFInputSmsVC.h */,
-				C7664E912511AE1D005E26A2 /* NTFInputSmsVC.m */,
-				C7664E942511AE1D005E26A2 /* NTFSmsInputView.h */,
-				C7664E992511AE1D005E26A2 /* NTFSmsInputView.m */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -432,18 +370,6 @@
 				C7664E9E2511AE1D005E26A2 /* NENavCustomView.m */,
 			);
 			path = View;
-			sourceTree = "<group>";
-		};
-		C7664EA22511AE1D005E26A2 /* Service */ = {
-			isa = PBXGroup;
-			children = (
-				C7664EA32511AE1D005E26A2 /* NEService.h */,
-				C7664EA62511AE1D005E26A2 /* NEService.m */,
-				C7664EA52511AE1D005E26A2 /* NEServiceTask.h */,
-				C7664EA72511AE1D005E26A2 /* NETask.h */,
-				C7664EA42511AE1D005E26A2 /* NETask.m */,
-			);
-			path = Service;
 			sourceTree = "<group>";
 		};
 		C7664EA82511AE1D005E26A2 /* Utils */ = {
@@ -660,7 +586,6 @@
 			files = (
 				01C0D04D288687E900B796BA /* GroupUserViewCell.m in Sources */,
 				C7664ED92511AE1E005E26A2 /* UIView+NTES.m in Sources */,
-				C7664ECC2511AE1E005E26A2 /* NESendSmsCodeTask.m in Sources */,
 				54AD12862CE3514C00F0F370 /* NECallUISettingViewController.m in Sources */,
 				84B155912E856F18006C1523 /* GroupUserController.m in Sources */,
 				C758CCDA24EB7F5A003C406A /* AppDelegate.m in Sources */,
@@ -678,15 +603,11 @@
 				013B53962892A4D2002CB1AA /* Attachment.m in Sources */,
 				26D0C57C2A82299800D13ED0 /* SettingManager.m in Sources */,
 				26A00C9A27181563007849FA /* NECallStatusRecordModel.m in Sources */,
-				C7664ED32511AE1E005E26A2 /* NTFSmsInputView.m in Sources */,
 				C7664EDA2511AE1E005E26A2 /* UIImage+NTES.m in Sources */,
 				C7664EDD2511AE1E005E26A2 /* NECallBaseViewController.m in Sources */,
 				C7664EC72511AE1E005E26A2 /* NERtcContactsViewController.m in Sources */,
-				C7664ED72511AE1E005E26A2 /* NETask.m in Sources */,
 				26A00C8F271812A4007849FA /* NECallStatusRecordCell.m in Sources */,
-				C7664ECE2511AE1E005E26A2 /* NEAccountTask.m in Sources */,
 				C7664ED02511AE1E005E26A2 /* NELoginOptions.m in Sources */,
-				C7664ED82511AE1E005E26A2 /* NEService.m in Sources */,
 				84B1558E2E856E4C006C1523 /* SectionHeaderView.m in Sources */,
 				4BA14012271E50E200B7148C /* NSArray+NTES.m in Sources */,
 				261B1AF92A823F3D0049FEF8 /* NECallCustomController.m in Sources */,
@@ -696,9 +617,6 @@
 				C7664EE02511AE1E005E26A2 /* NEAccount.m in Sources */,
 				01C0D042288504B000B796BA /* NEGroupContactsController.m in Sources */,
 				C7664ED62511AE1E005E26A2 /* NENavCustomView.m in Sources */,
-				C7664EC82511AE1E005E26A2 /* NESearchTask.m in Sources */,
-				C7664ECF2511AE1E005E26A2 /* NTFInputSmsVC.m in Sources */,
-				C7664ECD2511AE1E005E26A2 /* NEAccountTask.m in Sources */,
 				C7664EC92511AE1E005E26A2 /* NERtcVideoCallModel.m in Sources */,
 				C7664EC62511AE1E005E26A2 /* NEPSTNViewController.m in Sources */,
 				013B53932890FF4F002CB1AA /* DataManager.m in Sources */,

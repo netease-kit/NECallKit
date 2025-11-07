@@ -108,13 +108,13 @@ rotation:(NERtcVideoRotationType)rotation
 
   NESetupConfig *setupConfig = [[NESetupConfig alloc] initWithAppkey:kAppKey];
   [[NECallEngine sharedInstance] setup:setupConfig];
-  [[NECallEngine sharedInstance] setTimeout:30];
 
   NECallUIKitConfig *config = [[NECallUIKitConfig alloc] init];
   config.uiConfig.showCallingSwitchCallType = YES;
   config.uiConfig.enableFloatingWindow = YES;
   config.uiConfig.enableFloatingWindowOutOfApp = YES;
   config.uiConfig.language = NECallUILanguageAuto;
+  config.uiConfig.enableGroupCallInviteOthersWhenCalling = YES;
   [[NERtcCallUIKit sharedInstance] setupWithConfig:config];
   [NERtcCallUIKit sharedInstance].delegate = self;
 

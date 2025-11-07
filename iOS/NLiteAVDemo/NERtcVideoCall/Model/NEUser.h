@@ -16,8 +16,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property(strong, nonatomic, nonnull) NSString *imAccid;
 /// 云信IM token
 @property(strong, nonatomic, nonnull) NSString *imToken;
-/// 用户系统登录token
-@property(strong, nonatomic) NSString *accessToken;
 /// 音视频房间ID
 @property(assign, nonatomic) NSString *avRoomUid;
 // 主叫
