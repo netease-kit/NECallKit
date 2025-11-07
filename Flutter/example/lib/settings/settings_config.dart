@@ -13,6 +13,7 @@ class SettingsConfig {
 
   static bool muteMode = false;
   static bool enableFloatWindow = true;
+  static bool enableFloatWindowOutOfApp = false; // 应用外悬浮窗（画中画）- iOS 15+
   static bool showBlurBackground = false;
   static bool showIncomingBanner = true;
 

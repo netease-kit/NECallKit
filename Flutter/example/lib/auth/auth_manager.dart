@@ -88,6 +88,8 @@ class AuthManager {
 
     NECallKitUI.instance.enableFloatWindow(SettingsConfig.enableFloatWindow);
     NECallKitUI.instance
+        .enableFloatWindowOutOfApp(SettingsConfig.enableFloatWindowOutOfApp);
+    NECallKitUI.instance
         .enableIncomingBanner(SettingsConfig.showIncomingBanner);
     NECallKitUI.instance
         .login(AppConfig().appKey, loginInfo.accountId, loginInfo.accountToken,
@@ -141,5 +143,29 @@ class AuthManager {
 
   bool isLogined() {
     return AuthStateManager().state == AuthState.authed;
+  }
+
+  /// 更新用户信息（昵称和头像）
+  /// - Parameters:
+  ///   - nickname: 昵称
+  ///   - avatar: 头像URL
+  void updateUserInfo({String? nickname, String? avatar}) {
+    if (_loginInfo == null) {
+      print('$_tag: updateUserInfo failed - loginInfo is null');
+      return;
+    }
+
+    // 创建新的 LoginInfo，保留原有信息，只更新传入的参数
+    final updatedLoginInfo = LoginInfo(
+      accountId: _loginInfo!.accountId,
+      accountToken: _loginInfo!.accountToken,
+      nickname: nickname ?? _loginInfo!.nickname,
+      avatar: avatar ?? _loginInfo!.avatar,
+      account: _loginInfo!.account,
+    );
+
+    _syncAuthInfo(updatedLoginInfo);
+    print(
+        '$_tag: updateUserInfo - nickname: ${updatedLoginInfo.nickname}, avatar: ${updatedLoginInfo.avatar}');
   }
 }

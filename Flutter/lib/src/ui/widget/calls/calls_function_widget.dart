@@ -26,13 +26,31 @@ class CallsFunctionWidget {
       "https://yx-web-nosdn.netease.im/common/e2ca6c0b7a35174efde6e3ec7eaf1609/hangup.png";
   static const String _acceptNetworkUrl =
       "https://yx-web-nosdn.netease.im/common/ed23abfde97d28036502095c071264e6/dialing.png";
+  static const String _acceptVideoNetworkUrl =
+      "https://yx-web-nosdn.netease.im/common/eeb01ce8ca84a9f5a749c5d88babcea4/dialing_video.png";
+
+  /// 根据通话类型获取接听按钮图片路径
+  /// 视频通话使用 dialing_video.png，音频通话使用 dialing.png
+  static String _getAcceptButtonImage() {
+    return CallState.instance.callType == NECallType.video
+        ? "assets/images/dialing_video.png"
+        : "assets/images/dialing.png";
+  }
+
+  /// 根据通话类型获取接听按钮备用网络图片URL
+  /// 视频通话使用 _acceptVideoNetworkUrl，音频通话使用 _acceptNetworkUrl
+  static String _getAcceptButtonNetworkUrl() {
+    return CallState.instance.callType == NECallType.video
+        ? _acceptVideoNetworkUrl
+        : _acceptNetworkUrl;
+  }
 
   static Widget buildIndividualFunctionWidget(Function close) {
     CallKitUILog.i(_tag,
         "buildIndividualFunctionWidget current callStatus = ${CallState.instance.selfUser.callStatus}");
     if (NECallStatus.waiting == CallState.instance.selfUser.callStatus) {
       if (NECallRole.caller == CallState.instance.selfUser.callRole) {
-        if (NECallType.audio == CallState.instance.mediaType) {
+        if (NECallType.audio == CallState.instance.callType) {
           return _buildAudioCallerWaitingAndAcceptedView(close);
         } else {
           if (CallState.instance.showVirtualBackgroundButton) {
@@ -42,10 +60,12 @@ class CallsFunctionWidget {
           }
         }
       } else {
+        // 每次显示接听页面时重置接听状态标志
+        _isAccepting = false;
         return _buildAudioAndVideoCalleeWaitingView(close);
       }
     } else if (NECallStatus.accept == CallState.instance.selfUser.callStatus) {
-      if (NECallType.audio == CallState.instance.mediaType) {
+      if (NECallType.audio == CallState.instance.callType) {
         return _buildAudioCallerWaitingAndAcceptedView(close);
       } else {
         return _buildVideoCallerAndCalleeAcceptedView(close);
@@ -60,6 +80,8 @@ class CallsFunctionWidget {
     Widget functionWidget;
     if (NECallStatus.waiting == CallState.instance.selfUser.callStatus &&
         NECallRole.called == CallState.instance.selfUser.callRole) {
+      // 每次显示接听页面时重置接听状态标志
+      _isAccepting = false;
       functionWidget = _buildAudioAndVideoCalleeWaitingFunctionView(close);
     } else {
       functionWidget =
@@ -86,8 +108,8 @@ class CallsFunctionWidget {
               },
             ),
             ExtendButton(
-              imgUrl: "assets/images/dialing.png",
-              fallbackNetworkUrl: _acceptNetworkUrl,
+              imgUrl: _getAcceptButtonImage(),
+              fallbackNetworkUrl: _getAcceptButtonNetworkUrl(),
               tips: NECallKitUI.localizations.accept,
               textColor: Colors.white,
               imgHeight: 64,
@@ -299,9 +321,7 @@ class CallsFunctionWidget {
       mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-          _buildSwitchCameraButton(),
           _buildHangupButton(close),
-          _buildCameraControlButton(),
         ]),
       ],
     );
@@ -388,8 +408,8 @@ class CallsFunctionWidget {
               },
             ),
             ExtendButton(
-              imgUrl: "assets/images/dialing.png",
-              fallbackNetworkUrl: _acceptNetworkUrl,
+              imgUrl: _getAcceptButtonImage(),
+              fallbackNetworkUrl: _getAcceptButtonNetworkUrl(),
               tips: NECallKitUI.localizations.accept,
               textColor: _getTextColor(),
               imgHeight: 60,
@@ -563,7 +583,7 @@ class CallsFunctionWidget {
       PermissionResult permissionRequestResult = PermissionResult.requesting;
       if (Platform.isAndroid || Platform.isIOS) {
         permissionRequestResult =
-            await Permission.request(CallState.instance.mediaType);
+            await Permission.request(CallState.instance.callType);
       }
       if (permissionRequestResult == PermissionResult.granted) {
         CallKitUILog.i(_tag,

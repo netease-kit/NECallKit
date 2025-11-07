@@ -13,6 +13,8 @@
   "needToAccessMicrophoneAndCameraPermissions": "need to access microphone and camera permissions",
   "noFloatWindowPermission": "no float window permission",
   "needFloatWindowPermission": "need float window permission",
+  "noBackgroundStartPermission": "no background start permission",
+  "needBackgroundStartPermission": "Your phone has not granted background start permission, minimizing calls may not work properly",
   "accept": "accept",
   "cameraIsOn": "cameraIsOn",
   "cameraIsOff": "cameraIsOff",
@@ -26,5 +28,9 @@
   "hangUp": "hangUp",
   "userBusy": "Other party is busy",
   "userInCall": "User is already in a call",
-  "remoteUserReject": "remote user rejected"
+  "answerOnOtherDevice": "The other client has answered the call",
+  "rejectOnOtherDevice": "The other client has rejected the call",
+  "remoteUserReject": "remote user rejected",
+  "remoteTimeout" : "Timeout and no response",
+  "remoteCancel": "The call was canceled"
 }

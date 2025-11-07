@@ -55,6 +55,13 @@ class CallKitClientLocalizationsEn extends CallKitClientLocalizations {
   String get needFloatWindowPermission => 'need float window permission';
 
   @override
+  String get noBackgroundStartPermission => 'no background start permission';
+
+  @override
+  String get needBackgroundStartPermission =>
+      'Your phone has not granted background start permission, minimizing calls may not work properly';
+
+  @override
   String get accept => 'accept';
 
   @override
@@ -94,5 +101,17 @@ class CallKitClientLocalizationsEn extends CallKitClientLocalizations {
   String get userInCall => 'User is already in a call';
 
   @override
+  String get answerOnOtherDevice => 'The other client has answered the call';
+
+  @override
+  String get rejectOnOtherDevice => 'The other client has rejected the call';
+
+  @override
   String get remoteUserReject => 'remote user rejected';
+
+  @override
+  String get remoteTimeout => 'Timeout and no response';
+
+  @override
+  String get remoteCancel => 'The call was canceled';
 }

@@ -84,6 +84,32 @@ class _SettingsWidgetState extends State<SettingsWidget> {
             ],
           ),
         ),
+        SizedBox(
+          height: 40,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '应用外悬浮窗（画中画）',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontStyle: FontStyle.normal,
+                  fontWeight: FontWeight.normal,
+                  color: Colors.black,
+                ),
+              ),
+              Switch(
+                  value: SettingsConfig.enableFloatWindowOutOfApp,
+                  onChanged: (value) {
+                    setState(() {
+                      SettingsConfig.enableFloatWindowOutOfApp = value;
+                      NECallKitUI.instance.enableFloatWindowOutOfApp(
+                          SettingsConfig.enableFloatWindowOutOfApp);
+                    });
+                  })
+            ],
+          ),
+        ),
         if (Platform.isAndroid)
           SizedBox(
             height: 40,

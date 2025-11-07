@@ -138,6 +138,7 @@ class NESingleCallFloatWindowView: NEFloatWindowView {
     isViewReady = true
 
     updateUI()
+    setupRemoteView()
   }
 
   func constructViewHierarchy() {
@@ -230,7 +231,6 @@ class NESingleCallFloatWindowView: NEFloatWindowView {
     })
 
     NECallState.instance.remoteUser.addObserver(remoteUserObserver, closure: { [weak self] newValue, _ in
-
       guard let self = self else { return }
       self.updateUI()
     })
@@ -258,7 +258,10 @@ class NESingleCallFloatWindowView: NEFloatWindowView {
     videoDescribeLabel.isHidden = true
     avatarImageView.isHidden = true
     remotePreView.isHidden = false
+  }
 
+  func setupRemoteView() {
+    NEFLTCallUIKitLog.infoLog("NESingleCallFloatWindowView", desc: "setVideoAcceptUI setupRemoteView")
     NECallEngine.sharedInstance().setupRemoteView(remotePreView)
   }
 

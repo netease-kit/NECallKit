@@ -186,6 +186,18 @@ abstract class CallKitClientLocalizations {
   /// **'need float window permission'**
   String get needFloatWindowPermission;
 
+  /// No description provided for @noBackgroundStartPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'no background start permission'**
+  String get noBackgroundStartPermission;
+
+  /// No description provided for @needBackgroundStartPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone has not granted background start permission, minimizing calls may not work properly'**
+  String get needBackgroundStartPermission;
+
   /// No description provided for @accept.
   ///
   /// In en, this message translates to:
@@ -264,11 +276,35 @@ abstract class CallKitClientLocalizations {
   /// **'User is already in a call'**
   String get userInCall;
 
+  /// No description provided for @answerOnOtherDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'The other client has answered the call'**
+  String get answerOnOtherDevice;
+
+  /// No description provided for @rejectOnOtherDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'The other client has rejected the call'**
+  String get rejectOnOtherDevice;
+
   /// No description provided for @remoteUserReject.
   ///
   /// In en, this message translates to:
   /// **'remote user rejected'**
   String get remoteUserReject;
+
+  /// No description provided for @remoteTimeout.
+  ///
+  /// In en, this message translates to:
+  /// **'Timeout and no response'**
+  String get remoteTimeout;
+
+  /// No description provided for @remoteCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'The call was canceled'**
+  String get remoteCancel;
 }
 
 class _CallKitClientLocalizationsDelegate

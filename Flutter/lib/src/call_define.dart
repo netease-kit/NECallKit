@@ -15,16 +15,6 @@ class NECallDefine {
   static const String version = "0.0.0.0";
 }
 
-/// Indicates the error code during the calls.
-///
-class NECallError {
-  /// You have not purchased the calls capability package, please go to the IM console to activate the free experience or purchase the official version.
-  static const int errorPackageNotPurchased = -1001;
-
-  /// The calls capability package you currently purchased does not support this function. It is recommended that you upgrade the package type.
-  static const int errorPackageNotSupported = -1002;
-}
-
 /// Indicates the role in the calls.
 ///
 enum NECallRole {

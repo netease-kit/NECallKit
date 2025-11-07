@@ -12,7 +12,6 @@ import 'package:netease_callkit_ui/src/impl/call_manager.dart';
 import 'package:netease_callkit_ui/src/impl/call_state.dart';
 import 'package:netease_callkit_ui/src/data/constants.dart';
 import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
-import 'package:netease_callkit_ui/src/ui/call_navigator_observer.dart';
 import 'package:netease_callkit_ui/src/ui/widget/calls/calls_function_widget.dart';
 import 'package:netease_callkit_ui/src/ui/widget/calls/calls_user_widget_data.dart';
 import 'package:netease_callkit_ui/src/ui/widget/common/timing_widget.dart';
@@ -240,18 +239,21 @@ class _CallsWidgetState extends State<CallsWidget>
   }
 
   _openFloatWindow() async {
+    CallKitUILog.i(_tag, 'CallsWidget openFloatWindow()');
     if (Platform.isAndroid) {
-      bool result = await NECallKitPlatform.instance.hasFloatPermission();
-      if (!result) {
-        // 显示浮窗权限对话框
+      bool hasFloat = await NECallKitPlatform.instance.hasFloatPermission();
+      if (!hasFloat) {
         await FloatPermissionDialog.show(context);
         return;
       }
-      CallManager.instance.openFloatWindow();
-      NECallKitNavigatorObserver.getInstance().exitCallingPage();
-    } else if (Platform.isIOS) {
-      CallManager.instance.openFloatWindow();
-      NECallKitNavigatorObserver.getInstance().exitCallingPage();
-    }
+      // 同时校验后台启动权限（MIUI 等机型）
+      bool hasBgStart =
+          await NECallKitPlatform.instance.hasBackgroundStartPermission();
+      if (!hasBgStart) {
+        await FloatPermissionDialog.show(context, isBackgroundStart: true);
+        return;
+      }
+    } else if (Platform.isIOS) {}
+    CallManager.instance.openFloatWindowWithPageState();
   }
 }

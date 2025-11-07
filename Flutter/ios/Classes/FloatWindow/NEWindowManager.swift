@@ -20,6 +20,13 @@ class NEWindowManager: NSObject, NEFloatWindowViewDelegate {
 
   var floatWindow = UIWindow()
 
+  // 画中画管理器
+  @available(iOS 15.0, *)
+  var pipManager: NEPIPManager {
+    let manager = NEPIPManager.instance
+    return manager
+  }
+
   override init() {
     super.init()
     registerObserveState()
@@ -145,6 +152,38 @@ class NEWindowManager: NSObject, NEFloatWindowViewDelegate {
     default:
       break
     }
+  }
+
+  // MARK: - Picture-in-Picture Methods
+
+  /// 设置画中画 UI
+  @available(iOS 15.0, *)
+  func setupPIP(completion: @escaping (Bool) -> Void) {
+    pipManager.setupPIP(completion: completion)
+  }
+
+  /// 清理画中画资源
+  @available(iOS 15.0, *)
+  func disposePIP() {
+    pipManager.disposePIP()
+  }
+
+  /// 启动视频渲染
+  @available(iOS 15.0, *)
+  func startVideoRendering() {
+    pipManager.startVideoRendering()
+  }
+
+  /// 停止视频渲染
+  @available(iOS 15.0, *)
+  func stopVideoRendering() {
+    pipManager.stopVideoRendering()
+  }
+
+  /// 检查画中画是否激活
+  @available(iOS 15.0, *)
+  func isPIPActive() -> Bool {
+    pipManager.isPIPActive()
   }
 }
 

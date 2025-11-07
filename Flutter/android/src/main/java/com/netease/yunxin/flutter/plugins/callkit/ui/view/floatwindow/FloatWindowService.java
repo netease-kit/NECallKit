@@ -16,6 +16,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import com.netease.yunxin.flutter.plugins.callkit.ui.utils.FloatWindowsPermission;
 
 public class FloatWindowService extends Service {
   private CallFloatView mCallView;
@@ -40,6 +41,11 @@ public class FloatWindowService extends Service {
   @Override
   public void onCreate() {
     super.onCreate();
+    // Ensure application context is initialized after process restarts
+    try {
+      FloatWindowsPermission.setApplicationContext(getApplicationContext());
+    } catch (Throwable ignore) {
+    }
     init();
   }
 
@@ -58,6 +64,7 @@ public class FloatWindowService extends Service {
     super.onDestroy();
     if (null != mCallView) {
       mWindowManager.removeView(mCallView);
+      mCallView.destroy();
       mCallView = null;
     }
   }
@@ -67,7 +74,7 @@ public class FloatWindowService extends Service {
     mCallView = new SingleCallFloatView(mContext);
     mCallView.setOnClickListener(
         (view) -> {
-          mCallView.destory();
+          mCallView.destroyAndBackCallingPage();
         });
     mWindowManager =
         (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);

@@ -32,7 +32,13 @@ public class CallFloatView extends FrameLayout {
     return true;
   }
 
-  public void destory() {
+  public void destroy() {
+    stopTiming();
+    Intent mStartIntent = new Intent(mContext, FloatWindowService.class);
+    mContext.stopService(mStartIntent);
+  }
+
+  public void destroyAndBackCallingPage() {
     stopTiming();
     Intent mStartIntent = new Intent(mContext, FloatWindowService.class);
     mContext.stopService(mStartIntent);

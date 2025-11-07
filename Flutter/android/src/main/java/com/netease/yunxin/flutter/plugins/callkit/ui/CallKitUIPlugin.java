@@ -21,14 +21,12 @@ public class CallKitUIPlugin implements FlutterPlugin, ActivityAware, EventManag
 
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-    CallUILog.i(TAG, "onAttachedToEngine");
     mCallKitManager = new CallKitUIHandler(flutterPluginBinding);
     registerObserver();
   }
 
   @Override
   public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-    CallUILog.i(TAG, "onDetachedFromEngine");
     mCallKitManager.removeMethodChannelHandler();
     unRegisterObserver();
   }
@@ -50,6 +48,8 @@ public class CallKitUIPlugin implements FlutterPlugin, ActivityAware, EventManag
         .registerEvent(Constants.KEY_CALLKIT_PLUGIN, Constants.SUB_KEY_LOGOUT_SUCCESS, this);
     EventManager.getInstance()
         .registerEvent(Constants.KEY_CALLKIT_PLUGIN, Constants.SUB_KEY_ENTER_FOREGROUND, this);
+    EventManager.getInstance()
+        .registerEvent(Constants.KEY_CALLKIT_PLUGIN, Constants.SUB_KEY_ENTER_BACKGROUND, this);
   }
 
   private void unRegisterObserver() {
@@ -95,6 +95,10 @@ public class CallKitUIPlugin implements FlutterPlugin, ActivityAware, EventManag
 
     if (Constants.SUB_KEY_ENTER_FOREGROUND.equals(subKey)) {
       mCallKitManager.appEnterForeground();
+    }
+
+    if (Constants.SUB_KEY_ENTER_BACKGROUND.equals(subKey)) {
+      mCallKitManager.appEnterBackground();
     }
   }
 }

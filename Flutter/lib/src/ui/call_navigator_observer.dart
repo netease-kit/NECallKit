@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 import 'package:netease_callkit_ui/src/impl/boot.dart';
 import 'package:netease_callkit_ui/src/extensions/calling_bell_feature.dart';
-import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
 import 'package:netease_callkit_ui/src/ui/call_main_widget.dart';
 
 class NECallKitNavigatorObserver extends NavigatorObserver {
@@ -38,7 +37,7 @@ class NECallKitNavigatorObserver extends NavigatorObserver {
       return NECallKitWidget(close: () {
         if (!isClose) {
           isClose = true;
-          NECallKitPlatform.instance.stopForegroundService();
+          CallManager.instance.stopForegroundService();
           CallingBellFeature.stopRing();
           NECallKitNavigatorObserver.getInstance().exitCallingPage();
         }
