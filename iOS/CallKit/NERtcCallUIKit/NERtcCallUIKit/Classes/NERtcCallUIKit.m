@@ -7,8 +7,8 @@
 #import <NECoreKit/NECoreKit-Swift.h>
 #import <NECoreKit/XKit.h>
 #import <NERtcSDK/NERtcSDK.h>
+#import <NEXKitBase/NEXKitBase.h>
 #import <SDWebImage/SDWebImage.h>
-#import <YXAlog_iOS/YXAlog.h>
 #import "NEBufferDisplayView.h"
 #import "NECallKitUtil.h"
 #import "NEDataManager.h"
@@ -223,7 +223,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)callWithParam:(NEUICallParam *)callParam {
-  YXAlogInfo(@"call uikit callWithParam called : %d", self.isCalled);
+  NEXKitBaseLogInfo(@"call uikit callWithParam called : %d", self.isCalled);
   if (self.isCalled == YES) {
     return;
   }
@@ -252,7 +252,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)onCallEnd:(NECallEndInfo *)info {
-  YXAlogInfo(@"call ui kit oncallend");
+  NEXKitBaseLogInfo(@"call ui kit oncallend");
   [self stopPip];
 }
 
@@ -267,7 +267,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 // 设置应用外小窗远端关闭视频时候的占位视图
 - (void)setRemoteWithUrl:(NSString *)url withAccid:(NSString *)accid {
-  YXAlogInfo(@"set url %@  set accid %@", url, accid);
+  NEXKitBaseLogInfo(@"set url %@  set accid %@", url, accid);
   [self.coverView removeFromSuperview];
   [self.remoteHeaderImageView removeFromSuperview];
   self.coverView = [self getCoverView];
@@ -313,7 +313,7 @@ const NSInteger kGroupCallMaxUsers = 10;
   if (self.config.uiConfig.disableShowCalleeView == YES) {
     return;
   }
-  YXAlogInfo(@"call uikit onReceiveInvited calling : %d", self.isCalling);
+  NEXKitBaseLogInfo(@"call uikit onReceiveInvited calling : %d", self.isCalling);
   if (self.isCalling == YES) {
     NEHangupParam *param = [[NEHangupParam alloc] init];
     [param setValue:[NSNumber numberWithInteger:TerminalCodeBusy] forKey:@"reasonCode"];
@@ -422,7 +422,7 @@ const NSInteger kGroupCallMaxUsers = 10;
   callNav.modalPresentationStyle = UIModalPresentationFullScreen;
   [callNav.navigationBar setHidden:YES];
   [nav presentViewController:callNav animated:YES completion:nil];
-  YXAlogInfo(@"call uikit show call view caller : %d", callVC.callParam.isCaller);
+  NEXKitBaseLogInfo(@"call uikit show call view caller : %d", callVC.callParam.isCaller);
 }
 
 - (void)stopPip {
@@ -433,7 +433,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (UINavigationController *)getKeyWindowNav {
-  YXAlogInfo(@"call uikit getKeyWindowNav");
+  NEXKitBaseLogInfo(@"call uikit getKeyWindowNav");
   if (self.keywindow == nil) {
     UIWindow *window = [[UIWindow alloc] init];
     if (@available(iOS 13.0, *)) {
@@ -449,8 +449,8 @@ const NSInteger kGroupCallMaxUsers = 10;
     window.backgroundColor = [UIColor clearColor];
     self.keywindow = window;
     self.preiousKeywindow = UIApplication.sharedApplication.keyWindow;
-    YXAlogInfo(@"create new window %@", self.keywindow);
-    YXAlogInfo(@"self.preiousKeywindow %@", self.preiousKeywindow);
+    NEXKitBaseLogInfo(@"create new window %@", self.keywindow);
+    NEXKitBaseLogInfo(@"self.preiousKeywindow %@", self.preiousKeywindow);
   }
 
   UIViewController *root = [[UIViewController alloc] init];
@@ -466,13 +466,14 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)didDismiss:(NSNotification *)noti {
-  YXAlogInfo(@"call uikit didDismiss caller : %d called : %d", self.isCalling, self.isCalled);
+  NEXKitBaseLogInfo(@"call uikit didDismiss caller : %d called : %d", self.isCalling,
+                    self.isCalled);
   UINavigationController *nav = (UINavigationController *)self.keywindow.rootViewController;
   __weak typeof(self) weakSelf = self;
   [nav dismissViewControllerAnimated:YES
                           completion:^{
                             NSLog(@"self window %@", weakSelf.keywindow);
-                            YXAlogInfo(@"call uikit didDismiss completion");
+                            NEXKitBaseLogInfo(@"call uikit didDismiss completion");
                           }];
 
   [self.keywindow resignKeyWindow];
@@ -610,8 +611,9 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)onVideoMuted:(BOOL)muted userID:(NSString *)userId {
-  YXAlogInfo(@"callkit ui onVideoMuted current accid : %@  userid : %@ mute : %d mask view : %@",
-             self.currentRemoteAccid, userId, muted, self.coverView);
+  NEXKitBaseLogInfo(
+      @"callkit ui onVideoMuted current accid : %@  userid : %@ mute : %d mask view : %@",
+      self.currentRemoteAccid, userId, muted, self.coverView);
 
   if (self.currentRemoteAccid.length > 0 && [self.currentRemoteAccid isEqualToString:userId]) {
     self.coverView.hidden = !muted;
@@ -794,19 +796,34 @@ const NSInteger kGroupCallMaxUsers = 10;
 #pragma mark - Version
 
 + (NSString *)version {
-  return @"3.7.0";
+  return @"3.8.0";
 }
 
 #pragma mark - Group Call
 - (void)groupCallWithParam:(NEUIGroupCallParam *)callParam {
+  // 参数验证：防止崩溃
+  if (!callParam) {
+    NEXKitBaseLogInfo(@"call uikit group call param is nil");
+    return;
+  }
+
+  if (!callParam.remoteUsers || callParam.remoteUsers.count == 0) {
+    NEXKitBaseLogInfo(@"call uikit group call remote users is empty");
+    return;
+  }
+
   NSString *selfAccid = [NIMSDK.sharedSDK.v2LoginService getLoginUser];
+  if (!selfAccid || selfAccid.length == 0) {
+    NEXKitBaseLogInfo(@"call uikit group call self accid is nil");
+    return;
+  }
 
   // 对 remoteUsers 进行去重处理
   NSMutableArray<NSString *> *uniqueRemoteUsers = [[NSMutableArray alloc] init];
   NSMutableSet<NSString *> *userSet = [[NSMutableSet alloc] init];
 
   for (NSString *userId in callParam.remoteUsers) {
-    if (userId.length > 0 && ![userSet containsObject:userId]) {
+    if (userId && userId.length > 0 && ![userSet containsObject:userId]) {
       [userSet addObject:userId];
       [uniqueRemoteUsers addObject:userId];
     }
@@ -814,7 +831,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 
   // 自己不算在内
   if (uniqueRemoteUsers.count > kGroupCallMaxUsers - 1) {
-    YXAlogInfo(@"call uikit group call remote users exceed limit");
+    NEXKitBaseLogInfo(@"call uikit group call remote users exceed limit");
     [NECallKitUtil makeToast:[NECallKitUtil localizableWithKey:@"ui_member_exceed_limit"]];
     return;
   }
@@ -828,14 +845,27 @@ const NSInteger kGroupCallMaxUsers = 10;
   __weak typeof(self) weakSelf = self;
   [NIMSDK.sharedSDK.v2UserService getUserList:allUserIds
       success:^(NSArray<V2NIMUser *> *_Nonnull result) {
+        // 验证 result 的有效性
+        if (!result || result.count == 0) {
+          NEXKitBaseLogInfo(@"call uikit group call result is empty");
+          return;
+        }
+
         NSMutableArray<NEGroupUser *> *allUsers = [[NSMutableArray alloc] init];
         NEGroupUser *caller = nil;
 
         // 转换 V2NIMUser 为 NEGroupUser
         for (V2NIMUser *user in result) {
-          NEGroupUser *groupUser = [weakSelf convertV2NIMUserToGroupUser:user];
+          if (!user) {
+            continue;
+          }
 
-          if ([groupUser.imAccid isEqualToString:selfAccid]) {
+          NEGroupUser *groupUser = [weakSelf convertV2NIMUserToGroupUser:user];
+          if (!groupUser) {
+            continue;
+          }
+
+          if (groupUser.imAccid && [groupUser.imAccid isEqualToString:selfAccid]) {
             groupUser.state = GroupMemberStateInChannel;
             caller = groupUser;
           } else {
@@ -863,11 +893,15 @@ const NSInteger kGroupCallMaxUsers = 10;
           callController.pushParam = callParam.pushParam;
         }
 
+        if (callParam.callId) {
+          callController.callId = callParam.callId;
+        }
+
         [callController addUser:allUsers];
         [weakSelf showGroupCallView:callController];
       }
       failure:^(V2NIMError *_Nonnull error) {
-        YXAlogInfo(@"获取用户信息失败: %@", error.desc);
+        NEXKitBaseLogInfo(@"获取用户信息失败: %@", error.desc);
         // 即使获取用户信息失败，也显示界面，但用户列表为空
         NEGroupCallViewController *callController =
             [[NEGroupCallViewController alloc] initWithCalled:NO withCaller:nil];
@@ -883,18 +917,19 @@ const NSInteger kGroupCallMaxUsers = 10;
   callNav.modalPresentationStyle = UIModalPresentationFullScreen;
   [callNav.navigationBar setHidden:YES];
   [nav presentViewController:callNav animated:YES completion:nil];
-  YXAlogInfo(@"call uikit show group call view");
+  NEXKitBaseLogInfo(@"call uikit show group call view");
 }
 
 - (void)didGroupCallDismiss:(NSNotification *)notification {
-  YXAlogInfo(@"Group call uikit didDismiss caller : %d called : %d", self.isCalling, self.isCalled);
+  NEXKitBaseLogInfo(@"Group call uikit didDismiss caller : %d called : %d", self.isCalling,
+                    self.isCalled);
   UINavigationController *nav = (UINavigationController *)self.keywindow.rootViewController;
 
   __weak typeof(self) weakSelf = self;
   [nav dismissViewControllerAnimated:YES
                           completion:^{
                             NSLog(@"self window %@", weakSelf.keywindow);
-                            YXAlogInfo(@"call uikit didDismiss completion");
+                            NEXKitBaseLogInfo(@"call uikit didDismiss completion");
                           }];
   [self.keywindow resignKeyWindow];
   self.keywindow = nil;
@@ -908,7 +943,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 - (void)onGroupInvitedWithInfo:(NEGroupCallInfo *)info {
   NSMutableArray<GroupCallMember *> *members = [[NSMutableArray alloc] init];
   for (GroupCallMember *member in info.calleeList) {
-    YXAlogInfo(@"current member accid : %@", member.imAccid);
+    NEXKitBaseLogInfo(@"current member accid : %@", member.imAccid);
   }
   [members addObjectsFromArray:info.calleeList];
 
@@ -918,7 +953,7 @@ const NSInteger kGroupCallMaxUsers = 10;
                 completion:^(NSError *_Nullable error, NSArray<NEGroupUser *> *_Nonnull users) {
                   if ([NEGroupCallKit sharedInstance].callId == nil ||
                       ![[NEGroupCallKit sharedInstance].callId isEqualToString:info.callId]) {
-                    YXAlogInfo(@"data come, but group call has end");
+                    NEXKitBaseLogInfo(@"data come, but group call has end");
                     return;
                   }
                   NSMutableArray *neUsers = [[NSMutableArray alloc] init];
@@ -979,8 +1014,8 @@ const NSInteger kGroupCallMaxUsers = 10;
 - (void)inviteUsersWithCallId:(NSString *)callId
                   inCallUsers:(NSArray<NSString *> *)inCallUsers
                    completion:(void (^)(NSArray<NSString *> *_Nullable users))completion {
-  YXAlogInfo(@"NERtcCallUIKit 收到邀请用户请求，callId: %@, 当前通话用户数: %ld", callId,
-             (long)inCallUsers.count);
+  NEXKitBaseLogInfo(@"NERtcCallUIKit 收到邀请用户请求，callId: %@, 当前通话用户数: %ld", callId,
+                    (long)inCallUsers.count);
   if (self.delegate &&
       [self.delegate respondsToSelector:@selector(inviteUsersWithCallId:inCallUsers:completion:)]) {
     [self.delegate inviteUsersWithCallId:callId inCallUsers:inCallUsers completion:completion];

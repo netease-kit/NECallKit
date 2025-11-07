@@ -5,6 +5,7 @@
 #import "NERingPlayerManager.h"
 #import <AVFoundation/AVFoundation.h>
 #import "NERtcCallUIKit.h"
+#import "NERtcSDK/NERtcSDK.h"
 
 @interface NERingPlayerManager () <AVAudioPlayerDelegate>
 
@@ -43,6 +44,8 @@
     [self.player stop];
     self.player = nil;
   }
+
+  [self stopPlayByRtc];
 }
 
 - (void)playRingWithRingType:(CallRingType)ringType isRtcPlay:(Boolean)isRtc {
@@ -88,6 +91,11 @@
     url = [NSURL fileURLWithPath:path];
   }
 
+  if (isRtc) {
+    [self playByRtc:path isRepeat:repeat];
+    return;
+  }
+
   if (url != nil) {
     [self stopCurrentPlaying];
     [self resetAuidoSessionCategory];
@@ -115,6 +123,23 @@
   AVAudioSession *session = [AVAudioSession sharedInstance];
   [session setActive:YES error:nil];
   [session setCategory:AVAudioSessionCategoryPlayback error:nil];
+}
+
+#pragma mark - rtc play
+- (void)playByRtc:(NSString *)path isRepeat:(BOOL)repeat {
+  [[NERtcEngine sharedEngine] stopAudioMixing];
+  NERtcCreateAudioMixingOption *option = [[NERtcCreateAudioMixingOption alloc] init];
+  option.path = path;
+  option.sendEnabled = NO;
+  option.playbackEnabled = YES;
+  option.playbackVolume = 100;
+  option.loopCount = 0;
+
+  [[NERtcEngine sharedEngine] startAudioMixingWithOption:option];
+}
+
+- (void)stopPlayByRtc {
+  [[NERtcEngine sharedEngine] stopAudioMixing];
 }
 
 #pragma mark - delegate

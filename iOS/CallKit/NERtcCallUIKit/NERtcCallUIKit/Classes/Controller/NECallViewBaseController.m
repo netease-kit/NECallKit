@@ -15,8 +15,6 @@
 
 @property(nonatomic, assign) CallRingType ringType;
 
-@property(nonatomic, assign) BOOL isReceiver;
-
 @end
 
 @implementation NECallViewBaseController
@@ -245,6 +243,10 @@
   [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
   [session setActive:YES error:nil];
   self.isReceiver = NO;
+}
+
+- (void)setCurrentAudioOutputToRTC {
+  [[NERtcEngine sharedEngine] setLoudspeakerMode:!self.isReceiver];
 }
 
 - (void)handleInterruption:(NSNotification *)notification {

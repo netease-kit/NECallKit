@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 #import "NEGroupUserController.h"
-#import <YXAlog_iOS/YXAlog.h>
+#import <NEXKitBase/NEXKitBase.h>
 #import "NECallUIKitMacro.h"
 #import "NEGroupUserViewCell.h"
 #import "NESectionHeaderView.h"
@@ -54,7 +54,7 @@
 }
 
 - (void)addUsers:(NSArray<NEGroupUser *> *)users {
-  YXAlogInfo(@"GroupUserController count : %lu", users.count);
+  NEXKitBaseLogInfo(@"GroupUserController count : %lu", users.count);
   [self.datas addObjectsFromArray:users];
   [self.collection reloadData];
   if (self.datas.count > 0 && self.hideHeaderSection == NO) {

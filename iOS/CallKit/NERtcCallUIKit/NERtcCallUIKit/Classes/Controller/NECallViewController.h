@@ -32,6 +32,8 @@ extern NSString *const kCallKitDismissNoti;
 
 - (void)changeRemoteMute:(BOOL)mute videoView:(NEVideoView *)remoteVideo;
 
+- (void)changeTitle:(BOOL)cameraMute videoView:(NEVideoView *)videoView;
+
 - (void)destroy;
 
 @end
