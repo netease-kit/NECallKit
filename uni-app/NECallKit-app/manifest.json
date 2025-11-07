@@ -58,15 +58,15 @@
         "nativePlugins" : {
             "netease-CallKit" : {
                 "__plugin_info__" : {
-                    "name" : "【最新官方】网易云信音视频通话插件（呼叫组件）netease-CallKit",
-                    "description" : "呼叫组件（netease-CallKit）网易云信官方推出的音视频通话插件，支持 1v1 通话和群组通话，并提供“类微信\"的 UI 交互。",
+                    "name" : "netease-CallKit",
+                    "description" : "网易云信音视频通话插件",
                     "platforms" : "Android,iOS",
-                    "url" : "https://ext.dcloud.net.cn/plugin?id=14739",
-                    "android_package_name" : "com.charles.demo.callkit",
-                    "ios_bundle_id" : "com.netease.yunxin.app.im.hawk",
-                    "isCloud" : true,
-                    "bought" : 1,
-                    "pid" : "14739",
+                    "url" : "",
+                    "android_package_name" : "",
+                    "ios_bundle_id" : "",
+                    "isCloud" : false,
+                    "bought" : -1,
+                    "pid" : "",
                     "parameters" : {}
                 }
             }

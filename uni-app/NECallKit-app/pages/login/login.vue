@@ -209,62 +209,10 @@
 
 <script>
 	// 首先需要通过 uni.requireNativePlugin("ModuleName") 获取 module
-	var callKit = uni.requireNativePlugin("netease-CallKit")
-	const callKitEvent = uni.requireNativePlugin('globalEvent');
+	var NECallKit = uni.requireNativePlugin("netease-CallKit")
+
 	// 导入配置文件
 	import AppConfig from '../../debug/AppConfig.js';
-
-	callKitEvent.addEventListener('onReceiveInvited', function(e) {
-		console.log('onReceiveInvited' + JSON.stringify(e));
-	});
-
-	callKitEvent.addEventListener('onCallConnected', function(e) {
-		console.log('onCallConnected' + JSON.stringify(e));
-		uni.showToast({
-			title: 'onCallConnected ' + JSON.stringify(e),
-			icon: "none"
-		});
-	});
-
-	callKitEvent.addEventListener('onCallTypeChange', function(e) {
-		console.log('onCallTypeChange' + JSON.stringify(e));
-		uni.showToast({
-			title: 'onCallTypeChange ' + JSON.stringify(e),
-			icon: "none"
-		});
-	});
-
-	callKitEvent.addEventListener('onCallEnd', function(e) {
-		console.log('onCallEnd' + JSON.stringify(e));
-		uni.showToast({
-			title: 'onCallEnd ' + JSON.stringify(e),
-			icon: "none"
-		});
-	});
-
-	callKitEvent.addEventListener('onVideoAvailable', function(e) {
-		console.log('onVideoAvailable' + JSON.stringify(e));
-		uni.showToast({
-			title: 'onVideoAvailable ' + JSON.stringify(e),
-			icon: "none"
-		});
-	});
-
-	callKitEvent.addEventListener('onVideoMuted', function(e) {
-		console.log('onVideoMuted' + JSON.stringify(e));
-		uni.showToast({
-			title: 'onVideoMuted ' + JSON.stringify(e),
-			icon: "none"
-		});
-	});
-
-	callKitEvent.addEventListener('onAudioMuted', function(e) {
-		console.log('onAudioMuted' + JSON.stringify(e));
-		uni.showToast({
-			title: 'onAudioMuted ' + JSON.stringify(e),
-			icon: "none"
-		});
-	});
 
 	export default {
 		data() {
@@ -338,7 +286,7 @@
 			async loginAPI() {
 				return new Promise((resolve) => {
 					console.log("loginAPI: ", this.accountId, this.token);
-					callKit.login({
+					NECallKit.login({
 						appKey: AppConfig.appKey,
 						account: this.accountId,
 						token: this.token,

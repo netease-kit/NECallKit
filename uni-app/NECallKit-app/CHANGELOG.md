@@ -1,4 +1,16 @@
 ## Changelog
+## [3.8.0] - 2025-11-06
+### New Features
+* Uniapp 群呼支持自定义rtcChannelName
+* Uniapp 支持推送配置
+* Uniapp 支持ai降噪开关
+
+### Bug Fixes
+* 更新相关 framework，修复 iOS 可能出现的上架问题
+
+### Compatibility
+* 兼容 Android `CallKit` 3.8.0 版本
+* 兼容 iOS`CallKit` 3.8.0 版本
 
 ## [3.7.0] - 2025-09-26
 ### New Features
