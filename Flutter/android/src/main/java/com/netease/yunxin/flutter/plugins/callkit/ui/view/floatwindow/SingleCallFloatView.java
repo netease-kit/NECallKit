@@ -71,8 +71,8 @@ public class SingleCallFloatView extends CallFloatView implements EventManager.I
   }
 
   @Override
-  public void destory() {
-    super.destory();
+  public void destroy() {
+    super.destroy();
     unRegisterObserver();
   }
 
@@ -107,7 +107,7 @@ public class SingleCallFloatView extends CallFloatView implements EventManager.I
         }
         mHadAccepted = true;
       } else {
-        destory();
+        destroy();
       }
       return;
     }
@@ -137,7 +137,7 @@ public class SingleCallFloatView extends CallFloatView implements EventManager.I
       if (CallState.getInstance().mSelfUser.callStatus == CallState.CallStatus.Accept) {
         mTextStatus.setVisibility(GONE);
         if (CallState.getInstance().mRemoteUserList.isEmpty()) {
-          destory();
+          destroy();
           return;
         }
         User remoteUser = CallState.getInstance().mRemoteUserList.get(0);
@@ -164,6 +164,6 @@ public class SingleCallFloatView extends CallFloatView implements EventManager.I
         return;
       }
     }
-    destory();
+    destroy();
   }
 }

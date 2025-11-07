@@ -21,7 +21,8 @@ class NECallKitWidget extends StatefulWidget {
   State<NECallKitWidget> createState() => _NECallKitWidgetState();
 }
 
-class _NECallKitWidgetState extends State<NECallKitWidget> {
+class _NECallKitWidgetState extends State<NECallKitWidget>
+    with WidgetsBindingObserver {
   static const String _tag = "NECallKitWidget";
   NEEventCallback? onCallEndCallBack;
 
@@ -29,6 +30,10 @@ class _NECallKitWidgetState extends State<NECallKitWidget> {
   void initState() {
     super.initState();
     CallKitUILog.i(_tag, 'NECallKitWidget initState');
+    WidgetsBinding.instance.addObserver(this);
+    if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+      CallManager.instance.startForegroundService();
+    }
     if (CallState.instance.selfUser.callStatus == NECallStatus.none) {
       Future.microtask(() {
         widget.close();
@@ -40,6 +45,15 @@ class _NECallKitWidgetState extends State<NECallKitWidget> {
       }
     };
     NEEventNotify().register(setStateEventOnCallEnd, onCallEndCallBack);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        CallState.instance.selfUser.callStatus != NECallStatus.none) {
+      CallManager.instance.startForegroundService();
+    }
+    super.didChangeAppLifecycleState(state);
   }
 
   @override
@@ -64,6 +78,7 @@ class _NECallKitWidgetState extends State<NECallKitWidget> {
   void dispose() {
     super.dispose();
     CallKitUILog.i(_tag, 'NECallKitWidget dispose');
+    WidgetsBinding.instance.removeObserver(this);
     NEEventNotify().unregister(setStateEventOnCallEnd, onCallEndCallBack);
     CallManager.instance.enableWakeLock(false);
   }

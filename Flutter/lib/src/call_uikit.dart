@@ -96,6 +96,12 @@ class NECallKitUI {
     return await CallManager.instance.enableFloatWindow(enable);
   }
 
+  /// 启用/禁用应用外悬浮窗（画中画）
+  /// 前提：需要先调用 enableFloatWindow(true)
+  Future<void> enableFloatWindowOutOfApp(bool enable) async {
+    return await CallManager.instance.enableFloatWindowOutOfApp(enable);
+  }
+
   Future<void> enableVirtualBackground(bool enable) async {
     return await CallManager.instance.enableVirtualBackground(enable);
   }

@@ -31,7 +31,7 @@ class CallState {
   List<String> calleeIdList = [];
   List<User> remoteUserList = [];
   NECallScene scene = NECallScene.singleCall;
-  NECallType mediaType = NECallType.audio;
+  NECallType callType = NECallType.audio;
   int timeCount = 0;
   int startTime = 0;
   Timer? _timer;
@@ -41,14 +41,18 @@ class CallState {
   bool isMicrophoneMute = false;
   bool isEnableSpeaker = false;
   bool enableFloatWindow = false;
+  bool enableFloatWindowOutOfApp = false;
   bool showVirtualBackgroundButton = false;
   bool enableBlurBackground = false;
   NetworkQualityHint networkQualityReminder = NetworkQualityHint.none;
 
-  bool isChangedBigSmallVideo = false;
+  bool isLocalViewBig = true;
   bool isOpenFloatWindow = false;
+  bool isIOSOpenFloatWindowOutOfApp = false;
   bool enableIncomingBanner = false;
   bool isInNativeIncomingBanner = false;
+
+  bool isStartForegroundService = false;
 
   final NECallEngineDelegate observer = NECallEngineDelegate(
     onReceiveInvited: (NEInviteInfo info) async {
@@ -88,7 +92,7 @@ class CallState {
         }
       }
     },
-    onCallEnd: (NECallEndInfo info) {
+    onCallEnd: (NECallEndInfo info) async {
       CallKitUILog.i(_tag,
           'NECallObserver onCallEnd(reasonCode:${info.reasonCode}, message:${info.message})');
       if (info.reasonCode == NECallTerminalCode.busy) {
@@ -99,28 +103,48 @@ class CallState {
           CallManager.instance
               .showToast(NECallKitUI.localizations.remoteUserReject);
         }
+      } else if (info.reasonCode == NECallTerminalCode.otherAccepted) {
+        CallManager.instance
+            .showToast(NECallKitUI.localizations.answerOnOtherDevice);
+      } else if (info.reasonCode == NECallTerminalCode.otherRejected) {
+        CallManager.instance
+            .showToast(NECallKitUI.localizations.rejectOnOtherDevice);
+      } else if (info.reasonCode == NECallTerminalCode.timeOut) {
+        if (CallState.instance.selfUser.callRole == NECallRole.caller) {
+          CallManager.instance
+              .showToast(NECallKitUI.localizations.remoteTimeout);
+        }
+      } else if (info.reasonCode == NECallTerminalCode.calleeCancel) {
+        CallManager.instance.showToast(NECallKitUI.localizations.remoteCancel);
       } else {
         CallKitUILog.i(_tag, 'NECallObserver onCallEnd: ${info.reasonCode}');
       }
       CallingBellFeature.stopRing();
-      if (CallState.instance.mediaType == NECallType.video &&
+      if (CallState.instance.callType == NECallType.video &&
           CallState.instance.isCameraOpen) {
         CallManager.instance.closeCamera();
       }
+
+      // 如果启用了应用外悬浮窗，清理画中画资源
+      if (Platform.isIOS &&
+          CallState.instance.enableFloatWindowOutOfApp &&
+          CallState.instance.enableFloatWindow) {
+        await NECallKitPlatform.instance.disposePIP();
+      }
+
       CallState.instance.cleanState();
       NEEventNotify().notify(setStateEventOnCallEnd);
       CallManager.instance.enableWakeLock(false);
       CallState.instance.stopTimer();
       NECallKitPlatform.instance.updateCallStateToNative();
     },
-    onCallConnected: (NECallInfo info) {
+    onCallConnected: (NECallInfo info) async {
       CallKitUILog.i(_tag,
           'NECallObserver onCallConnected(callId:${info.callId}, callType:${info.callType})');
-      NECallKitPlatform.instance.startForegroundService(info.callType);
       CallState.instance.startTime =
           DateTime.now().millisecondsSinceEpoch ~/ 1000;
       CallingBellFeature.stopRing();
-      CallState.instance.mediaType = info.callType;
+      CallState.instance.callType = info.callType;
       CallState.instance.selfUser.callStatus = NECallStatus.accept;
       if (CallState.instance.isMicrophoneMute) {
         CallManager.instance.closeMicrophone();
@@ -130,8 +154,22 @@ class CallState {
       CallManager.instance
           .setSpeakerphoneOn(CallState.instance.isEnableSpeaker);
       CallState.instance.startTimer();
-      CallState.instance.isChangedBigSmallVideo = true;
+      CallState.instance.isLocalViewBig = false;
       CallState.instance.isInNativeIncomingBanner = false;
+
+      CallKitUILog.i(_tag,
+          'NECallObserver onCallConnected: enableFloatWindowOutOfApp = ${CallState.instance.enableFloatWindowOutOfApp}, enableFloatWindow = ${CallState.instance.enableFloatWindow}');
+
+      // 如果启用了应用外悬浮窗，设置画中画
+      if (Platform.isIOS &&
+          CallState.instance.enableFloatWindowOutOfApp &&
+          CallState.instance.enableFloatWindow &&
+          CallState.instance.callType == NECallType.video) {
+        final success = await NECallKitPlatform.instance.setupPIP();
+        CallKitUILog.i(
+            _tag, 'NECallObserver onCallConnected: setupPIP result = $success');
+      }
+
       NEEventNotify().notify(setStateEvent);
       NEEventNotify().notify(setStateEventOnCallBegin);
       NECallKitPlatform.instance.updateCallStateToNative();
@@ -139,7 +177,7 @@ class CallState {
     onCallTypeChange: (NECallTypeChangeInfo info) {
       CallKitUILog.i(_tag,
           'NECallObserver onCallTypeChange(callType:${info.callType}, state:${info.state})');
-      CallState.instance.mediaType = info.callType;
+      CallState.instance.callType = info.callType;
       NEEventNotify().notify(setStateEvent);
       NECallKitPlatform.instance.updateCallStateToNative();
     },
@@ -159,6 +197,14 @@ class CallState {
       CallKitUILog.i(
           _tag, 'NECallObserver onVideoMuted(userId:$userID, muted:$muted)');
       // 处理视频静音逻辑
+      for (var remoteUser in CallState.instance.remoteUserList) {
+        if (remoteUser.id == userID) {
+          remoteUser.videoAvailable = !muted;
+          NEEventNotify().notify(setStateEvent);
+          NECallKitPlatform.instance.updateCallStateToNative();
+          return;
+        }
+      }
     },
     onAudioMuted: (bool muted, String userID) {
       CallKitUILog.i(
@@ -219,7 +265,7 @@ class CallState {
     CallState.instance.calleeIdList.clear();
     CallState.instance.calleeIdList.addAll(calleeIdList);
     // CallState.instance.groupId = groupId;
-    CallState.instance.mediaType = callMediaType;
+    CallState.instance.callType = callMediaType;
     CallState.instance.selfUser.callStatus = NECallStatus.waiting;
 
     // if (calleeIdList.isEmpty) {
@@ -239,7 +285,7 @@ class CallState {
     // }
     CallState.instance.scene = NECallScene.singleCall;
 
-    CallState.instance.mediaType = callMediaType;
+    CallState.instance.callType = callMediaType;
 
     CallState.instance.selfUser.callRole = NECallRole.called;
 
@@ -312,7 +358,7 @@ class CallState {
     CallState.instance.calleeList.clear();
     CallState.instance.calleeIdList.clear();
 
-    CallState.instance.mediaType = NECallType.audio;
+    CallState.instance.callType = NECallType.audio;
     CallState.instance.timeCount = 0;
     CallState.instance.groupId = '';
 
@@ -321,8 +367,14 @@ class CallState {
     CallState.instance.isCameraOpen = false;
     CallState.instance.isEnableSpeaker = false;
 
-    CallState.instance.isChangedBigSmallVideo = false;
+    CallState.instance.isLocalViewBig = true;
     CallState.instance.enableBlurBackground = false;
+
+    // 重置悬浮窗状态
+    CallState.instance.isOpenFloatWindow = false;
+    if (Platform.isIOS) {
+      CallState.instance.isIOSOpenFloatWindowOutOfApp = false;
+    }
   }
 
   bool isBadNetwork(NENetworkQuality quality) {

@@ -57,6 +57,10 @@ abstract class NECallKitPlatform extends PlatformInterface {
     await instance.requestFloatPermission();
   }
 
+  Future<bool> hasBackgroundStartPermission() async {
+    return await instance.hasBackgroundStartPermission();
+  }
+
   Future<bool> isAppInForeground() async {
     return await instance.isAppInForeground();
   }
@@ -108,5 +112,25 @@ abstract class NECallKitPlatform extends PlatformInterface {
 
   Future<bool> isSamsungDevice() async {
     return await instance.isSamsungDevice();
+  }
+
+  Future<void> startToPermissionSetting() async {
+    await instance.startToPermissionSetting();
+  }
+
+  Future<bool> setupPIP() async {
+    return await instance.setupPIP();
+  }
+
+  Future<void> disposePIP() async {
+    return await instance.disposePIP();
+  }
+
+  Future<bool> startPIP() async {
+    return await instance.startPIP();
+  }
+
+  Future<void> stopPIP() async {
+    return await instance.stopPIP();
   }
 }

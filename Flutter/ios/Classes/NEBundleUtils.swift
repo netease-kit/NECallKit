@@ -5,8 +5,8 @@
 import Foundation
 import UIKit
 
-class NEBundleUtils {
-  static func getBundleImage(name: String) -> UIImage? {
+@objc public class NEBundleUtils: NSObject {
+  @objc public static func getBundleImage(name: String) -> UIImage? {
     print("NEBundleUtils: Attempting to load image '\(name)'")
 
     // 方法1：直接从当前 Bundle 的 Assets 中加载

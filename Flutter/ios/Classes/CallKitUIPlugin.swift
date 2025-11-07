@@ -5,11 +5,16 @@
 import AVFoundation
 import Flutter
 import NERtcCallKit
+import os.log
 import UIKit
 
 @objc public class SwiftCallKitUIPlugin: NSObject, FlutterPlugin, NEBackToFlutterWidgetDelegate {
+  let tag: String = "SwiftCallKitUIPlugin"
+
   private var audioPlayer: AVAudioPlayer?
   private var registrar: FlutterPluginRegistrar?
+  /// OSLog 日志记录器
+  private static let logger = OSLog(subsystem: "com.netease.yunxin.app.party", category: "CallKitUIPlugin")
 
   /// 是否处于 Incoming 状态（内存存储）
   private var lckIsInIncomingState: Bool = false
@@ -17,8 +22,17 @@ import UIKit
   /// 当前通话状态
   private var currentCallStatus: NECallStatus = .none
 
+  /// 应用进入前台观察者
+  private var appForegroundObserver: NSObjectProtocol?
+
+  /// 应用进入后台观察者
+  private var appBackgroundObserver: NSObjectProtocol?
+
   @objc public static func register(with registrar: FlutterPluginRegistrar) {
-    print("CallKitUIPlugin: register called")
+    NEFLTCallUIKitLog.setupLog()
+    // 临时启用 OSLog（仅用于测试）
+    NEFLTCallUIKitLog.infoLog("SwiftCallKitUIPlugin", desc: "🔔 [CallKitUIPlugin] register called")
+
     let channel = FlutterMethodChannel(name: "call_kit_ui", binaryMessenger: registrar.messenger())
     let instance = SwiftCallKitUIPlugin()
     instance.registrar = registrar
@@ -33,11 +47,17 @@ import UIKit
     // 开始监听通话状态变化
     instance.registerObserveCallStatus()
 
-    print("CallKitUIPlugin: register completed")
+    // 开始监听应用进入前台
+    instance.setupAppForegroundObserver()
+
+    // 开始监听应用进入后台
+    instance.setupAppBackgroundObserver()
+
+    NEFLTCallUIKitLog.infoLog("SwiftCallKitUIPlugin", desc: "🔔 [CallKitUIPlugin] register completed")
   }
 
   @objc public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-    print("CallKitUIPlugin: handle method called - \(call.method)")
+    NEFLTCallUIKitLog.infoLog("SwiftCallKitUIPlugin", desc: "CallKitUIPlugin: handle method called - \(call.method)")
     switch call.method {
     case "getPlatformVersion":
       result("iOS " + UIDevice.current.systemVersion)
@@ -63,8 +83,16 @@ import UIKit
       handleEnableWakeLock(call, result: result)
     case "updateCallStateToNative":
       handleUpdateCallStateToNative(call, result: result)
+    case "setupPIP":
+      handleSetupPIP(result: result)
+    case "disposePIP":
+      handleDisposePIP(result: result)
+    case "startPIP":
+      handleStartPIP(result: result)
+    case "stopPIP":
+      handleStopPIP(result: result)
     default:
-      print("CallKitUIPlugin: method not implemented - \(call.method)")
+      NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: method not implemented - \(call.method)")
       result(FlutterMethodNotImplemented)
     }
   }
@@ -147,10 +175,8 @@ import UIKit
 
     if enable {
       UIApplication.shared.isIdleTimerDisabled = true
-      print("CallKitUIPlugin: Wake lock enabled")
     } else {
       UIApplication.shared.isIdleTimerDisabled = false
-      print("CallKitUIPlugin: Wake lock disabled")
     }
 
     result(true)
@@ -159,13 +185,13 @@ import UIKit
   // MARK: - Float Window Methods
 
   private func handleStartFloatWindow(result: @escaping FlutterResult) {
-    print("CallKitUIPlugin: startFloatWindow called")
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: startFloatWindow called")
     NEWindowManager.instance.showFloatWindow()
     result(true)
   }
 
   private func handleStopFloatWindow(result: @escaping FlutterResult) {
-    print("CallKitUIPlugin: stopFloatWindow called")
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: stopFloatWindow called")
     NEWindowManager.instance.closeFloatWindow()
     result(true)
   }
@@ -185,7 +211,7 @@ import UIKit
 
     // 如果处于 Incoming 状态，直接返回，此时使用lck自带铃声，不需要额外播放铃声
     if lckIsInIncomingState {
-      print("CallKitUIPlugin: Skipping startRing because in incoming state")
+      NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Skipping startRing because in incoming state")
       result(true)
       return
     }
@@ -200,7 +226,6 @@ import UIKit
       // 配置音频会话
       try AVAudioSession.sharedInstance().setCategory(.soloAmbient)
       try AVAudioSession.sharedInstance().setActive(true)
-
       // 创建音频播放器
       let url = URL(fileURLWithPath: filePath)
       audioPlayer = try AVAudioPlayer(contentsOf: url)
@@ -208,16 +233,16 @@ import UIKit
       audioPlayer?.volume = 1.0
       audioPlayer?.play()
 
-      print("CallKitUIPlugin: Started playing ring tone from \(filePath)")
+      NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Started playing ring tone from \(filePath)")
       result(true)
     } catch {
-      print("CallKitUIPlugin: Failed to start ring tone - \(error)")
+      NEFLTCallUIKitLog.errorLog(tag, desc: "CallKitUIPlugin: Failed to start ring tone - \(error.localizedDescription)")
       result(FlutterError(code: "PLAYBACK_ERROR", message: "Failed to start ring tone", details: error.localizedDescription))
     }
   }
 
   private func handleStopRing(result: @escaping FlutterResult) {
-    print("CallKitUIPlugin: stopRing called")
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: stopRing called")
     stopRing()
     result(true)
   }
@@ -234,22 +259,73 @@ import UIKit
     do {
       try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     } catch {
-      print("CallKitUIPlugin: Failed to deactivate audio session - \(error)")
+      NEFLTCallUIKitLog.errorLog(tag, desc: "CallKitUIPlugin: Failed to deactivate audio session - \(error.localizedDescription)")
     }
+  }
+
+  // MARK: - PIP Methods
+
+  /// 设置画中画 UI
+  private func handleSetupPIP(result: @escaping FlutterResult) {
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: setupPIP called")
+
+    if #available(iOS 15.0, *) {
+      NEWindowManager.instance.setupPIP { success in
+        if success {
+          NEFLTCallUIKitLog.infoLog(self.tag, desc: "CallKitUIPlugin: PIP setup successfully")
+        } else {
+          NEFLTCallUIKitLog.errorLog(self.tag, desc: "CallKitUIPlugin: PIP setup failed")
+        }
+        result(success)
+      }
+    } else {
+      result(false)
+    }
+  }
+
+  /// 清理画中画资源
+  private func handleDisposePIP(result: @escaping FlutterResult) {
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: disposePIP called")
+
+    if #available(iOS 15.0, *) {
+      NEWindowManager.instance.disposePIP()
+    }
+    result(true)
+  }
+
+  /// 启动视频渲染
+  private func handleStartPIP(result: @escaping FlutterResult) {
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: startPIP called (start video rendering)")
+
+    if #available(iOS 15.0, *) {
+      NEWindowManager.instance.startVideoRendering()
+      NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Start video rendering")
+      result(true)
+    } else {
+      result(false)
+    }
+  }
+
+  /// 停止视频渲染
+  private func handleStopPIP(result: @escaping FlutterResult) {
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: stopPIP called (stop video rendering)")
+
+    if #available(iOS 15.0, *) {
+      NEWindowManager.instance.stopVideoRendering()
+      NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Stop video rendering")
+    }
+    result(true)
   }
 
   // MARK: - Call State Methods
 
   private func handleUpdateCallStateToNative(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-    print("CallKitUIPlugin: Updating call state to native")
-
     guard let args = call.arguments as? [String: Any] else {
       result(FlutterError(code: "INVALID_ARGUMENTS", message: "Invalid arguments", details: nil))
       return
     }
 
     parseAndUpdateCallState(args)
-    print("CallKitUIPlugin: Call state updated successfully")
     result(true)
   }
 
@@ -268,7 +344,7 @@ import UIKit
       selfUser.viewID = selfUserData["viewID"] as? Int ?? 0
 
       NECallState.instance.selfUser.value = selfUser
-      print("CallKitUIPlugin: Self user updated - id: \(selfUser.id), status: \(selfUser.callStatus)")
+      NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Self user updated - id: \(selfUser.id), status: \(String(describing: selfUser.callStatus)) callRole: \(String(describing: selfUser.callRole))")
     }
 
     // 解析 remoteUserList，如果存在且不为空，取第一个元素赋值给 remoteUser
@@ -286,7 +362,7 @@ import UIKit
       remoteUser.viewID = firstRemoteUserData["viewID"] as? Int ?? 0
 
       NECallState.instance.remoteUser.value = remoteUser
-      print("CallKitUIPlugin: Remote user updated - id: \(remoteUser.id), status: \(remoteUser.callStatus)")
+      NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Remote user updated - id: \(remoteUser.id), status: \(String(describing: remoteUser.callStatus)), videoAvailable: \(String(describing: remoteUser.videoAvailable))")
     }
 
     if let mediaTypeIndex = args["mediaType"] as? Int {
@@ -306,13 +382,15 @@ import UIKit
       NECallState.instance.isMicrophoneMute.value = isMicrophoneMuteValue
     }
 
-    print("CallKitUIPlugin: Call state updated - mediaType: \(NECallState.instance.mediaType.value), isCameraOpen: \(NECallState.instance.isCameraOpen.value), isMicrophoneMute: \(NECallState.instance.isMicrophoneMute.value)")
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Call state updated - mediaType: \(String(describing: NECallState.instance.mediaType.value)), isCameraOpen: \(String(NECallState.instance.isCameraOpen.value)), isMicrophoneMute: \(String(NECallState.instance.isMicrophoneMute.value))")
   }
 
   @objc public func detachFromEngine(for registrar: FlutterPluginRegistrar) {
     stopRing() // 停止铃声播放
     stopListeningToIncomingState() // 停止监听状态变化
     unregisterObserveCallStatus() // 取消注册通话状态监听
+    removeAppForegroundObserver() // 移除应用前台观察者
+    removeAppBackgroundObserver() // 移除应用后台观察者
   }
 
   // MARK: - Live Communication Kit State Monitoring
@@ -325,13 +403,13 @@ import UIKit
       name: NSNotification.Name("NELiveCommunicationKitIncomingStateChanged"),
       object: nil
     )
-    print("CallKitUIPlugin: Started listening to Live Communication Kit state changes")
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Started listening to Live Communication Kit state changes")
   }
 
   /// 停止监听 Live Communication Kit 的 Incoming 状态变化
   private func stopListeningToIncomingState() {
     NotificationCenter.default.removeObserver(self)
-    print("CallKitUIPlugin: Stopped listening to Live Communication Kit state changes")
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Stopped listening to Live Communication Kit state changes")
   }
 
   /// 处理 Incoming 状态变化
@@ -340,8 +418,7 @@ import UIKit
           let lckIsInIncomingState = userInfo["lckIsInIncomingState"] as? Bool else {
       return
     }
-
-    print("CallKitUIPlugin: Live Communication Kit incoming state changed to \(lckIsInIncomingState)")
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Live Communication Kit incoming state changed to \(String(lckIsInIncomingState))")
 
     // 更新本地状态
     self.lckIsInIncomingState = lckIsInIncomingState
@@ -356,14 +433,14 @@ import UIKit
 
   /// 处理进入 LCK Incoming 状态
   private func handleLckEnterIncomingState() {
-    print("CallKitUIPlugin: Entered Live Communication Kit incoming state")
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Entered Live Communication Kit incoming state")
     // 停止铃声播放
     stopRing()
   }
 
   /// 处理退出 LCK Incoming 状态
   private func handleLckExitIncomingState() {
-    print("CallKitUIPlugin: Exited Live Communication Kit incoming state")
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Exited Live Communication Kit incoming state")
   }
 
   // MARK: - Call Status Monitoring
@@ -378,8 +455,7 @@ import UIKit
       if self.currentCallStatus == newUser.callStatus { return }
       let oldStatus = self.currentCallStatus
       self.currentCallStatus = newUser.callStatus
-
-      print("CallKitUIPlugin: Call status changed from \(oldStatus) to \(newUser.callStatus)")
+      NEFLTCallUIKitLog.infoLog(self.tag, desc: "CallKitUIPlugin: Call status changed from \(String(describing: oldStatus)) to \(String(describing: newUser.callStatus))")
 
       // 根据状态变化执行相应操作
       self.handleCallStatusChanged(from: oldStatus, to: newUser.callStatus)
@@ -395,15 +471,79 @@ import UIKit
   private func handleCallStatusChanged(from oldStatus: NECallStatus, to newStatus: NECallStatus) {
     // 只要不是 waiting 状态，就设置 lckIsInIncomingState 为 false
     if newStatus != .waiting {
-      print("CallKitUIPlugin: Live Communication Kit incoming state changed to false")
+      NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Live Communication Kit incoming state changed to false")
       lckIsInIncomingState = false
+    }
+  }
+
+  // MARK: - App Foreground Monitoring
+
+  /// 设置应用进入前台观察者
+  private func setupAppForegroundObserver() {
+    appForegroundObserver = NotificationCenter.default.addObserver(
+      forName: UIApplication.willEnterForegroundNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.handleAppWillEnterForeground()
+    }
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Setup app foreground observer")
+  }
+
+  /// 移除应用前台观察者
+  private func removeAppForegroundObserver() {
+    if let observer = appForegroundObserver {
+      NotificationCenter.default.removeObserver(observer)
+      appForegroundObserver = nil
+    }
+  }
+
+  /// 处理应用即将进入前台
+  private func handleAppWillEnterForeground() {
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: App will enter foreground, notifying Flutter")
+
+    // 调用 Flutter 端的 appEnterForeground 方法
+    if let registrar = registrar {
+      let channel = FlutterMethodChannel(name: "call_kit_ui", binaryMessenger: registrar.messenger())
+      channel.invokeMethod("appEnterForeground", arguments: nil)
+    }
+  }
+
+  /// 设置应用进入后台观察者
+  private func setupAppBackgroundObserver() {
+    appBackgroundObserver = NotificationCenter.default.addObserver(
+      forName: UIApplication.didEnterBackgroundNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.handleAppDidEnterBackground()
+    }
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Setup app background observer")
+  }
+
+  /// 移除应用后台观察者
+  private func removeAppBackgroundObserver() {
+    if let observer = appBackgroundObserver {
+      NotificationCenter.default.removeObserver(observer)
+      appBackgroundObserver = nil
+    }
+  }
+
+  /// 处理应用进入后台
+  private func handleAppDidEnterBackground() {
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: App did enter background, notifying Flutter")
+
+    // 调用 Flutter 端的 appEnterBackground 方法
+    if let registrar = registrar {
+      let channel = FlutterMethodChannel(name: "call_kit_ui", binaryMessenger: registrar.messenger())
+      channel.invokeMethod("appEnterBackground", arguments: nil)
     }
   }
 }
 
 extension SwiftCallKitUIPlugin {
   func backCallingPageFromFloatWindow() {
-    print("CallKitUIPlugin: backCallingPageFromFloatWindow called")
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: backCallingPageFromFloatWindow called")
     // 调用 Flutter 端的 backCallingPageFromFloatWindow 方法
     if let registrar = registrar {
       let channel = FlutterMethodChannel(name: "call_kit_ui", binaryMessenger: registrar.messenger())

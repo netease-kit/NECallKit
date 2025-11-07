@@ -52,6 +52,8 @@ class _HomePageRouteState extends State<HomePageRoute> {
     });
     getVersion();
     _requestNotificationPermissions();
+    // 页面显示时更新用户信息（昵称和头像）
+    updateUserInfo();
   }
 
   void _requestNotificationPermissions() async {
@@ -270,5 +272,37 @@ class _HomePageRouteState extends State<HomePageRoute> {
   Future<void> _addCallRecord(CallRecord record) async {
     CallKitUILog.i(_tag, "_addCallRecord: $record");
     await _callRecordService.addRecordToCurrentAccount(record);
+  }
+
+  /// 更新用户信息
+  Future<void> updateUserInfo() async {
+    final accountId = AuthManager().accountId;
+    if (accountId == null || accountId.isEmpty) {
+      CallKitUILog.i(_tag, "updateUserInfo: accountId is null or empty");
+      return;
+    }
+
+    try {
+      final userInfo =
+          await NimCore.instance.userService.getUserList([accountId]);
+      if (userInfo.data?.isNotEmpty ?? false) {
+        final user = userInfo.data?.first;
+        // 使用 AuthManager 的接口更新用户信息
+        AuthManager().updateUserInfo(
+          nickname: user?.name,
+          avatar: user?.avatar,
+        );
+        // 更新 UI（如果 widget 还在 mounted 状态）
+        if (mounted) {
+          setState(() {});
+        }
+        CallKitUILog.i(_tag,
+            "updateUserInfo: updated - nickname: ${user?.name}, avatar: ${user?.avatar}");
+      } else {
+        CallKitUILog.i(_tag, "updateUserInfo: userInfo data is empty");
+      }
+    } catch (e) {
+      CallKitUILog.i(_tag, "updateUserInfo: error - $e");
+    }
   }
 }

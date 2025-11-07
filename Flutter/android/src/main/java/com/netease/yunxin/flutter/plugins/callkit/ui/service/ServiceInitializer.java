@@ -68,8 +68,13 @@ public final class ServiceInitializer extends ContentProvider {
 
                 @Override
                 public void onActivityStopped(Activity activity) {
-                  foregroundActivities--;
                   isChangingConfiguration = activity.isChangingConfigurations();
+                  foregroundActivities--;
+                  if (foregroundActivities == 0 && !isChangingConfiguration) {
+                    EventManager.getInstance()
+                        .notifyEvent(
+                            Constants.KEY_CALLKIT_PLUGIN, Constants.SUB_KEY_ENTER_BACKGROUND, null);
+                  }
                 }
 
                 @Override

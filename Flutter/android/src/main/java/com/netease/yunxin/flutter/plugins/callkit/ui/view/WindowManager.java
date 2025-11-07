@@ -4,12 +4,18 @@
 
 package com.netease.yunxin.flutter.plugins.callkit.ui.view;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
+import android.text.TextUtils;
 import com.netease.yunxin.flutter.plugins.callkit.ui.CallKitUIPlugin;
 import com.netease.yunxin.flutter.plugins.callkit.ui.event.EventManager;
+import com.netease.yunxin.flutter.plugins.callkit.ui.service.AudioCallForegroundService;
 import com.netease.yunxin.flutter.plugins.callkit.ui.service.ServiceInitializer;
+import com.netease.yunxin.flutter.plugins.callkit.ui.service.VideoCallForegroundService;
 import com.netease.yunxin.flutter.plugins.callkit.ui.state.CallState;
 import com.netease.yunxin.flutter.plugins.callkit.ui.state.User;
 import com.netease.yunxin.flutter.plugins.callkit.ui.utils.CallUILog;
@@ -19,18 +25,124 @@ import com.netease.yunxin.flutter.plugins.callkit.ui.utils.FloatWindowsPermissio
 import com.netease.yunxin.flutter.plugins.callkit.ui.view.floatwindow.FloatWindowService;
 import com.netease.yunxin.flutter.plugins.callkit.ui.view.incomingfloatwindow.IncomingFloatView;
 import com.netease.yunxin.flutter.plugins.callkit.ui.view.incomingfloatwindow.IncomingNotificationView;
+import com.netease.yunxin.kit.call.p2p.model.NECallType;
+import java.util.List;
 
 public class WindowManager {
 
   public static boolean showFloatWindow(Context context) {
     if (FloatWindowsPermission.hasPermission(FloatWindowsPermission.FLOAT_PERMISSION)) {
+      // 检查 Service 是否已经在运行，避免重复启动
+      if (isServiceRunning(context, FloatWindowService.class.getName())) {
+        CallUILog.i(CallKitUIPlugin.TAG, "FloatWindowService is already running");
+        return true;
+      }
+
+      // 检查是否有前台服务在运行（通话服务）
+      boolean hasForegroundService =
+          isServiceRunning(context, AudioCallForegroundService.class.getName())
+              || isServiceRunning(context, VideoCallForegroundService.class.getName());
+
+      // 检查通话状态
+      CallState callState = CallState.getInstance();
+      boolean isCallInProgress =
+          callState != null
+              && callState.mSelfUser != null
+              && callState.mSelfUser.callStatus != null
+              && callState.mSelfUser.callStatus != CallState.CallStatus.None;
+
+      // 在 MIUI 设备上，如果通话在进行但没有前台服务，先启动前台服务
+      // 这样可以避免 MIUI powerkeeper 的后台限制（RUN_ANY_IN_BACKGROUND）
+      if (isCallInProgress && !hasForegroundService) {
+        CallUILog.i(
+            CallKitUIPlugin.TAG,
+            "Call in progress but no foreground service, start foreground service first");
+        // 根据通话类型启动对应的前台服务
+        if (callState.mMediaType == NECallType.VIDEO) {
+          VideoCallForegroundService.start(context);
+        } else {
+          AudioCallForegroundService.start(context);
+        }
+        // 延迟启动悬浮窗 Service，给前台服务启动时间（避免阻塞主线程）
+        new Handler(Looper.getMainLooper())
+            .postDelayed(
+                () -> {
+                  try {
+                    Intent mStartIntent = new Intent(context, FloatWindowService.class);
+                    context.startService(mStartIntent);
+                  } catch (Exception e) {
+                    CallUILog.e(
+                        CallKitUIPlugin.TAG,
+                        "Failed to start FloatWindowService: " + e.getMessage());
+                  }
+                },
+                150);
+        return true;
+      }
+
+      // 如果应用在后台且没有前台服务，先确保应用在前台，避免 MIUI 后台限制
+      if (!hasForegroundService && !ServiceInitializer.isAppInForeground(context)) {
+        CallUILog.i(
+            CallKitUIPlugin.TAG,
+            "App in background, ensure app is in foreground before starting float window");
+        // 先启动主 Activity，确保应用在前台
+        launchMainActivity(context);
+        // 延迟启动 Service，给 Activity 启动时间
+        new Handler(Looper.getMainLooper())
+            .postDelayed(
+                () -> {
+                  try {
+                    Intent mStartIntent = new Intent(context, FloatWindowService.class);
+                    context.startService(mStartIntent);
+                  } catch (Exception e) {
+                    CallUILog.e(
+                        CallKitUIPlugin.TAG,
+                        "Failed to start FloatWindowService: " + e.getMessage());
+                  }
+                },
+                200);
+        return true;
+      }
+
       Intent mStartIntent = new Intent(context, FloatWindowService.class);
-      context.startService(mStartIntent);
-      return true;
+      // 参考腾讯实现：直接使用 startService，悬浮窗 Service 不需要前台通知
+      // 使用 startService 可以避免 startForegroundService 必须在 5 秒内调用 startForeground() 的限制
+      try {
+        context.startService(mStartIntent);
+        return true;
+      } catch (Exception e) {
+        CallUILog.e(CallKitUIPlugin.TAG, "Failed to start FloatWindowService: " + e.getMessage());
+        return false;
+      }
     } else {
       FloatWindowsPermission.requestFloatPermission();
       return false;
     }
+  }
+
+  /** 检查 Service 是否正在运行 */
+  private static boolean isServiceRunning(Context context, String className) {
+    if (context == null || TextUtils.isEmpty(className)) {
+      return false;
+    }
+    try {
+      ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+      if (am == null) {
+        return false;
+      }
+      List<ActivityManager.RunningServiceInfo> info = am.getRunningServices(0x7FFFFFFF);
+      if (info == null || info.size() == 0) {
+        return false;
+      }
+      for (ActivityManager.RunningServiceInfo aInfo : info) {
+        if (className.equals(aInfo.service.getClassName())) {
+          return true;
+        }
+      }
+    } catch (Exception e) {
+      CallUILog.e(CallKitUIPlugin.TAG, "Failed to check service status: " + e.getMessage());
+    }
+    return false;
   }
 
   public static void closeFloatWindow(Context context) {

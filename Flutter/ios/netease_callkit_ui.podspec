@@ -28,10 +28,11 @@ callkit Flutter project.
   # Flutter.framework does not contain a i386 slice.
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'i386' }
   s.swift_version = '5.0'
-  s.dependency 'NERtcCallKit/FCS_Special','3.7.1'
+  s.dependency 'NERtcCallKit/FCS_Special','3.8.0'
   s.dependency 'NERtcSDK','5.9.10'
+
   s.dependency 'SnapKit'
   s.dependency 'SDWebImage'
-
+  s.dependency "NEDyldYuv1"
 
 end
