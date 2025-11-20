@@ -31,6 +31,6 @@
   "answerOnOtherDevice": "其他端已经接听",
   "rejectOnOtherDevice": "其他端已经拒绝",
   "remoteUserReject": "对方已经拒绝",
-  "remoteTimeout": "对方超时未响应"
+  "remoteTimeout": "对方超时未响应",
   "remoteCancel": "对方取消"
 }
