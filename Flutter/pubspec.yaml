@@ -1,6 +1,7 @@
 name: netease_callkit_ui
 description: "netease callkit_ui is a ui kit about audio&video calls launched by CommsEase."
 version: 3.8.0
+repository: https://github.com/netease-kit/NECallKit
 homepage: https://yunxin.163.com/
 #publish_to: none
 
