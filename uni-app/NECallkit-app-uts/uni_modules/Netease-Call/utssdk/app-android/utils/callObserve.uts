@@ -1,0 +1,72 @@
+import List from 'kotlin.collections.List';
+import Map from 'kotlin.collections.Map';
+
+import NECallEngineDelegate from 'com.netease.yunxin.kit.call.p2p.model.NECallEngineDelegate';
+import NEInviteInfo from 'com.netease.yunxin.kit.call.p2p.model.NEInviteInfo';
+import NECallInfo from 'com.netease.yunxin.kit.call.p2p.model.NECallInfo';
+import NECallTypeChangeInfo from 'com.netease.yunxin.kit.call.p2p.model.NECallTypeChangeInfo';
+import NECallEndInfo from 'com.netease.yunxin.kit.call.p2p.model.NECallEndInfo';
+import FloatingWindowObserver from 'com.netease.yunxin.nertc.ui.floating.FloatingWindowObserver';
+
+import { NAME } from './const.uts';
+
+export type ICallObserve = {
+  listener : (eventType : string, data : any) => void
+}
+export class CallEngineObserver extends NECallEngineDelegate {
+  private listener : (eventType : string, data : any) => void;
+
+  constructor(options : ICallObserve) {
+    super();
+    this.listener = options.listener;
+    console.log(`${NAME.PREFIX} CallEngineObserver ok`);
+  }
+  
+  override onReceiveInvited(info: NEInviteInfo) {
+    console.log(`${NAME.PREFIX} onCallReceived ${JSON.stringify(info)}`);
+    this.listener('onCallReceived', { info: info});
+  }
+  
+  override onCallConnected(info: NECallInfo) {
+    console.log(`${NAME.PREFIX} onCallConnected ${JSON.stringify(info)}`);
+    this.listener('onCallConnected', { info: info});
+  }
+  
+  override onCallTypeChange(info: NECallTypeChangeInfo) {
+    console.log(`${NAME.PREFIX} onCallTypeChange ${JSON.stringify(info)}`);
+    this.listener('onCallTypeChange', { info: info});
+  }
+  
+  override onCallEnd(info: NECallEndInfo) {
+    console.log(`${NAME.PREFIX} onCallEnd ${JSON.stringify(info)}`);
+    this.listener('onCallEnd', { info: info});
+  }
+  
+  override onVideoAvailable(userId: string, available: boolean) {
+    console.log(`${NAME.PREFIX} onVideoAvailable ${JSON.stringify({userId: userId, available: available})}`);
+    this.listener('onVideoAvailable', { userId: userId, available: available});
+  }
+  
+  override onVideoMuted(userId: string, mute: boolean) {
+    console.log(`${NAME.PREFIX} onVideoMuted ${JSON.stringify({userId: userId, mute: mute})}`);
+    this.listener('onVideoMuted', { userId: userId, mute: mute});
+  }
+  
+  override onAudioMuted(userId: string, mute: boolean) {
+    console.log(`${NAME.PREFIX} onAudioMuted ${JSON.stringify({userId: userId, mute: mute})}`);
+    this.listener('onAudioMuted', { userId: userId, mute: mute});
+  }
+}
+
+export class CallFloatWindowObserver implements FloatingWindowObserver {
+  private listener : (eventType : string, data : any) => void;
+
+  constructor(options : ICallObserve) {
+    this.listener = options.listener;
+    console.log(`${NAME.PREFIX} CallFloatWindowObserver ok`);
+  }
+
+  override onFloatWindowClick() {
+    this.listener('onFloatWindowClick', {});
+  }
+}

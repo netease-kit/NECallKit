@@ -1,0 +1,61 @@
+<template>
+  <view class="btn" @tap="handleSwitchCamera">
+    <image class="btn-img" :style="[style]" :src="SWITCH_CAMERA_SRC"></image>
+    <text class="btn-text" v-if="isShowText">
+      {{ t("switch camera") }}
+    </text>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { computed, ref } from "vue";
+import { t } from "../../callServices/locales";
+import SWITCH_CAMERA_SRC from "../assets/switch-camera.png";
+
+const isFrontCamera = ref<boolean>(true);
+
+const props = defineProps({
+  size: {
+    type: Number,
+    default: 40,
+  },
+  isShowText: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const style = computed(() => ({
+  width: props.size + "px",
+  height: props.size + "px",
+}));
+
+const handleSwitchCamera = () => {
+  if (isFrontCamera.value) {
+    uni.$NECallKit.switchCamera(1);
+  } else {
+    uni.$NECallKit.switchCamera(0);
+  }
+  isFrontCamera.value = !isFrontCamera.value;
+};
+</script>
+
+<style scoped>
+.btn {
+  margin: 0px 5px;
+}
+
+.btn-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 140px;
+}
+
+.btn-text {
+  font-size: 12px;
+  color: #fff;
+  font-weight: 400;
+  text-align: center;
+  margin-top: 10px;
+}
+</style>

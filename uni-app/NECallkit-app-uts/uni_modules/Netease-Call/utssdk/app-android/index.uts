@@ -1,0 +1,417 @@
+import Context from 'android.content.Context';
+import Intent from "android.content.Intent";
+
+import NECallBridge from 'com.netease.yunxin.nertc.ui.hybird.CallKitBridge';
+import NECallEngine from 'com.netease.yunxin.kit.call.p2p.NECallEngine';
+import NECallEngineDelegate from 'com.netease.yunxin.kit.call.p2p.model.NECallEngineDelegate';
+import NECallInfo from 'com.netease.yunxin.kit.call.p2p.model.NECallInfo';
+import NECallConfig from 'com.netease.yunxin.kit.call.p2p.model.NECallConfig';
+import NEHangupParam from 'com.netease.yunxin.kit.call.p2p.param.NEHangupParam';
+import NESwitchParam from 'com.netease.yunxin.kit.call.p2p.param.NESwitchParam';
+import IVideoRender from 'com.netease.lava.api.IVideoRender';
+import NERtcAudioAINSMode from 'com.netease.lava.nertc.sdk.audio.NERtcAudioAINSMode';
+import NERecordProvider from 'com.netease.yunxin.kit.call.p2p.model.NERecordProvider';
+import CallUIFloatingWindowMgr from 'com.netease.yunxin.nertc.ui.p2p.CallUIFloatingWindowMgr';
+import PermissionRequester from 'com.netease.yunxin.nertc.ui.permission.PermissionRequester';
+import FloatWindowManager from 'com.netease.yunxin.nertc.ui.hybird.FloatingWindowManager';
+
+import {
+  InitParams,
+  LoginParams,
+  CallParams,
+  CallbackParams,
+  AcceptParams,
+  HangupParams,
+  SwitchCallTypeParams,
+  PermissionOptions,
+} from "../interface.uts";
+import {
+  CallbackVoid,
+  CallbackNECallInfo,
+  CallResultObserver,
+  CallResultVoidObserver,
+  ICallback,
+  ICallObserve,
+  CallEngineObserver,
+  CallFloatWindowObserver,
+  NAME,
+  ParamsCovert,
+  isIMLogined
+} from "./utils/index.uts";
+
+const context: Context = UTSAndroid.getAppContext() as Context;
+
+const listenerMap = new Map<string, Array<(res: any) => void>>();
+
+export class CallEngine {
+  callBridge: NECallBridge;
+  callObserver: NECallEngineDelegate;
+  floatWindowObserver: CallFloatWindowObserver;
+
+  constructor() {
+    console.log(`${NAME.PREFIX} constructor.start`);
+    const callObserve: ICallObserve = {
+      listener: (eventName: string, data: any) => {
+        console.log(`${NAME.PREFIX} callObserve listener ${eventName}`);
+        listenerMap.get(eventName)?.forEach((cb) => {
+          cb(data);
+        });
+      },
+    };
+    this.callBridge = NECallBridge.instance;
+    this.callObserver = new CallEngineObserver(callObserve);
+    this.floatWindowObserver = new CallFloatWindowObserver(callObserve);
+  }
+  
+  public setup(param: InitParams) {
+    console.log(`setup param: ${JSON.stringify(param)}`);
+    let currentUserRtcUid: Long = 0;
+    if (param.params != null) {
+      let uidValue = param.params.getNumber("currentUserRtcUid");
+      if (uidValue != null) {
+        currentUserRtcUid = uidValue.toLong();
+      }
+    }
+    this.callBridge.init(UTSAndroid.getAppContext() as Context, param.appKey, "UniApp-uts", "dcloud", currentUserRtcUid);
+    
+    let errorRes = new UTSJSONObject();
+    errorRes.set("code", 200);
+    errorRes.set("message", "success");
+    
+    param?.success?.();
+  }
+  
+  public login (param: LoginParams) {
+    console.log(`${NAME.PREFIX} login.start, data: ${JSON.stringify(param)}`);
+    const cb: ICallback = {
+      apiName: "login",
+      success: () => {
+        param?.success?.();
+      },
+      fail: (errCode: number, errMsg: string) => {
+        param?.fail?.(errCode, errMsg);
+      },
+    };
+    
+    this.callBridge.login(param.accountId, param.token, new CallbackVoid(cb));
+  }
+  
+  public logout(param: CallbackParams) : void {
+    console.log(
+      `${NAME.PREFIX} logout.start, data: ${JSON.stringify(param)}`
+    );
+    const cb: ICallback = {
+      apiName: "logout",
+      success: () => {
+        param?.success?.();
+      },
+      fail: (errCode: number, errMsg: string) => {
+        param?.fail?.(errCode, errMsg);
+      },
+    };
+    this.callBridge.logout(new CallbackVoid(cb));
+  }
+  
+  public call(param: CallParams) {
+    console.log(`${NAME.PREFIX} call.start, data: ${JSON.stringify(param)}`);
+    if (!isIMLogined()) {
+      param?.fail?.(-1, "please call login method first");
+      return;
+    }
+    
+    const callParams = ParamsCovert.covertCallPrams(param.accountId, param.callType, param.params);
+    if (callParams == null) {
+      param?.fail?.(-1, "invalid call params");
+      return;
+    }
+    
+    const cb: ICallback = {
+      apiName: "call",
+      success: () => {
+        param?.success?.();
+      },
+      fail: (errCode: number, errMsg: string) => {
+        param?.fail?.(errCode, errMsg);
+      },
+    };
+    this.callBridge.call(callParams, new CallbackNECallInfo(cb));
+  }
+
+	/**
+	 * 接受当前通话
+	 */
+  public accept(param?: AcceptParams) {
+    console.log(`${NAME.PREFIX} accept.start, data: ${param}`);
+    const cb: ICallback = {
+      apiName: "accept",
+      success: () => {
+        console.log(`${NAME.PREFIX} accept success`);
+        param?.success?.();
+      },
+      fail: (errCode: number, errMsg: string) => {
+        console.error(`${NAME.PREFIX} accept fail, code: ${errCode}, msg: ${errMsg}`);
+        param?.fail?.(errCode, errMsg);
+      },
+    };
+    this.callBridge.accept(new CallbackNECallInfo(cb));
+  }
+  
+  
+  /**
+   * 挂断当前通话
+   */
+  public hangup(param: HangupParams): void {
+    console.log(`${NAME.PREFIX} hangup.start, data: ${JSON.stringify(param)}`);
+    const hangupParam = new NEHangupParam();
+    
+    const cb: ICallback = {
+      apiName: "hangup",
+      success: () => {
+        console.log(`${NAME.PREFIX} hangup success`);
+        param?.success?.();
+      },
+      fail: (errCode: number, errMsg: string) => {
+        console.error(`${NAME.PREFIX} hangup fail, code: ${errCode}, msg: ${errMsg}`);
+        param?.fail?.(errCode, errMsg);
+      },
+    };
+    this.callBridge.hangup(hangupParam, new CallbackVoid(cb));
+  }
+  
+  /**
+   * 视频通话中转为音频通话
+   */
+  public switchCallType(param: SwitchCallTypeParams): void {
+    console.log(`${NAME.PREFIX} switchCallType.start, callType: ${param.callType}`);
+    const switchParam = new NESwitchParam(param.callType as Int, param.state as Int);
+
+    const cb: ICallback = {
+      apiName: "switchCallType",
+      success: () => {
+        console.log(`${NAME.PREFIX} switchCallType success`);
+        param?.success?.();
+      },
+      fail: (errCode: number, errMsg: string) => {
+        console.error(`${NAME.PREFIX} switchCallType fail, code: ${errCode}, msg: ${errMsg}`);
+        param?.fail?.(errCode, errMsg);
+      },
+    };
+    this.callBridge.switchCallType(switchParam, new CallbackVoid(cb));
+  }
+
+  /**
+   * 设置呼叫超时时间
+   */
+  public setTimeout(millisecond: number): void {
+    console.log(`${NAME.PREFIX} setTimeout, millisecond: ${millisecond}`);
+    this.callBridge.setTimeout(millisecond.toLong());
+  }
+  
+  /**
+   * 开始悬浮窗
+   */
+  public startFloatWindow(options: CallbackParams) {
+    console.log(`${NAME.PREFIX} startFloatWindow`);
+    this.callBridge.startFloatWindow(UTSAndroid.getUniActivity() as Context);
+    const floatPermission = PermissionRequester.newInstance(
+      PermissionRequester.FLOAT_PERMISSION
+    ).has();
+    if (floatPermission) {
+      options?.success?.();
+      console.log(`${NAME.PREFIX} startFloatWindow.success`);
+    } else {
+      options?.fail?.(0, "");
+      console.error(`${NAME.PREFIX} startFloatWindow.fail`);
+    }
+    FloatWindowManager.addFloatWindowObserver(this.floatWindowObserver);
+  }
+  
+  /**
+   * 开始悬浮窗
+   */
+  public stopFloatWindow() {
+    console.log(`${NAME.PREFIX} stopFloatWindow`);
+    this.callBridge.stopFloatWindow();
+  }
+
+  /**
+   * 开启摄像头
+   */
+  public enableLocalVideo(enable: boolean): number {
+    console.log(`${NAME.PREFIX} enableLocalVideo, enable: ${enable}`);
+	return Number.from(this.callBridge.enableLocalVideo(enable));
+  }
+
+  /**
+   * 开启/关闭视频采集
+   */
+  public muteLocalVideo(mute: boolean): number {
+    console.log(`${NAME.PREFIX} muteLocalVideo, mute: ${mute}`);
+    return Number.from(this.callBridge.muteLocalVideo(mute));
+  }
+
+  /**
+   * 静音本地音频采集
+   */
+  public muteLocalAudio(mute: boolean): number {
+    console.log(`${NAME.PREFIX} muteLocalAudio, mute: ${mute}`);
+    return Number.from(this.callBridge.muteLocalAudio(mute));
+  }
+
+  /**
+   * 设置话单控制
+   */
+  public setCallRecordProvider(recordProvider: NERecordProvider): void {
+    console.log(`${NAME.PREFIX} setCallRecordProvider`);
+    const engine = NECallEngine.sharedInstance();
+    engine.setCallRecordProvider(recordProvider);
+  }
+
+  /**
+   * 切换摄像头（前置/后置）
+   * @param camera 摄像头类型，0=前置，1=后置
+   */
+  public switchCamera(camera: number) {
+    console.log(`${NAME.PREFIX} switchCamera.start, data: ${camera}`);
+    this.callBridge.switchCamera(camera as Int);
+  }
+
+  /**
+   * 获取扬声器是否开启
+   */
+  public isSpeakerphoneOn(): boolean {
+	console.log(`${NAME.PREFIX} isSpeakerphoneOn`);
+    return this.callBridge.isSpeakerphoneOn();
+  }
+
+  /**
+   * 设置扬声器开关
+   */
+  public setSpeakerphoneOn(enable: boolean): number {
+    console.log(`${NAME.PREFIX} setSpeakerphoneOn, enable: ${enable}`);
+    return Number.from(this.callBridge.setSpeakerphoneOn(enable));
+  }
+
+  /**
+   * 设置呼叫时的配置参数
+   */
+  public setCallConfig(config: NECallConfig): void {
+    console.log(`${NAME.PREFIX} setCallConfig`);
+    this.callBridge.setCallConfig(config);
+  }
+
+  /**
+   * 获取呼叫时的配置参数
+   */
+  public getCallConfig(): NECallConfig | null {
+	console.log(`${NAME.PREFIX} getCallConfig`);
+    return this.callBridge.getCallConfig();
+  }
+
+  /**
+   * 通话过程中获取通话信息
+   */
+  public getCallInfo(): NECallInfo | null {
+    console.log(`${NAME.PREFIX} getCallInfo`);
+    return this.callBridge.getCallInfo();
+  }
+
+  /**
+   * 设置AI降噪模式
+   */
+  public setAINSMode(mode: NERtcAudioAINSMode): number {
+    console.log(`${NAME.PREFIX} setAINSMode, mode: ${mode}`);
+    return Number.from(this.callBridge.setAINSMode(mode));
+  }
+
+  /**
+   * 组件销毁
+   */
+  public destroy(): void {
+    console.log(`${NAME.PREFIX} destroy`);
+    this.callBridge.destroy();
+  }
+  
+  /**
+   * 检查权限
+   * @param options 权限选项，包含类型（1=音频，2=视频）和回调函数
+   */
+  public hasPermission(options: PermissionOptions): void {
+    console.log(
+      `${NAME.PREFIX} hasPermission.start, data: ${JSON.stringify(options)}`
+    );
+    const cb: ICallback = {
+      apiName: "hasPermission",
+      success: () => {
+        console.log(`${NAME.PREFIX} hasPermission success`);
+        options?.success?.();
+      },
+      fail: (errCode: number, errMsg: string) => {
+        console.error(`${NAME.PREFIX} hasPermission fail, code: ${errCode}, msg: ${errMsg}`);
+        options?.fail?.(errCode, errMsg);
+      },
+    };
+    this.callBridge.hasPermission(UTSAndroid.getAppContext() as Context, options.type.toInt(), new CallbackVoid(cb));
+  }
+  
+  public startService(callType: number): void {
+	  console.log(
+	    `${NAME.PREFIX} startService.start, data: ${JSON.stringify(callType)}`
+	  );
+    this.callBridge.startForegroundService(UTSAndroid.getAppContext() as Context, callType as Int, "", "");
+  }
+  
+  public stopService(callType: number): void {
+    console.log(
+      `${NAME.PREFIX} stopService.start, data: ${JSON.stringify(callType)}`
+    );
+    this.callBridge.stopForegroundService(UTSAndroid.getAppContext() as Context);
+  }
+
+  /**
+   * 获取当前版本号
+   */
+  public static getVersion(): string {
+    return NECallBridge.getVersion();
+  }
+
+  public bringAppToForeground() {
+    console.log(
+      `${
+        NAME.PREFIX
+      } bringAppToForeground.start, data: ${UTSAndroid.getAppContext()} | ${
+        UTSAndroid.getUniActivity()!.javaClass
+      }`
+    );
+    const intent = new Intent(
+      UTSAndroid.getAppContext()!,
+      UTSAndroid.getUniActivity()!.javaClass
+    );
+    intent.addFlags(
+      Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+    );
+    UTSAndroid.getUniActivity()!.startActivity(intent);
+  }
+
+  @UTSJS.keepAlive
+  public on(eventName: string, listener: (res: any) => void): void {
+    if (listenerMap.size === 0) {
+      NECallEngine.sharedInstance().addCallDelegate(this.callObserver);
+    }
+    const listeners: Array<(res: any) => void> = [listener];
+    listenerMap.get(eventName)?.forEach((item) => {
+      listeners.push(item);
+    });
+    listenerMap.set(eventName, listeners);
+  }
+
+  public off(eventName: string): void {
+    listenerMap.delete(eventName);
+    if (listenerMap.size === 0) {
+      NECallEngine.sharedInstance().removeCallDelegate(this.callObserver);
+      FloatWindowManager.removeFloatWindowObserver(
+        this.floatWindowObserver
+      );
+    }
+  }
+}

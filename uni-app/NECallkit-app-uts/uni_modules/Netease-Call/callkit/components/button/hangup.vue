@@ -1,0 +1,54 @@
+<template>
+  <view class="btn" @tap="handleHangup">
+    <image class="btn-img" :style="[style]" :src="HANGUP_SRC"></image>
+    <text class="btn-text" v-if="isShowText">
+      {{ t("hangup") }}
+    </text>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { computed } from "vue";
+import { t } from "../../callServices/locales";
+import HANGUP_SRC from "../assets/hangup.png";
+
+const props = defineProps({
+  size: {
+    type: Number,
+    default: 75,
+  },
+  isShowText: {
+    type: Boolean,
+    default: true,
+  },
+});
+
+const style = computed(() => ({
+  width: props.size + "px",
+  height: props.size + "px",
+}));
+
+const handleHangup = () => {
+  uni.$NECallKit.hangup();
+};
+</script>
+
+<style scoped>
+.btn {
+  margin: 0px 15px;
+}
+
+.btn-img {
+  width: 75px;
+  height: 75px;
+  border-radius: 140px;
+}
+
+.btn-text {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 400;
+  text-align: center;
+  margin-top: 10px;
+}
+</style>

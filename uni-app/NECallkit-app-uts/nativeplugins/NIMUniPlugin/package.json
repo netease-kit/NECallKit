@@ -1,0 +1,70 @@
+{
+  "name": "NIMUniPlugin",
+  "id": "NIMUniPlugin",
+  "version": "1.1.3",
+  "git": "3ff8678",
+  "buildAt": "7/21/2025, 10:17:00 AM",
+  "description": "uni消息推送插件",
+  "_dp_type": "nativeplugin",
+  "_dp_nativeplugin": {
+    "android": {
+      "plugins": [
+        {
+          "type": "module",
+          "name": "NIMUniPlugin-PluginModule",
+          "class": "com.netease.nimlib.uniapp.push.PushModule"
+        }
+      ],
+      "hooksClass": "com.netease.nimlib.uniapp.push.PushModule",
+      "integrateType": "aar",
+      "dependencies": [
+        "com.huawei.hms:push:6.9.0.300",
+        "com.meizu.flyme.internet:push-internal:4.2.3",
+        "com.google.android.gms:play-services-base:18.2.0",
+        "com.google.firebase:firebase-messaging:23.1.2",
+        "com.google.firebase:firebase-core:21.1.1",
+        "com.google.code.gson:gson:2.6.2",
+        "commons-codec:commons-codec:1.6",
+        "com.netease.nimlib:basesdk:9.16.1",
+        "com.netease.nimlib:push:9.16.1"
+      ],
+      "compileOptions": {
+        "sourceCompatibility": "1.8",
+        "targetCompatibility": "1.8"
+      },
+      "abis": [
+        "armeabi-v7a",
+        "arm64-v8a",
+        "x86"
+      ],
+      "minSdkVersion": "21",
+      "useAndroidX": true,
+      "parameters": {
+        "PUSH_VIVO_APPID": {
+          "des": "厂商VIVO-app_id",
+          "key": "com.vivo.push.app_id"
+        },
+        "PUSH_VIVO_APPKEY": {
+          "des": "厂商VIVO-app_key",
+          "key": "com.vivo.push.api_key"
+        },
+        "PUSH_HONOR_APPID": {
+          "des": "厂商HONOR-app_id",
+          "key": "com.hihonor.push.app_id"
+        }
+      }
+    },
+    "ios": {
+      "plugins": [
+        {
+          "type": "module",
+          "name": "NIMUniPlugin-PluginModule",
+          "class": "NIMPluginModule"
+        }
+      ],
+      "hooksClass": "NIMPluginProxy",
+      "integrateType": "framework",
+      "deploymentTarget": "9.0"
+    }
+  }
+}
