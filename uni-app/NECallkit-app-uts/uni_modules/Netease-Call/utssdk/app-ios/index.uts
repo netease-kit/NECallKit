@@ -1,0 +1,434 @@
+
+import {
+  MediaType,
+  CallbackOptions,
+  SelfInfoOptions,
+  MultiDeviceOptions,
+  PermissionOptions,
+  InitParams,
+  LoginParams,
+  CallParams,
+  CallbackParams,
+  AcceptParams,
+  HangupParams,
+  SwitchCallTypeParams,
+} from "../interface.uts";
+import {
+  ParamsCovert,
+  NAME,
+  ICallObserve,
+  CallEngineObserver,
+  FloatWindowObserver,
+} from "./utils/index.uts";
+import { NERtcCallKit, 
+ NECallParam, 
+ NECallType, 
+ NECallEngine, 
+ NECallEngineDelegate,
+ NEHangupParam, 
+ NESwitchParam, 
+ NECallConfig,
+ NECallInfo, 
+ NERtcAudioAINSMode, 
+ NECallSwitchState} from "NERtcCallKit";
+import { NECallKitBridge, NEFloatWindowObserver } from "NERtcCallUIKit";
+import { NEXKitBaseLog } from "NEXKitBase";
+
+import { Int } from 'Swift';
+
+const listenerMap = new Map<string, Array<(res: any) => void>>();
+
+export class CallEngine {
+  callBridge: NECallKitBridge;
+  callObserver: NECallEngineDelegate;
+  floatWindowObserver: FloatWindowObserver;
+
+  constructor() {
+    this.callBridge = NECallKitBridge.instance();
+    console.log(`${NAME.PREFIX} constructor.start`);
+    const callObserve: ICallObserve = {
+      listener: (eventName: string, data: any) => {
+        listenerMap.get(eventName)?.forEach((cb) => {
+          cb(data);
+        });
+      },
+    };
+	
+    console.log(`${NAME.PREFIX} constructor.start ${this.callBridge}`);
+    this.callObserver = new CallEngineObserver(callObserve);
+	this.floatWindowObserver = new FloatWindowObserver(callObserve);
+
+	console.log(`${NAME.PREFIX} constructor.start callObserver ${this.callObserver}`);
+  }
+
+  private log(msg:string){
+	  console.log(`${NAME.PREFIX} log:------------------- ${msg}`);
+      NEXKitBaseLog.shared().log(NEXKitBaseLogLevel.info, moduleName = "CallkitUts", tag = "CallkitUts", type = NEXKitBaseLogType.normal, line = 0, message = msg)
+  }
+
+  public setup(param: InitParams) {
+    console.log(`setup init param: ${JSON.stringify(param)}`);
+    let currentUserRtcUid: UInt64 = 0;
+    let apnsCername: string = "";
+    let voipCerName: string = "";
+    
+    if (param.params != null) {
+      let uidValue = param.params.getNumber("currentUserRtcUid");
+      if (uidValue != null) {
+        currentUserRtcUid = uidValue.toUInt64();
+      }
+      let apnsCerValue = param.params.getString("apnsCername");
+      if (apnsCerValue != null) {
+        apnsCername = apnsCerValue;
+      }
+      let voipCerValue = param.params.getString("voipCerName");
+      if (voipCerValue != null) {
+        voipCerName = voipCerValue;
+      }
+    }
+    
+    console.log(`${NAME.PREFIX} setup params:`, {
+      appKey: param.appKey,
+      frameWork: "UniApp-uts",
+      channel: "dcloud",
+      apnsCername: apnsCername,
+      voipCerName: voipCerName,
+      currentUserRtcUid: currentUserRtcUid
+    });
+    
+    this.callBridge.initWithAppKey(
+      param.appKey,
+      (frameWork = "UniApp-uts"),
+      (channel = "dcloud"),
+      (apnsCername = apnsCername),
+      (voipCerName = voipCerName),
+      (currentUserRtcUid = currentUserRtcUid)
+    );
+    
+    param.success?.();
+  }
+
+  public login(param: LoginParams) {
+    console.log(`${NAME.PREFIX} login.start12, data: ${JSON.stringify(param)}`);
+		
+	this.callBridge.login((withAccountId = param.accountId),
+	  (token = param.token),
+	  (onSuccess = (data: any): void => {
+	    console.log(`${NAME.PREFIX} login success, data: ${data}`);
+	    param.success?.();
+	  }),
+	  (onFail = (code: Int, message: string | null): void => {
+	    const errMsg = message ?? "";
+	    console.error(
+	      `${NAME.PREFIX} login fail, errCode = ${code}, errMsg = ${errMsg}`
+	    );
+	    param.fail?.(code as number, errMsg as string);
+	  })
+	);
+  }
+
+  public logout(param: CallbackParams) {
+    console.log(
+      `${NAME.PREFIX} logout.start, data: ${JSON.stringify(param)}`
+    );
+	this.callBridge.logout(
+	  (onSuccess = (data: any): void => {
+	    console.log(`${NAME.PREFIX} logout success, data: ${data}`);
+	    param.success?.();
+	  }),
+	  (onFail = (code: Int, message: string | null): void => {
+	    const errMsg = message ?? "";
+	    console.error(
+	      `${NAME.PREFIX} logout fail, errCode = ${code}, errMsg = ${errMsg}`
+	    );
+	    param.fail?.(code as number, errMsg as string);
+	  })
+	);    
+  }
+
+  public call(param: CallParams) {
+    console.log(`${NAME.PREFIX} call.start, data: ${JSON.stringify(param)}`);
+    const { success, fail } = param;
+    
+    // 创建 NECallParam 对象
+    // callType: 1=音频, 2=视频 (对应 MediaType)
+    // NECallType: 需要查看实际枚举值，通常 1=audio, 2=video
+    const callParam = new NECallParam();
+    callParam.accId = param.accountId;
+    callParam.callType = ParamsCovert.covertMediaType(param.callType);
+    
+    // 设置可选参数
+    if (param.params != null) {
+      let extraInfo = param.params.getString("extraInfo");
+      if (extraInfo != null) {
+        callParam.extraInfo = extraInfo;
+      }
+      let rtcChannelName = param.params.getString("rtcChannelName");
+      if (rtcChannelName != null) {
+        callParam.rtcChannelName = rtcChannelName;
+      }
+      let globalExtraCopy = param.params.getString("globalExtraCopy");
+      if (globalExtraCopy != null) {
+        callParam.globalExtraCopy = globalExtraCopy;
+      }
+      // pushConfig 如果需要的话，可以从 params 中获取并设置
+    }
+    
+    // 调用 callWithParam 方法
+    this.callBridge.call(with = callParam,
+      (onSuccess = (data: any): void => {
+        console.log(`${NAME.PREFIX} call success, data: ${data}`);
+        success?.();
+      }),
+      (onFail = (code: Int, message: string | null): void => {
+        const errMsg = message ?? "";
+        console.error(
+          `${NAME.PREFIX} call fail, errCode = ${code}, errMsg = ${errMsg}`
+        );
+        fail?.(code as number, errMsg as string);
+      })
+    );
+  }
+
+  public accept(param?: AcceptParams) {
+    console.log(`${NAME.PREFIX} accept.start, data: ${param}`);
+    
+    this.callBridge.accept(
+      (onSuccess = (data: any): void => {
+        console.log(`${NAME.PREFIX} accept success, data: ${data}`);
+         param?.success?.();
+      }),
+      (onFail = (code: Int, message: string | null): void => {
+        const errMsg = message ?? "";
+        console.error(
+          `${NAME.PREFIX} accept fail, errCode = ${code}, errMsg = ${errMsg}`
+        );
+        param?.fail?.(code as number, errMsg as string);
+      })
+    );
+  }
+
+  public hangup(param: HangupParams): void {
+    console.log(`${NAME.PREFIX} hangup.start, data: ${JSON.stringify(param)}`);
+    const { success, fail } = param;
+    
+    // 创建 NEHangupParam 对象
+    const hangupParam = new NEHangupParam();
+    // 如果需要设置参数，可以从 param.params 中获取
+    
+    this.callBridge.hangup(with = hangupParam,
+      (onSuccess = (data: any): void => {
+        console.log(`${NAME.PREFIX} hangup success, data: ${data}`);
+        success?.();
+      }),
+      (onFail = (code: Int, message: string | null): void => {
+        const errMsg = message ?? "";
+        console.error(
+          `${NAME.PREFIX} hangup fail, errCode = ${code}, errMsg = ${errMsg}`
+        );
+        fail?.(code as number, errMsg as string);
+      })
+    );
+  }
+
+  /**
+   * 视频通话中转为音频通话
+   */
+  public switchCallType(param: SwitchCallTypeParams): void {
+    console.log(`${NAME.PREFIX} switchCallType.start, callType: ${param.callType}`);    
+    // 转换 callType 为 NECallType
+    const callType = ParamsCovert.covertMediaType(param.callType);
+    
+    // 创建 NESwitchParam 对象
+    const switchParam = new NESwitchParam();
+    switchParam.callType = callType;
+    switchParam.state = ParamsCovert.covertSwitchState(param.state);
+    
+    // switchCallTypeWithParam 没有回调，直接调用
+    this.callBridge.switchCallType(with = switchParam);
+    
+    // 由于没有回调，直接调用 success
+    param.success?.();
+  }
+  
+  /**
+   * 设置呼叫超时时间
+   */
+  public setTimeout(millisecond: number): void {
+    console.log(`${NAME.PREFIX} setTimeout, millisecond: ${millisecond}`);
+    // 转换为秒
+    const second: number = Math.floor(millisecond / 1000);
+    this.callBridge.setTimeout(second.toInt32());
+  }
+  
+  /**
+   * 开启摄像头
+   */
+  public enableLocalVideo(enable: boolean): number {
+    console.log(`${NAME.PREFIX} enableLocalVideo, enable: ${enable}`);
+    return Number.from(this.callBridge.enableLocalVideo(enable));
+  }
+  
+  /**
+   * 开启/关闭视频采集
+   */
+  public muteLocalVideo(mute: boolean): number {
+    console.log(`${NAME.PREFIX} muteLocalVideo, mute: ${mute}`);
+    return Number.from(this.callBridge.muteLocalVideo(mute));
+  }
+  
+  /**
+   * 静音本地音频采集
+   */
+  public muteLocalAudio(mute: boolean): number {
+    console.log(`${NAME.PREFIX} muteLocalAudio, mute: ${mute}`);
+    return Number.from(this.callBridge.muteLocalAudio(mute));
+  }
+
+  
+  /**
+   * 切换摄像头（前置/后置）
+   * @param camera 摄像头类型，0=前置，1=后置
+   */
+  public switchCamera(camera: number) {
+    console.log(`${NAME.PREFIX} switchCamera.start, data: ${camera}`);
+    // 参数反转：传入的 0=前置，1=后置；传递给 callBridge 的 0=后置，1=前置
+    const reversedCamera = 1 - camera;
+    this.callBridge.switchCamera(reversedCamera.intValue);
+  }
+
+  /**
+   * 开启悬浮窗
+   * @param options 回调选项，包含成功和失败回调
+   */
+  public startFloatWindow(options: CallbackOptions) {
+    console.log(`${NAME.PREFIX} startFloatWindow.start`);
+    this.callBridge.startFloatWindow()
+	this.callBridge.add(this.floatWindowObserver as NEFloatWindowObserver)
+	options.success?.();
+	console.log(`${NAME.PREFIX} startFloatWindow.success`);
+  }
+
+  /**
+   * 关闭悬浮窗
+   */
+  public stopFloatWindow() {
+    console.log(`${NAME.PREFIX} stopFloatWindow.start`);
+    this.callBridge.stopFloatWindow();   
+	this.callBridge.remove(this.floatWindowObserver as NEFloatWindowObserver);
+  }
+
+  /**
+   * 获取扬声器是否开启
+   */
+  public isSpeakerphoneOn(): boolean {
+    return this.callBridge.isSpeakerphoneOn();
+  }
+
+  /**
+   * 设置扬声器开关
+   */
+  public setSpeakerphoneOn(enable: boolean): number {
+    console.log(`${NAME.PREFIX} setSpeakerphoneOn, enable: ${enable}`);
+    return Number.from(this.callBridge.setSpeakerphoneOn(enable));
+  }
+
+  /**
+   * 设置呼叫时的配置参数
+   */
+  public setCallConfig(config: NECallConfig): void {
+    console.log(`${NAME.PREFIX} setCallConfig`);
+    this.callBridge.setCallConfig(config);
+  }
+
+  /**
+   * 获取呼叫时的配置参数
+   */
+  public getCallConfig(): NECallConfig | null {
+    return this.callBridge.getCallConfig();
+  }
+
+  /**
+   * 通话过程中获取通话信息
+   */
+  public getCallInfo(): NECallInfo | null {
+    return this.callBridge.getCallInfo();
+  }
+
+  /**
+   * 设置AI降噪模式
+   */
+  public setAINSMode(mode: NERtcAudioAINSMode): number {
+    console.log(`${NAME.PREFIX} setAINSMode, mode: ${mode}`);
+    return Number.from(this.callBridge.setAINSMode(mode));
+  }
+
+  /**
+   * 组件销毁
+   */
+  public destroy(): void {
+    console.log(`${NAME.PREFIX} destroy`);
+    this.callBridge.destroy();
+  }
+  
+  public bringAppToForeground(): void {
+    console.log(`${NAME.PREFIX} bringAppToForeground.start`);
+  }
+
+  /**
+   * 获取当前版本号
+   */
+  public static getVersion(): string {
+    return NECallKitBridge.getVersion();
+  }
+
+  /**
+   * 检查权限
+   * @param options 权限选项，包含类型（1=音频，2=视频）和回调函数
+   */
+  public hasPermission(options: PermissionOptions): void {
+    console.log(
+      `${NAME.PREFIX} hasPermission.start, data: ${JSON.stringify(options)}`
+    );	
+    this.callBridge.hasPermission((withCallType = options.type.toInt()),
+      (onSuccess = (data: any): void => {
+        console.log(`${NAME.PREFIX} hasPermission success, data: ${data}`);
+        options.success();
+      }),
+      (onFail = (code: Int, message: string | null): void => {
+        const errMsg = message ?? "";
+        console.error(
+          `${NAME.PREFIX} hasPermission fail, errCode = ${code}, errMsg = ${errMsg}`
+        );
+        options.fail(code as number, errMsg as string);
+      })
+    );
+  }
+  
+  public startService(callType: number): void {
+    console.log(`${NAME.PREFIX} startService.start`);
+  }
+  
+  public stopService(callType: number): void {
+    console.log(`${NAME.PREFIX} stopService.start`);
+  }
+
+  @UTSJS.keepAlive
+  public on(eventName: string, listener: (res: any) => void): void {
+    if (listenerMap.size === 0) {
+      NECallEngine.sharedInstance().addCall(this.callObserver);
+    }
+    const listeners: Array<(res: any) => void> = [listener];
+    listenerMap.get(eventName)?.forEach((item) => {
+      listeners.push(item);
+    });
+    listenerMap.set(eventName, listeners);
+  }
+
+  public off(eventName: string): void {
+    listenerMap.delete(eventName);
+    if (listenerMap.size === 0) {
+      NECallEngine.sharedInstance().removeCall(this.callObserver);
+    }
+  }
+}

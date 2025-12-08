@@ -1,0 +1,100 @@
+import { NECallEngineDelegate } from "NERtcCallKit";
+import { NEInviteInfo } from "NERtcCallKit";
+import { NECallInfo } from "NERtcCallKit";
+import { NECallTypeChangeInfo } from "NERtcCallKit";
+import { NECallEndInfo } from "NERtcCallKit";
+import { NAME } from "./const.uts";
+import { NEFloatWindowObserver } from "NERtcCallUIKit";
+
+export type ICallObserve = {
+  listener: (eventType: string, data: any) => void;
+};
+
+export class CallEngineObserver implements NECallEngineDelegate {
+  private listener: (eventType: string, data: any) => void;
+
+  constructor(options: ICallObserve) {
+    this.listener = options.listener;
+    console.log(`${NAME.PREFIX} CallEngineObserver ok`);
+  }
+
+  onReceiveInvited(info: NEInviteInfo) {
+    console.log(`${NAME.PREFIX} onCallReceived ${JSON.stringify(info)}`);
+    this.listener("onCallReceived", { info: info });
+  }
+
+  onCallConnected(info: NECallInfo) {
+    console.log(`${NAME.PREFIX} onCallConnected ${JSON.stringify(info)}`);
+    this.listener("onCallConnected", { info: info });
+  }
+
+  onCallTypeChange(info: NECallTypeChangeInfo) {
+    console.log(`${NAME.PREFIX} onCallTypeChange ${JSON.stringify(info)}`);
+    this.listener("onCallTypeChange", { info: info });
+  }
+
+  onCallEnd(info: NECallEndInfo) {
+    console.log(`${NAME.PREFIX} onCallEnd ${JSON.stringify(info)}`);
+    this.listener("onCallEnd", { info: info });
+  }
+
+  onVideoAvailable(available: boolean, userID: string) {
+    console.log(
+      `${NAME.PREFIX} onVideoAvailable ${JSON.stringify({
+        userId: userID,
+        available: available,
+      })}`
+    );
+    this.listener("onVideoAvailable", {
+      userId: userID,
+      available: available,
+    });
+  }
+
+  onVideoMuted(muted: boolean, userID: string) {
+    console.log(
+      `${NAME.PREFIX} onVideoMuted ${JSON.stringify({
+        userId: userID,
+        mute: muted,
+      })}`
+    );
+    this.listener("onVideoMuted", { userId: userID, mute: muted });
+  }
+
+  onAudioMuted(muted: boolean, userID: string) {
+    console.log(
+      `${NAME.PREFIX} onAudioMuted ${JSON.stringify({
+        userId: userID,
+        mute: muted,
+      })}`
+    );
+    this.listener("onAudioMuted", { userId: userID, mute: muted });
+  }
+
+  onLocalAudioMuted(muted: boolean) {
+    console.log(
+      `${NAME.PREFIX} onLocalAudioMuted ${JSON.stringify({ mute: muted })}`
+    );
+    this.listener("onLocalAudioMuted", { mute: muted });
+  }
+
+  onRtcInitEnd() {
+    console.log(`${NAME.PREFIX} onRtcInitEnd`);
+    this.listener("onRtcInitEnd", {});
+  }
+}
+
+export class FloatWindowObserver implements NEFloatWindowObserver {
+  private listener: (eventType: string, data: any) => void;
+
+  constructor(options: ICallObserve) {
+    this.listener = options.listener;
+    console.log(`${NAME.PREFIX} NEUtsFloatWindowObserver ok`);
+  }
+
+  tapFloatWindow() {
+    console.log(`${NAME.PREFIX} tapFloatWindow`);
+    this.listener("onFloatWindowClick", {});
+  }
+}
+

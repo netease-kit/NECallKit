@@ -1,0 +1,124 @@
+{
+    "name" : "NECallKit_Example",
+    "appid" : "__UNI__877507A",
+    "description" : "",
+    "versionName" : "1.0.0",
+    "versionCode" : 102,
+    "transformPx" : false,
+    /* 5+App特有相关 */
+    "app-plus" : {
+        "usingComponents" : true,
+        "nvueStyleCompiler" : "uni-app",
+        "compilerVersion" : 3,
+        "splashscreen" : {
+            "alwaysShowBeforeRender" : true,
+            "waiting" : true,
+            "autoclose" : true,
+            "delay" : 0
+        },
+        /* 模块配置 */
+        "modules" : {
+            "Push" : {}
+        },
+        /* 应用发布信息 */
+        "distribute" : {
+            /* android打包配置 */
+            "android" : {
+                "permissions" : [
+                    "<uses-permission android:name=\"android.permission.CHANGE_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.MOUNT_UNMOUNT_FILESYSTEMS\"/>",
+                    "<uses-permission android:name=\"android.permission.VIBRATE\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_LOGS\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_WIFI_STATE\"/>",
+                    "<uses-feature android:name=\"android.hardware.camera.autofocus\"/>",
+                    "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.RECORD_AUDIO\" />",
+                    "<uses-permission android:name=\"android.permission.CAMERA\"/>",
+                    "<uses-permission android:name=\"android.permission.GET_ACCOUNTS\"/>",
+                    "<uses-permission android:name=\"android.permission.READ_PHONE_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.CHANGE_WIFI_STATE\"/>",
+                    "<uses-permission android:name=\"android.permission.WAKE_LOCK\"/>",
+                    "<uses-permission android:name=\"android.permission.FLASHLIGHT\"/>",
+                    "<uses-feature android:name=\"android.hardware.camera\"/>",
+                    "<uses-permission android:name=\"android.permission.WRITE_SETTINGS\"/>",
+                    "<uses-permission android:name=\"android.permission.USE_FULL_SCREEN_INTENT\" />",
+                    "<uses-permission android:name=\"android.permission.SYSTEM_ALERT_WINDOW\"/>",
+                    "<uses-permission android:name=\"android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS\" />",
+                    "<uses-permission android:name=\"android.permission.FOREGROUND_SERVICE\" />",
+                    "<uses-permission android:name=\"android.permission.FOREGROUND_SERVICE_MICROPHONE\" />",
+                    "<uses-permission android:name=\"android.permission.FOREGROUND_SERVICE_CAMERA\" />",
+                    "<uses-permission android:name=\"android.permission.POST_NOTIFICATIONS\" />",
+                    "<uses-permission android:name=\"android.permission.INTERNET\" />",
+                    "<uses-permission android:name=\"android.permission.MODIFY_AUDIO_SETTINGS\" />"
+                ]
+            },
+            /* ios打包配置 */
+            "ios" : {
+                "dSYMs" : false,
+                "UIBackgroundModes" : "audio"
+            },
+            /* SDK配置 */
+            "sdkConfigs" : {
+                "push" : {}
+            }
+        },
+        "nativePlugins" : {
+            "NIMUniPlugin" : {
+                "PUSH_VIVO_APPID" : "",
+                "PUSH_VIVO_APPKEY" : "",
+                "PUSH_HONOR_APPID" : "",
+                "__plugin_info__" : {
+                    "name" : "NIMUniPlugin",
+                    "description" : "uni消息推送插件",
+                    "platforms" : "Android,iOS",
+                    "url" : "",
+                    "android_package_name" : "",
+                    "ios_bundle_id" : "",
+                    "isCloud" : false,
+                    "bought" : -1,
+                    "pid" : "",
+                    "parameters" : {
+                        "PUSH_VIVO_APPID" : {
+                            "des" : "厂商VIVO-app_id",
+                            "key" : "com.vivo.push.app_id",
+                            "value" : ""
+                        },
+                        "PUSH_VIVO_APPKEY" : {
+                            "des" : "厂商VIVO-app_key",
+                            "key" : "com.vivo.push.api_key",
+                            "value" : ""
+                        },
+                        "PUSH_HONOR_APPID" : {
+                            "des" : "厂商HONOR-app_id",
+                            "key" : "com.hihonor.push.app_id",
+                            "value" : ""
+                        }
+                    }
+                }
+            }
+        }
+    },
+    /* 快应用特有相关 */
+    "quickapp" : {},
+    /* 小程序特有相关 */
+    "mp-weixin" : {
+        "appid" : "",
+        "setting" : {
+            "urlCheck" : false
+        },
+        "usingComponents" : true
+    },
+    "mp-alipay" : {
+        "usingComponents" : true
+    },
+    "mp-baidu" : {
+        "usingComponents" : true
+    },
+    "mp-toutiao" : {
+        "usingComponents" : true
+    },
+    "uniStatistics" : {
+        "enable" : false
+    },
+    "vueVersion" : "3"
+}

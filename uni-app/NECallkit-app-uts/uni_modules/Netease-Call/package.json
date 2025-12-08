@@ -1,0 +1,113 @@
+{
+  "id": "Netease-Call",
+  "displayName": "【官方】网易云信RTC音视频通话组件 Netease-Call",
+  "version": "4.0.0",
+  "description": "NECallKit 是云信官方推出的音视频通话 UTS 插件，支持 1v1 通话，简化了呼叫流程，并提供通用的通话UI交互，开发者也可以根据自己的业务需求进行 UI 定制。",
+  "keywords": [
+    "Call",
+    "视频通话",
+    "音视频",
+    "APP",
+    "UTS"
+],
+  "repository": "https://github.com/netease-kit/NECallKit/tree/main/uni-app",
+  "engines": {
+    "HBuilderX": "^4.53",
+    "uni-app": "^3.6.15",
+    "uni-app-x": "^3.6.15"
+  },
+  "dcloudext": {
+    "type": "component-uts",
+    "sale": {
+      "regular": {
+        "price": "0.00"
+      },
+      "sourcecode": {
+        "price": "0.00"
+      }
+    },
+    "contact": {
+      "qq": ""
+    },
+    "declaration": {
+      "ads": "无",
+      "data": "插件使用的 NIM、NERTC SDK会采集数据，详情可参考：https://yunxin.163.com/",
+      "permissions": "安卓：摄像头，语音，本地存储空间 IOS：摄像头，语音，本地存储空间"
+    },
+    "npmurl": "",
+    "darkmode": "x",
+    "i18n": "√",
+    "widescreen": "x"
+  },
+  "uni_modules": {
+    "dependencies": [],
+    "encrypt": [],
+    "platforms": {
+      "cloud": {
+        "tcb": "√",
+        "aliyun": "√",
+        "alipay": "√"
+      },
+      "client": {
+        "uni-app": {
+          "vue": {
+            "vue2": "-",
+            "vue3": "-"
+          },
+          "web": {
+            "safari": "x",
+            "chrome": "x"
+          },
+          "app": {
+            "vue": "-",
+            "nvue": "-",
+            "android": {
+                "extVersion": "4.0.0",
+                "minVersion": "21"
+            },
+            "ios": {
+                "extVersion": "4.0.0",
+                "minVersion": "13"
+            },
+            "harmony": "x"
+          },
+          "mp": {
+            "weixin": "x",
+            "alipay": "x",
+            "toutiao": "x",
+            "baidu": "x",
+            "kuaishou": "x",
+            "jd": "x",
+            "harmony": "x",
+            "qq": "x",
+            "lark": "x"
+          },
+          "quickapp": {
+            "huawei": "x",
+            "union": "x"
+          }
+        },
+        "uni-app-x": {
+          "web": {
+            "safari": "x",
+            "chrome": "x"
+          },
+          "app": {
+            "android": {
+                "extVersion": "4.0.0",
+                "minVersion": "21"
+            },
+            "ios": {
+                "extVersion": "4.0.0",
+                "minVersion": "13"
+            },
+            "harmony": "x"
+          },
+          "mp": {
+            "weixin": "x"
+          }
+        }
+      }
+    }
+  }
+}
