@@ -1,5 +1,5 @@
 _English | [简体中文](README-zh_CN.md)_
-# NetEase YUNXIN for Video Calls 
+# NetEase YunXin for Video Calls 
 
 To help developers integrate the calling functionality of Audio/Video Call 2.0, NetEase YunXin combines signaling capabilities with NERTC's audio/video capabilities to simplify the complex calling process. The calling functionality is provided to customers in the form of components, improving integration efficiency and reducing usage costs. The Call Kit (NECallKit) internally provides calling, answering, and rejecting for audio/video calls, as well as audio and video switch controls during calls, along with supporting UI. You can use the Call Kit to implement audio/video calling functionality similar to that in general instant messaging applications.
 
