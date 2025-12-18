@@ -1,43 +1,42 @@
-_English | [简体中文](README-zh_CN.md)_
-# NetEase YunXin for Video Calls 
+_[English](README-en.md) | 简体中文_
+# 网易云信 · 音视频通话解决方案
 
-To help developers integrate the calling functionality of Audio/Video Call 2.0, NetEase YunXin combines signaling capabilities with NERTC's audio/video capabilities to simplify the complex calling process. The calling functionality is provided to customers in the form of components, improving integration efficiency and reducing usage costs. The Call Kit (NECallKit) internally provides calling, answering, and rejecting for audio/video calls, as well as audio and video switch controls during calls, along with supporting UI. You can use the Call Kit to implement audio/video calling functionality similar to that in general instant messaging applications.
+为了方便开发者接入音视频通话 2.0 的呼叫功能，网易云信将信令和 NERTC 的音视频能力相结合，简化呼叫的复杂流程，将呼叫功能以组件的形式提供给客户，提高接入效率、降低使用成本。呼叫组件（NECallKit）内部提供音视频类型通话的呼叫、接通、拒接，以及通话中音频和视频的开关控制，同时提供配套 UI，您可以使用呼叫组件实现类似通用即时通讯应用中的音视频通话功能。
 
-## Architecture Overview
-The CallKit (NECallKit) is a comprehensive scenario component packaged based on YunXin signaling, Audio/Video Call 2.0, and IM instant messaging products. It provides signaling, communication, and audio/video capabilities through NIM SDK and NERTC SDK. Developers can directly use the Call Kit (NECallKit) to implement calling services.
+## 架构简介
+呼叫组件（NECallKit）是基于云信信令、音视频通话 2.0 和 IM 即时通讯产品封装的融合性场景组件，通过 NIM SDK 和 NERTC SDK 提供信令、通信和音视频能力，开发者可以直接使用呼叫组件（NECallKit）实现通话呼叫业务。
 
 
-## Features
-| <div style="width: 200px">Feature</div> | Description |
+## 功能特性
+| <div style="width: 200px">功能</div> | 描述 |
 |---|---|
-| Custom UI | Developers can design their own UI for call and calling pages. |
-| Audio/Video Calling | Apps can notify called users of calling requests through this feature. Call request types include audio and video calls. |
-| Audio/Video Calls | After answering, real-time calls can be conducted according to the call type. |
-| Audio/Video Control | During calls, you can control the local audio or video switches, camera direction, etc. |
-| Call Records | After each call ends, you will receive corresponding call record messages, marking whether the call was answered, call duration, type, and other data. |
+| 自定义 UI | 开发者可以自行设计通话和呼叫页面 UI。 |
+| 音视频呼叫 | App 通过此功能通知被叫用户呼叫请求，呼叫请求类型包括音频和视频呼叫。 |
+| 音视频通话 | 接通后可依照呼叫类型进行实时通话。 |
+| 音视频控制 | 通话过程中可以控制本端音频或视频的开关，以及摄像头方向等。 |
+| 话单 | 每次通话结束后都会收到对应的话单消息，标记本次通话是否接通以及通话时间、类型等数据。 |
 
-## Platform Support
+## 平台支持
 
 * Android
 * iOS
 * Web
 * Flutter
 * Uniapp
-* WeChat Mini Program
+* 微信小程序
 
-## Contact Us
+## 联系我们
 
-- For more information about the Call Kit, please refer to [More Information](https://doc.yunxin.163.com/nertccallkit/guide?platform=android)
-- If you encounter issues, you can first check the [Knowledge Base](https://faq.yunxin.163.com/kb/main/#/)
-- For after-sales technical support, please [Submit a Ticket](https://app.yunxin.163.com/index#/issue/submit)  
+- 如果想要了解呼叫组件的更多信息，请参见[更多介绍](https://doc.yunxin.163.com/nertccallkit/guide?platform=android)
+- 如果您遇到问题，可以先查阅[知识库](https://faq.yunxin.163.com/kb/main/#/)
+- 如果需要售后技术支持，请[提交工单](https://app.yunxin.163.com/index#/issue/submit)  
 
-## More Scenario Solutions
-NetEase YunXin has launched integrated, scalable, feature-business-fused end-to-end solutions for business scenarios such as 1-on-1 entertainment social, voice chat rooms, PK co-streaming, online education, etc., helping customers quickly integrate and launch businesses in time to improve revenue growth.
-- [YunXin Entertainment Social Server Nemo](https://github.com/netease-kit/nemo)
-- [1-on-1 Entertainment Social](https://doc.yunxin.163.com/1v1-social/docs/jk2OTI0NTM?platform=android)
-- [Voice Chat Room](https://github.com/netease-kit/NEChatroom)
-- [Listen Together](https://github.com/netease-kit/NEListenTogether)
-- [Online Karaoke](https://github.com/netease-kit/NEKaraoke)
-- [PK Co-streaming](https://github.com/netease-kit/OnlinePK)
-- [Online Education](https://github.com/netease-kit/WisdomEducation)
-
+## 更多场景方案
+网易云信针对1 对 1 娱乐社交、语聊房、PK连麦、在线教育等业务场景，推出了一体式、可扩展、功能业务融合的全链路解决方案，帮助客户快速接入、业务及时上线，提高营收增长。
+- [云信娱乐社交服务端 Nemo](https://github.com/netease-kit/nemo)
+- [1 对 1 娱乐社交](https://doc.yunxin.163.com/1v1-social/docs/jk2OTI0NTM?platform=android)
+- [语聊房](https://github.com/netease-kit/NEChatroom)
+- [一起听](https://github.com/netease-kit/NEListenTogether)
+- [在线K歌](https://github.com/netease-kit/NEKaraoke)
+- [PK连麦](https://github.com/netease-kit/OnlinePK)
+- [在线教育](https://github.com/netease-kit/WisdomEducation)
