@@ -1,78 +1,12 @@
 {
   "app": {
-    "signingConfigs": [
-      {
-        "name": "default",
-        "type": "HarmonyOS",
-        "material": {
-          "storeFile": "../signing/debug/yunxin_app.p12",
-          "storePassword": "0000001EC7A19DB8B41690EBD8929D7CA7DA376A70FE32AE7B5067E1FBEEB52CEF77F24D1482A4F30D902538F73F",
-          "keyAlias": "yunxin-app",
-          "keyPassword": "0000001E2C7671C76773282E37F5E9F55ABC4DC66F0EEE2B94FF15AA0EEF3772C271EFFC9BDC62265F47E63F3235",
-          "signAlg": "SHA256withECDSA",
-          "profile": "../signing/debug/video_callDebug.p7b",
-          "certpath": "../signing/debug/yunxin_app.cer"
-        }
-      },
-      {
-        "name": "release",
-        "type": "HarmonyOS",
-        "material": {
-          "storeFile": "../signing/release/rtc_demo_pub.p12",
-          "storePassword": "0000001D6FCE77684C763284893C907C6518BC7CFAF108C70AD9E30B558283108096DEE023E1B9F47D83DA763A",
-          "keyAlias": "rtcdemo_pub",
-          "keyPassword": "0000001D6AA7B20447D56B6C23B5B5A3073885945D2C64107E8D5D8897871944337C42C32252F9F3D7F9503556",
-          "signAlg": "SHA256withECDSA",
-          "profile": "../signing/release/rtc_demo_pubRelease.p7b",
-          "certpath": "../signing/release/yunxin_rtc.cer"
-        }
-      },
-      {
-        "name": "debug",
-        "type": "HarmonyOS",
-        "material": {
-          "storeFile": "../signing/debug/yunxin_app.p12",
-          "storePassword": "0000001EC7A19DB8B41690EBD8929D7CA7DA376A70FE32AE7B5067E1FBEEB52CEF77F24D1482A4F30D902538F73F",
-          "keyAlias": "yunxin-app",
-          "keyPassword": "0000001E2C7671C76773282E37F5E9F55ABC4DC66F0EEE2B94FF15AA0EEF3772C271EFFC9BDC62265F47E63F3235",
-          "signAlg": "SHA256withECDSA",
-          "profile": "../signing/debug/video_callDebug.p7b",
-          "certpath": "../signing/debug/yunxin_app.cer"
-        }
-      }
-    ],
+    "signingConfigs": [],
     "products": [
       {
         "name": "default",
-        "signingConfig": "debug",
-        "targetSdkVersion": "5.0.5(17)",
-        "compatibleSdkVersion": "5.0.1(13)",
-        "runtimeOS": "HarmonyOS",
-        "buildOption": {
-          "strictMode": {
-            "caseSensitiveCheck": true,
-            "useNormalizedOHMUrl": true
-          }
-        }
-      },
-      {
-        "name": "release",
-        "signingConfig": "release",
-        "targetSdkVersion": "5.0.5(17)",
-        "compatibleSdkVersion": "5.0.1(13)",
-        "runtimeOS": "HarmonyOS",
-        "buildOption": {
-          "strictMode": {
-            "caseSensitiveCheck": true,
-            "useNormalizedOHMUrl": true
-          }
-        }
-      },
-      {
-        "name": "debug",
-        "signingConfig": "debug",
-        "targetSdkVersion": "5.0.5(17)",
-        "compatibleSdkVersion": "5.0.1(13)",
+        "signingConfig": "default",
+        "targetSdkVersion": "6.0.0(20)",
+        "compatibleSdkVersion": "6.0.0(20)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {
@@ -103,10 +37,6 @@
           ]
         }
       ]
-    },
-    {
-      "name": "callkit",
-      "srcPath": "./callkit",
     },
     {
       "name": "callkit_ui",
