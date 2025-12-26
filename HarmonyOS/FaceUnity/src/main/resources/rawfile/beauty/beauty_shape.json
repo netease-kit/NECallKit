@@ -1,0 +1,227 @@
+[
+    {
+        "name":"瘦脸",
+        "imeName":"shoulian",
+        "type":0,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "performanceLevel": -1
+    },
+    {
+        "name":"v脸",
+        "imeName":"vlian",
+        "type":1,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":false,
+        "performanceLevel": 1
+    },
+    {
+        "name":"窄脸",
+        "imeName":"zhailian",
+        "type":2,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "performanceLevel": 1
+    },
+    {
+        "name":"短脸",
+        "imeName":"duanlian",
+        "type":3,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "performanceLevel": 1
+    },
+    {
+        "name":"小脸",
+        "imeName":"xiaolian",
+        "type":4,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "performanceLevel": 1
+    },
+    {
+        "name":"瘦颧骨",
+        "imeName":"shouquangu",
+        "type":5,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "performanceLevel": 1
+    },
+    {
+        "name":"瘦下颌骨",
+        "imeName":"shouxiahegu",
+        "type":6,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "performanceLevel": 1
+    },
+    {
+        "name":"大眼",
+        "imeName":"dayan",
+        "type":7,
+        "currentValue":0.4,
+        "defaultValue":0.4,
+        "defaultValueInMiddle":false,
+        "performanceLevel": -1
+    },
+    {
+        "name":"圆眼",
+        "imeName":"yuanyan",
+        "type":8,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "performanceLevel": 1
+    },
+    {
+        "name":"下巴",
+        "imeName":"xiaba",
+        "type":9,
+        "currentValue":0.3,
+        "defaultValue":0.3,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 1
+    },
+    {
+        "name":"额头",
+        "imeName":"etou",
+        "type":10,
+        "currentValue":0.3,
+        "defaultValue":0.3,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 1
+    },
+    {
+        "name":"瘦鼻",
+        "imeName":"shoubi",
+        "type":11,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":false,
+        "performanceLevel": -1
+    },
+    {
+        "name":"嘴型",
+        "imeName":"zuixing",
+        "type":12,
+        "currentValue":0.4,
+        "defaultValue":0.4,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 1
+    },
+    {
+        "name":"嘴唇厚度",
+        "imeName":"zuichunhoudu",
+        "type":13,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 2
+    },
+    {
+        "name":"眼睛位置",
+        "imeName":"yanjingweizhi",
+        "type":14,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 2
+    },
+    {
+        "name":"开眼角",
+        "imeName":"kaiyanjiao",
+        "type":15,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "performanceLevel": 1
+    },
+    {
+        "name":"眼睑下至",
+        "imeName":"yanjianxiazhi",
+        "type":16,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "performanceLevel": 2
+    },
+    {
+        "name":"眼距",
+        "imeName":"yanju",
+        "type":17,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 1
+    },
+    {
+        "name":"眼睛角度",
+        "imeName":"yanjingjiaodu",
+        "type":18,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 1
+    },
+    {
+        "name":"长鼻",
+        "imeName":"changbi",
+        "type":19,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 1
+    },
+    {
+        "name":"缩人中",
+        "imeName":"suorenzhong",
+        "type":20,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 1
+    },
+    {
+        "name":"微笑嘴角",
+        "imeName":"weixiaozuijiao",
+        "type":21,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "performanceLevel": 1
+    },
+    {
+        "name":"眉毛上下",
+        "imeName":"meimaoshangxia",
+        "type":22,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 2
+    },
+    {
+        "name":"眉间距",
+        "imeName":"meijianju",
+        "type":23,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 2
+    },
+    {
+        "name":"眉毛粗细",
+        "imeName":"meimaocuxi",
+        "type":24,
+        "currentValue":0.5,
+        "defaultValue":0.5,
+        "defaultValueInMiddle":true,
+        "performanceLevel": 2
+    }
+]

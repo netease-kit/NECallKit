@@ -1,0 +1,23 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "Please describe the basic information.",
+  "main": "",
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "@necallkit/callkit": "4.0.0",
+    "@necallkit/callkit_ui": "file:../callkit_ui",
+    "@nertc/nertc_sdk": "5.9.11",
+    "@nimsdk/message": "10.9.50",
+    "@nimsdk/team": "10.9.50",
+    "@nimsdk/user": "10.9.50",
+    "@nimsdk/friend": "10.9.50",
+    "@nimsdk/signalling": "10.9.50",
+    "@nimsdk/nim": "10.9.50",
+    "@nimsdk/base": "10.9.50",
+    "faceunity": "file:../FaceUnity",
+    "byteeffect": "file:../ByteEffect"
+  }
+}
+

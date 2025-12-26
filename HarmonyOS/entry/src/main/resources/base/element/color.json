@@ -1,0 +1,28 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "home_avatar_background",
+      "value": "#007DFF"
+    },
+    {
+      "name": "home_text_primary",
+      "value": "#182431"
+    },
+    {
+      "name": "home_text_secondary",
+      "value": "#8E8E93"
+    },
+    {
+      "name": "home_button_background",
+      "value": "#007DFF"
+    },
+    {
+      "name": "home_button_text",
+      "value": "#FFFFFF"
+    }
+  ]
+}

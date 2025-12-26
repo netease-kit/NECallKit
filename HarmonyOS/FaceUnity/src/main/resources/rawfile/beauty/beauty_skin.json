@@ -1,0 +1,102 @@
+[
+    {
+        "name":"磨皮",
+        "imeName":"mopi",
+        "type":0,
+        "currentValue":3.6,
+        "defaultValue":3.6,
+        "defaultValueInMiddle":false,
+        "ratio":6,
+        "performanceLevel": -1
+    },
+    {
+        "name":"美白",
+        "imeName":"meibai",
+        "type":1,
+        "currentValue":0.3,
+        "defaultValue":0.3,
+        "defaultValueInMiddle":false,
+        "ratio":1,
+        "performanceLevel": 1
+    },
+    {
+        "name":"红润",
+        "imeName":"hongrun",
+        "type":2,
+        "currentValue":0.3,
+        "defaultValue":0.3,
+        "defaultValueInMiddle":false,
+        "ratio":1,
+        "performanceLevel": 1
+    },
+    {
+        "name":"清晰",
+        "imeName":"qingxi",
+        "type":10,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "ratio":1,
+        "performanceLevel": 1
+    },
+    {
+        "name":"锐化",
+        "imeName":"ruihua",
+        "type":3,
+        "currentValue":0.2,
+        "defaultValue":0.2,
+        "defaultValueInMiddle":false,
+        "ratio":1,
+        "performanceLevel": 1
+    },
+    {
+        "name":"五官立体",
+        "imeName":"wuguanliti",
+        "type":4,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "ratio":1,
+        "performanceLevel": 1
+    },
+    {
+        "name":"亮眼",
+        "imeName":"liangyan",
+        "type":5,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "ratio":1,
+        "performanceLevel": 1
+    },
+    {
+        "name":"美牙",
+        "imeName":"meiya",
+        "type":6,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "ratio":1,
+        "performanceLevel": 1
+    },
+    {
+        "name":"去黑眼圈",
+        "imeName":"quheiyanquan",
+        "type":7,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "ratio":1,
+        "performanceLevel": 1
+    },
+    {
+        "name":"去法令纹",
+        "imeName":"qufalingwen",
+        "type":8,
+        "currentValue":0.0,
+        "defaultValue":0.0,
+        "defaultValueInMiddle":false,
+        "ratio":1,
+        "performanceLevel": 1
+    }
+]

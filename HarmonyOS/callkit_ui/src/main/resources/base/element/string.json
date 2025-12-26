@@ -1,0 +1,104 @@
+{
+  "string": [
+    {
+      "name": "page_show",
+      "value": "page from package"
+    },
+    {
+      "name": "call_main_page_close_log",
+      "value": "Close call page, return to previous page"
+    },
+    {
+      "name": "call_status_waiting_caller",
+      "value": "Waiting for answer..."
+    },
+    {
+      "name": "call_status_waiting_callee",
+      "value": "Incoming call"
+    },
+    {
+      "name": "call_status_connected",
+      "value": "In call"
+    },
+    {
+      "name": "button_mic_on",
+      "value": "Mic On"
+    },
+    {
+      "name": "button_mic_off",
+      "value": "Mic Off"
+    },
+    {
+      "name": "button_speaker",
+      "value": "Speaker"
+    },
+    {
+      "name": "button_earpiece",
+      "value": "Earpiece"
+    },
+    {
+      "name": "button_camera_on",
+      "value": "Camera On"
+    },
+    {
+      "name": "button_camera_off",
+      "value": "Camera Off"
+    },
+    {
+      "name": "button_switch_camera",
+      "value": "Switch"
+    },
+    {
+      "name": "button_blur_background",
+      "value": "Blur"
+    },
+    {
+      "name": "button_hangup",
+      "value": "Hang Up"
+    },
+    {
+      "name": "call_end_hangup",
+      "value": "Call ended"
+    },
+    {
+      "name": "callee_end_reject",
+      "value": "remote user rejected"
+    },
+    {
+      "name": "call_end_no_response",
+      "value": "No response"
+    },
+    {
+      "name": "call_end_offline",
+      "value": "User is offline"
+    },
+    {
+      "name": "call_end_line_busy",
+      "value": "Line is busy"
+    },
+    {
+      "name": "call_end_canceled",
+      "value": "Call canceled"
+    },
+    {
+      "name": "call_end_other_device_accepted",
+      "value": "Answered on other device"
+    },
+    {
+      "name": "call_end_other_device_reject",
+      "value": "Rejected on other device"
+    },
+    {
+      "name": "call_end_server",
+      "value": "Ended by server"
+    },
+    {
+      "name": "call_end_unknown",
+      "value": "Call ended"
+    },
+    {
+      "name": "call_accept_failed",
+      "value": "Accept failed"
+    }
+  ]
+}

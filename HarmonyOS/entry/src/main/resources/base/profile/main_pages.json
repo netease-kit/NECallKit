@@ -1,0 +1,9 @@
+{
+  "src": [
+    "pages/Index",
+    "pages/LoginPage",
+    "pages/HomePage",
+    "pages/SingleCallPage",
+    "pages/SettingsPage"
+  ]
+}

@@ -1,0 +1,100 @@
+{
+  "string": [
+    {
+      "name": "call_main_page_close_log",
+      "value": "关闭通话页面，返回上一页"
+    },
+    {
+      "name": "call_status_waiting_caller",
+      "value": "等待对方接受邀请..."
+    },
+    {
+      "name": "call_status_waiting_callee",
+      "value": "邀请你语音通话..."
+    },
+    {
+      "name": "call_status_connected",
+      "value": "通话中"
+    },
+    {
+      "name": "button_mic_on",
+      "value": "麦克风已开"
+    },
+    {
+      "name": "button_mic_off",
+      "value": "麦克风已关"
+    },
+    {
+      "name": "button_speaker",
+      "value": "扬声器"
+    },
+    {
+      "name": "button_earpiece",
+      "value": "扬声器已关"
+    },
+    {
+      "name": "button_camera_on",
+      "value": "摄像头已开"
+    },
+    {
+      "name": "button_camera_off",
+      "value": "摄像头已关"
+    },
+    {
+      "name": "button_switch_camera",
+      "value": "翻转"
+    },
+    {
+      "name": "button_blur_background",
+      "value": "模糊背景"
+    },
+    {
+      "name": "button_hangup",
+      "value": "挂断"
+    },
+    {
+      "name": "call_end_hangup",
+      "value": "通话已挂断"
+    },
+    {
+      "name": "callee_end_reject",
+      "value": "对方已经拒绝"
+    },
+    {
+      "name": "call_end_no_response",
+      "value": "对方超时未响应"
+    },
+    {
+      "name": "call_end_offline",
+      "value": "对方已离线"
+    },
+    {
+      "name": "call_end_line_busy",
+      "value": "对方占线"
+    },
+    {
+      "name": "call_end_canceled",
+      "value": "对方取消"
+    },
+    {
+      "name": "call_end_other_device_accepted",
+      "value": "其他端已经接听"
+    },
+    {
+      "name": "call_end_other_device_reject",
+      "value": "其他端已经拒绝"
+    },
+    {
+      "name": "call_end_server",
+      "value": "服务器结束通话"
+    },
+    {
+      "name": "call_end_unknown",
+      "value": "通话已结束"
+    },
+    {
+      "name": "call_accept_failed",
+      "value": "接听失败"
+    }
+  ]
+}

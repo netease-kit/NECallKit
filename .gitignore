@@ -90,8 +90,5 @@ local.properties
 /flutter_module/.android/
 /flutter_module/.gradle/
 /flutter_module/.ios/
-/flutter_module/.gradle/
-/meeting_kit_bridge/.ios/
-/meeting_kit_bridge/.android/
 **/pubspec.lock
 .ccls-cache/
