@@ -1,0 +1,132 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "NECallKit"
+    },
+    {
+      "name": "camera_auth_reason",
+      "value": "need to use camera"
+    },
+    {
+      "name": "microphone_auth_reason",
+      "value": "need to use microphone"
+    },
+    {
+      "name": "screen_share_auth_reason",
+      "value": "need to use screen share"
+    },
+    {
+      "name": "single_call_page_title",
+      "value": "Call Page"
+    },
+    {
+      "name": "single_call_target_account_label",
+      "value": "Target Account ID:"
+    },
+    {
+      "name": "single_call_target_account_placeholder",
+      "value": "Please enter target account ID"
+    },
+    {
+      "name": "single_call_type_label",
+      "value": "Call Type:"
+    },
+    {
+      "name": "single_call_type_audio",
+      "value": "Audio Call"
+    },
+    {
+      "name": "single_call_type_video",
+      "value": "Video Call"
+    },
+    {
+      "name": "single_call_button",
+      "value": "Call"
+    },
+    {
+      "name": "single_call_alert_title",
+      "value": "Tip"
+    },
+    {
+      "name": "single_call_alert_message",
+      "value": "Please enter target account ID"
+    },
+    {
+      "name": "single_call_alert_self",
+      "value": "You cannot call yourself"
+    },
+    {
+      "name": "single_call_alert_confirm",
+      "value": "OK"
+    },
+    {
+      "name": "single_call_log_calling",
+      "value": "Calling"
+    },
+    {
+      "name": "single_call_log_audio_call",
+      "value": "Audio Call"
+    },
+    {
+      "name": "single_call_log_video_call",
+      "value": "Video Call"
+    },
+    {
+      "name": "permission_mic_title",
+      "value": "Microphone permission not enabled"
+    },
+    {
+      "name": "permission_mic_message",
+      "value": "Microphone is not available. Please go to [Settings > Apps & services > This App] to enable microphone permission."
+    },
+    {
+      "name": "permission_camera_title",
+      "value": "Camera permission not enabled"
+    },
+    {
+      "name": "permission_camera_message",
+      "value": "Camera is not available. Please go to [Settings > Apps & services > This App] to enable camera permission."
+    },
+    {
+      "name": "permission_common_title",
+      "value": "Permission not enabled"
+    },
+    {
+      "name": "permission_common_message",
+      "value": "Required permissions are not enabled. Please go to [Settings > Apps & services > This App] to enable the corresponding permissions."
+    },
+    {
+      "name": "single_call_settings_button",
+      "value": "Call Settings"
+    },
+    {
+      "name": "single_call_history_title",
+      "value": "Call History"
+    },
+    {
+      "name": "single_call_history_empty",
+      "value": "No call history yet"
+    },
+    {
+      "name": "single_call_history_clear",
+      "value": "Clear"
+    },
+    {
+      "name": "permission_button_iknow",
+      "value": "Got it"
+    },
+    {
+      "name": "permission_button_goto_settings",
+      "value": "Go to Settings"
+    }
+  ]
+}

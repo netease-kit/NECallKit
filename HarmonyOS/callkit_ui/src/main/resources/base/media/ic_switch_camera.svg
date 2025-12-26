@@ -1,0 +1,14 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle opacity="0.5" cx="32" cy="32" r="32" fill="black"/>
+<mask id="mask0_18150_4851" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="14" y="14" width="36" height="36">
+<rect x="14" y="14" width="36" height="36" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_18150_4851)">
+<path d="M34 27.5H40.5V21" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M30 35.5H23.5V42" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M23 31C23 26.0294 27.0294 22 32 22C35.4829 22 38.5038 23.9784 40 26.8728" stroke="white" stroke-width="2.5"/>
+<path d="M41 31.873C41 36.8436 36.9706 40.873 32 40.873C28.5171 40.873 25.4962 38.8946 24 36.0002" stroke="white" stroke-width="2.5"/>
+</g>
+</svg>
+
+

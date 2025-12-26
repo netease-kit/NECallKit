@@ -1,0 +1,9 @@
+{
+  "module": {
+    "name": "callkit_ui",
+    "type": "har",
+    "deviceTypes": [
+      "default"
+    ],
+  }
+}

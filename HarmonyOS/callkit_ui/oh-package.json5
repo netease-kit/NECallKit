@@ -1,0 +1,21 @@
+{
+  "name": "@necallkit/callkit_ui",
+  "version": "4.0.0",
+  "description": "Please describe the basic information.",
+  "main": "Index.ets",
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@necallkit/callkit": "4.0.0",
+    "@nertc/nertc_sdk": "5.9.11",
+    //虚拟背景插件，不用虚拟背景的话可以不依赖这个插件
+    "@nertc/person_segment_plugin": "1.0.0",
+    "@nimsdk/message": "10.9.50",
+    "@nimsdk/team": "10.9.50",
+    "@nimsdk/user": "10.9.50",
+    "@nimsdk/friend": "10.9.50",
+    "@nimsdk/signalling": "10.9.50",
+    "@nimsdk/nim": "10.9.50",
+    "@nimsdk/base": "10.9.50"
+  }
+}

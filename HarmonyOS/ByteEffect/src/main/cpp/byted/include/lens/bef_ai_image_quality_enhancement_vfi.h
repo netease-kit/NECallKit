@@ -1,0 +1,25 @@
+//
+// Created by Bytedance on 6/13/22.
+//
+
+#ifndef BYTEDEFFECTS_BEF_AI_IMAGE_QUALITY_ENHANCEMENT_VIF_H
+#define BYTEDEFFECTS_BEF_AI_IMAGE_QUALITY_ENHANCEMENT_VIF_H
+
+#include "bef_ai_image_quality_enhancement_public_define.h"
+
+BEF_SDK_API bef_effect_result_t
+bef_ai_image_quality_enhancement_vfi_create(bef_image_quality_enhancement_handle *handle, bef_ai_vfi_init_config* config);
+
+BEF_SDK_API bef_effect_result_t
+bef_ai_image_quality_enhancement_vfi_process(bef_image_quality_enhancement_handle handle, bef_ai_vfi_process_config* config, bef_ai_lens_vfi_data *output);
+
+BEF_SDK_API bef_effect_result_t
+bef_ai_image_quality_enhancement_vfi_check_license(bef_image_quality_enhancement_handle handle, const char* licensePath);
+
+BEF_SDK_API bef_effect_result_t
+bef_ai_image_quality_enhancement_vfi_check_online_license(bef_image_quality_enhancement_handle handle, const char* licensePath);
+
+BEF_SDK_API bef_effect_result_t
+bef_ai_image_quality_enhancement_vfi_destroy(bef_image_quality_enhancement_handle handle);
+
+#endif //BYTEDEFFECTS_BEF_AI_IMAGE_QUALITY_ENHANCEMENT_VIF_H

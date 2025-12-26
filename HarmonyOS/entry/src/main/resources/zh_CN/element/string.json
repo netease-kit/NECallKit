@@ -1,0 +1,153 @@
+{
+  "string": [
+    {
+      "name": "single_call_page_title",
+      "value": "呼叫页面"
+    },
+    {
+      "name": "single_call_target_account_label",
+      "value": "被呼叫账号ID:"
+    },
+    {
+      "name": "single_call_target_account_placeholder",
+      "value": "请输入被呼叫账号ID"
+    },
+    {
+      "name": "single_call_type_label",
+      "value": "呼叫类型:"
+    },
+    {
+      "name": "single_call_type_audio",
+      "value": "语音通话"
+    },
+    {
+      "name": "single_call_type_video",
+      "value": "视频通话"
+    },
+    {
+      "name": "single_call_button",
+      "value": "呼叫"
+    },
+    {
+      "name": "single_call_alert_title",
+      "value": "提示"
+    },
+    {
+      "name": "single_call_alert_message",
+      "value": "请输入被呼叫账号ID"
+    },
+    {
+      "name": "single_call_alert_self",
+      "value": "不能呼叫自己"
+    },
+    {
+      "name": "single_call_alert_confirm",
+      "value": "确定"
+    },
+    {
+      "name": "single_call_log_calling",
+      "value": "正在呼叫"
+    },
+    {
+      "name": "single_call_log_audio_call",
+      "value": "语音通话"
+    },
+    {
+      "name": "single_call_log_video_call",
+      "value": "视频通话"
+    },
+    {
+      "name": "call_status_waiting_caller",
+      "value": "等待对方接受邀请..."
+    },
+    {
+      "name": "call_status_waiting_callee",
+      "value": "邀请你语音通话..."
+    },
+    {
+      "name": "call_status_connected",
+      "value": "通话中"
+    },
+    {
+      "name": "button_mic_on",
+      "value": "麦克风已开"
+    },
+    {
+      "name": "button_mic_off",
+      "value": "麦克风已关"
+    },
+    {
+      "name": "button_speaker",
+      "value": "扬声器"
+    },
+    {
+      "name": "button_earpiece",
+      "value": "扬声器已关"
+    },
+    {
+      "name": "button_camera_on",
+      "value": "摄像头已开"
+    },
+    {
+      "name": "button_camera_off",
+      "value": "摄像头已关"
+    },
+    {
+      "name": "button_switch_camera",
+      "value": "翻转"
+    },
+    {
+      "name": "button_blur_background",
+      "value": "模糊背景"
+    },
+    {
+      "name": "permission_mic_title",
+      "value": "麦克风权限未开启"
+    },
+    {
+      "name": "permission_mic_message",
+      "value": "无法使用麦克风，前往[设置 > 应用和元服务 > 当前应用] 中打开相应的权限"
+    },
+    {
+      "name": "permission_camera_title",
+      "value": "摄像头权限未开启"
+    },
+    {
+      "name": "permission_camera_message",
+      "value": "无法使用摄像头，前往[设置 > 应用和元服务 > 当前应用] 中打开相应的权限"
+    },
+    {
+      "name": "permission_common_title",
+      "value": "权限未开启"
+    },
+    {
+      "name": "permission_common_message",
+      "value": "所需权限未开启，前往[设置 > 应用和元服务 > 当前应用] 中打开相应的权限"
+    },
+    {
+      "name": "single_call_settings_button",
+      "value": "通话设置"
+    },
+    {
+      "name": "single_call_history_title",
+      "value": "通话记录"
+    },
+    {
+      "name": "single_call_history_empty",
+      "value": "暂无通话记录"
+    },
+    {
+      "name": "single_call_history_clear",
+      "value": "清除"
+    },
+    {
+      "name": "permission_button_iknow",
+      "value": "我知道了"
+    },
+    {
+      "name": "permission_button_goto_settings",
+      "value": "前往设置"
+    }
+  ]
+}
+
