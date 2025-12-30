@@ -20,6 +20,7 @@ _[English](README-en.md) | 简体中文_
 
 * Android
 * iOS
+* HarmonyOS
 * Web
 * Flutter
 * Uniapp
