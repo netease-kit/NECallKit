@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-import { NECallType } from '@necallkit/callkit/src/main/ets/api/Models';
+import { NECallType } from '@yunxin/callkit/src/main/ets/api/Models';
 
 /**
  * Value callback interface

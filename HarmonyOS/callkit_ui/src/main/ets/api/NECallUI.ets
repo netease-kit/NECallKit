@@ -4,7 +4,7 @@
 
 import { media } from '@kit.MediaKit';
 import { NESetupConfig, VoidResult, NECallType, NECallPushConfig, NECallParam, NECertificateConfig,
-  NEExtraConfig } from "@necallkit/callkit";
+  NEExtraConfig } from "@yunxin/callkit";
 import { NECallUIImpl } from "../impl/NECallUIImpl";
 import { NEResult } from "../impl/CallManager";
 

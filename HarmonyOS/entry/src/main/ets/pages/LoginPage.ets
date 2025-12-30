@@ -1,9 +1,9 @@
-import { NECallUI } from '@necallkit/callkit_ui';
+import { NECallUI } from '@yunxin/callkit_ui';
 import { UserModel } from '../viewmodel/UserModel';
 import common from '@ohos.app.ability.common';
 import router from '@ohos.router';
-import { NESetupConfig } from '@necallkit/callkit/src/main/ets/api/Models';
-import { CallUILog } from '@necallkit/callkit_ui/src/main/ets/utils/CallUILog';
+import { NESetupConfig } from '@yunxin/callkit/src/main/ets/api/Models';
+import { CallUILog } from '@yunxin/callkit_ui/src/main/ets/utils/CallUILog';
 import { Want } from '@kit.AbilityKit';
 import {
   V2NIMError,

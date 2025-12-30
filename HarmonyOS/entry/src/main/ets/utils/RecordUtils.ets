@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import { CallRecord } from '../service/CallRecord';
-import { NECallType } from '@necallkit/callkit/src/main/ets/api/Models';
+import { NECallType } from '@yunxin/callkit/src/main/ets/api/Models';
 import { V2NIMMessage, V2NIMMessageType, V2NIMMessageSendingState, V2NIMMessageCallAttachment, V2NIMMessageCallDuration, NIMInterface } from '@nimsdk/base';
 
 /**

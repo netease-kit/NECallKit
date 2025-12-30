@@ -1,5 +1,5 @@
 export { CallMainPage } from './src/main/ets/pages/CallMainPage';
-export { NECallEngine } from '@necallkit/callkit';
+export { NECallEngine } from '@yunxin/callkit';
 export { NECallUI, INECallUI } from './src/main/ets/api/NECallUI';
 export { NECallUIImpl } from './src/main/ets/impl/NECallUIImpl';
 export { CallState } from './src/main/ets/impl/CallState';

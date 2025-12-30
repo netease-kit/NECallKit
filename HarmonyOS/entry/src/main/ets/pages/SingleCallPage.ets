@@ -1,7 +1,7 @@
-import { NECallParam, NECallType, NECallPushConfig, NESelfInfo, NERecordProvider, NERecordConfig, NERtcCallStatus } from '@necallkit/callkit/src/main/ets/api/Models';
-import { NECallEngine, NECallUI } from '@necallkit/callkit_ui';
-import { CallState } from '@necallkit/callkit_ui/src/main/ets/impl/CallState';
-import { CallManager } from '@necallkit/callkit_ui/src/main/ets/impl/CallManager';
+import { NECallParam, NECallType, NECallPushConfig, NESelfInfo, NERecordProvider, NERecordConfig, NERtcCallStatus } from '@yunxin/callkit/src/main/ets/api/Models';
+import { NECallEngine, NECallUI } from '@yunxin/callkit_ui';
+import { CallState } from '@yunxin/callkit_ui/src/main/ets/impl/CallState';
+import { CallManager } from '@yunxin/callkit_ui/src/main/ets/impl/CallManager';
 import common from '@ohos.app.ability.common';
 import router from '@ohos.router';
 import { BeautyDataService, BeautyFilterView, BeautyShapeView, BeautySkinView, VideoFuRender } from 'faceunity';
@@ -9,7 +9,7 @@ import { NERtcConstants, NERtcSDK, NERtcVideoView } from '@nertc/nertc_sdk';
 import { BaseEffectTabs,
   BytedRender,
   ComposerNode, EffectManagerData, EffectTabsController, TabItem  } from 'byteeffect'
-import { NEErrorCode } from '@necallkit/callkit';
+import { NEErrorCode } from '@yunxin/callkit';
 import { CallSettingsManager } from '../manager/CallSettingsManager';
 import { CallRecord } from '../service/CallRecord';
 import { CallRecordServiceImpl } from '../service/CallRecordServiceImpl';

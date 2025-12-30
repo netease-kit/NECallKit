@@ -4,7 +4,7 @@
 
 import { CallRecord } from './CallRecord';
 import { CallRecordStorage } from './CallRecordStorage';
-import { NECallType } from '@necallkit/callkit/src/main/ets/api/Models';
+import { NECallType } from '@yunxin/callkit/src/main/ets/api/Models';
 
 /**
  * 通话记录服务类 - 提供高级功能

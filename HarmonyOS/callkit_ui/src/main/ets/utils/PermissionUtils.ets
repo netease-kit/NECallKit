@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import AbilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl';
-import { NECallType, NEErrorCode } from '@necallkit/callkit';
+import { NECallType, NEErrorCode } from '@yunxin/callkit';
 import { CallUILog } from './CallUILog';
 
 /**

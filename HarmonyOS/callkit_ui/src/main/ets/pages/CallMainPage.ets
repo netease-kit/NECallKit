@@ -11,7 +11,7 @@ import router from '@ohos.router';
 import { CallMainWidget } from '../widget/CallMainWidget';
 import common from '@ohos.app.ability.common';
 import { CallUILog } from '../utils/CallUILog';
-import { NECallEndInfo, NECallEndReason } from '@necallkit/callkit';
+import { NECallEndInfo, NECallEndReason } from '@yunxin/callkit';
 import { promptAction } from '@kit.ArkUI';
 import { ToastUtils } from '../utils/ToastUtils';
 

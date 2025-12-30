@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-import { NECallEndReason, NECallEngine, NECallEngineDelegate, NEErrorCode } from '@necallkit/callkit';
+import { NECallEndReason, NECallEngine, NECallEngineDelegate, NEErrorCode } from '@yunxin/callkit';
 import {
   NECallType,
   NECallEndInfo,
@@ -10,7 +10,7 @@ import {
   NECallInfo,
   NECallTypeChangeInfo,
   NERecordConfig
-} from '@necallkit/callkit';
+} from '@yunxin/callkit';
 import { NEEventNotify } from '../event/EventNotify';
 import {
   setStateEvent,

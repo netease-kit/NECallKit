@@ -14,7 +14,7 @@ import {
   NERtcConstants,
   NESetupConfig,
   NEErrorCode
-} from '@necallkit/callkit';
+} from '@yunxin/callkit';
 
 import { media } from '@kit.MediaKit';
 import { NEEventNotify } from '../event/EventNotify';
