@@ -1,4 +1,4 @@
-import { NECallParam } from '@necallkit/callkit/src/main/ets/api/Models';
+import { NECallParam } from '@yunxin/callkit/src/main/ets/api/Models';
 import common from '@ohos.app.ability.common';
 import preferences from '@ohos.data.preferences';
 

@@ -1,18 +1,10 @@
 import { LogLevel, NIMInitializeOptions, NIMInterface, NIMServiceOptions, V2NIMProvidedServiceType } from '@nimsdk/base'
-// import { V2NIMConversationServiceImpl } from '@nimsdk/conversation'
-import { V2NIMFriendServiceImpl } from '@nimsdk/friend'
-// import { V2NIMLocalConversationServiceImpl } from '@nimsdk/localconversation'
 import { V2NIMMessageServiceImpl, V2NIMClientAntispamUtil } from '@nimsdk/message'
 import { NIMSdk } from '@nimsdk/nim'
-// import { V2NIMSearchServiceImpl } from '@nimsdk/search'
 import { V2NIMSignallingServiceImpl } from '@nimsdk/signalling'
-import { V2NIMTeamServiceImpl } from '@nimsdk/team'
 import { V2NIMUserServiceImpl } from '@nimsdk/user'
-// import { YSFServiceImpl } from '@nimsdk/ysf'
 import common from '@ohos.app.ability.common'
 import { AppConfig } from '../main/ets/config/AppConfig'
-// import { MessageFilterNotification } from '../utils/MessageFilterNotification'
-// import { USER_MODEL_LIST } from '../viewmodel/UserModel'
 
 export class NimRepository {
   private _context: common.Context
@@ -69,10 +61,8 @@ export class NimRepository {
 
   initNim(initializeOptions: NIMInitializeOptions, serviceOptions?: NIMServiceOptions) {
 
-    NIMSdk.registerCustomServices(V2NIMProvidedServiceType.V2NIM_PROVIDED_SERVICE_TEAM, (core, serviceName, serviceConfig) => new V2NIMTeamServiceImpl(core, serviceName, serviceConfig))
     NIMSdk.registerCustomServices(V2NIMProvidedServiceType.V2NIM_PROVIDED_SERVICE_MESSAGE, (core, serviceName, serviceConfig) => new V2NIMMessageServiceImpl(core, serviceName, serviceConfig));
     NIMSdk.registerCustomServices(V2NIMProvidedServiceType.V2NIM_PROVIDED_SERVICE_USER, (core, serviceName, serviceConfig) => new V2NIMUserServiceImpl(core, serviceName, serviceConfig));
-    NIMSdk.registerCustomServices(V2NIMProvidedServiceType.V2NIM_PROVIDED_SERVICE_FRIEND, (core, serviceName, serviceConfig) => new V2NIMFriendServiceImpl(core, serviceName, serviceConfig));
     NIMSdk.registerCustomServices(V2NIMProvidedServiceType.V2NIM_PROVIDED_SERVICE_SIGNALLING, (core, serviceName, serviceConfig) => new V2NIMSignallingServiceImpl(core, serviceName, serviceConfig));
     this._nim = NIMSdk.newInstance(this._context, initializeOptions, serviceOptions)
     console.log("nim from initNim: " + this._nim)

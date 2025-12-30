@@ -1,8 +1,8 @@
 import router from '@ohos.router';
 import { UserModel } from '../viewmodel/UserModel';
-import { NECallUI } from '@necallkit/callkit_ui';
-import { CallUILog } from '@necallkit/callkit_ui/src/main/ets/utils/CallUILog';
-import { NECallEngine } from '@necallkit/callkit';
+import { NECallUI } from '@yunxin/callkit_ui';
+import { CallUILog } from '@yunxin/callkit_ui/src/main/ets/utils/CallUILog';
+import { NECallEngine } from '@yunxin/callkit';
 import { BusinessError } from '@ohos.base';
 import { systemDateTime } from '@kit.BasicServicesKit';
 import backgroundTaskManager from '@ohos.resourceschedule.backgroundTaskManager';
