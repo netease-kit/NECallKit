@@ -2,44 +2,21 @@ import React, { useEffect, useMemo } from 'react'
 import { CallViewProvider, CallViewProviderRef } from '@xkit-yx/call-kit-react-ui'
 import '@xkit-yx/call-kit-react-ui/es/style'
 import V2NIM from 'nim-web-sdk-ng'
+import Login from '../components/Login'
+import Call from '../components/Call'
 
 const appkey = '' // 请填写你的appkey
-const account = '' // 请填写你的account
-const token = '' // 请填写你的token
+
+let nim: V2NIM | null = null
 
 const IndexPage = () => {
   const [isLogin, setIsLogin] = React.useState(false)
   const callViewProviderRef = React.createRef<CallViewProviderRef>()
 
-  const nim = useMemo(() => {
-    return V2NIM.getInstance({
-      appkey,
-      account,
-      token,
-      apiVersion: 'v2',
-      debugLevel: 'debug',
-    })
-  }, [])
+  const [loading, setLoading] = React.useState(false)
+  const [account, setAccount] = React.useState("")
+  const [token, setToken] = React.useState("")
 
-  useEffect(() => {
-    if (nim) {
-      // 当 App 完成渲染后，登录 IM
-      nim.V2NIMLoginService.login(account, token, {
-        retryCount: 5,
-      }).then(() => {
-        setIsLogin(true)
-      })
-    }
-
-    // 当 App 卸载时，登出 IM
-    return () => {
-      if (nim) {
-        nim.V2NIMLoginService.logout().then(() => {
-          setIsLogin(false)
-        })
-      }
-    }
-  }, [nim])
 
   return nim && isLogin ? (
     <CallViewProvider
@@ -50,18 +27,46 @@ const IndexPage = () => {
         debug: true,
       }}
       position={{
-        x: 500,
+        x: window.innerWidth/2 - 200,
         y: 10,
       }}
     >
-      <button onClick={() => {
+      <Call account={account} onCall={(accId, callType) => {
         callViewProviderRef.current?.call({
-          accId: '', // 被叫im账号
-          callType: '2', // 1: 音频通话 2: 视频通话
+          accId, // 被叫im账号
+          callType // 1: 音频通话 2: 视频通话
         })
-      }}>发起呼叫</button>
+        .catch((error) => {
+          alert("呼叫失败：" + error.message)
+        })
+      }} />
     </CallViewProvider>
-  ) : null
+  ) : <Login
+        account={account}
+        onAccountChange={setAccount}
+        token={token}
+        onTokenChange={setToken}
+        onLogin={() => {
+          setLoading(true)
+          nim = V2NIM.getInstance({
+            appkey,
+            account,
+            token,
+            apiVersion: 'v2',
+            debugLevel: 'debug',
+          })
+          nim.V2NIMLoginService.login(account, token, {
+            retryCount: 5,
+          }).then(() => {
+            setIsLogin(true)
+          }).catch((error) => {
+            alert("登录失败：" + error.message)
+          }).finally(() => {
+            setLoading(false)
+          })
+        }}
+        loading={loading}
+      />
 }
 
 export default IndexPage
