@@ -33,13 +33,13 @@
 1. 克隆仓库
 
 ```shell
-  git clone https://github.com/netease-kit/NEVideoCall-1to1.git
+  git clone https://github.com/netease-kit/NECallKit
 ```
 
 2. 安装依赖
 
 ```shell
-	cd ./NEVideoCall-1to1/NLiteAVDemo-uni-app
+	cd ./uni-app/NECallKit-app
 	npm install
 ```
   
