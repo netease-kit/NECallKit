@@ -1,4 +1,4 @@
-_English | [简体中文](README-zh)_
+_English | [简体中文](https://github.com/netease-kit/NECallKit/blob/main/Flutter/README-zh.md)_
 # NetEase YunXin Audio/Video Calling
 
 This document mainly introduces YunXin's Call Kit to help you quickly implement one-on-one audio/video calling functionality. You can directly modify and adapt based on our Demo, or use the CallKit component we provide to implement custom UI.
