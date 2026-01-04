@@ -1,4 +1,4 @@
-_[English](README) | 简体中文_
+_[English](https://github.com/netease-kit/NECallKit/blob/main/Flutter/README.md) | 简体中文_
 # 网易云信音视频通话
 
 本文主要介绍云信的呼叫组件，帮助您快速实现一对一音视频通话功能。您可以直接基于我们的Demo修改适配，也可以使用我们提供的CallKit组件，实现自定义UI。
