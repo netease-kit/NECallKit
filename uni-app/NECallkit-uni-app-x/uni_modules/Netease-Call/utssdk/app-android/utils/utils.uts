@@ -1,0 +1,6 @@
+import NIMClient from "com.netease.nimlib.sdk.NIMClient";
+
+
+export function isIMLogined() : boolean {
+	return (NIMClient.getCurrentAccount() != null && NIMClient.getCurrentAccount() !== "")
+}

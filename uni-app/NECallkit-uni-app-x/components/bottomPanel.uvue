@@ -1,0 +1,95 @@
+<template>
+  <view v-if="state.callType === CALL_TYPE.AUDIO">
+    <view class="button-group-row" v-if="state.callStatus === CALL_STATUS.CALLING && state.callRole === CALL_ROLE.CALLER">
+      <ne-microphone :isShowText="true" size="large" />
+      <hangup />
+      <ne-handsfree :isShowText="true" size="large" />
+    </view>
+    <view class="button-group" v-if="state.callStatus === CALL_STATUS.CONNECTED">
+      <view class="button-group-audio">
+        <ne-microphone />
+        <ne-handsfree />
+        <hangup :size="32" :is-show-text="false" />
+      </view>
+    </view>
+    <view class="button-group-row" v-if="state.callStatus === CALL_STATUS.CALLING && state.callRole === CALL_ROLE.CALLEE">
+      <reject />
+      <accept />
+    </view>
+  </view>
+
+  <view v-if="state.callType === CALL_TYPE.VIDEO">
+    <view class="button-group" v-if="state.callStatus === CALL_STATUS.CALLING && state.callRole === CALL_ROLE.CALLER">
+      <view class="button-group-row">
+        <hangup />
+      </view>
+    </view>
+    <view class="button-group" v-if="state.callStatus === CALL_STATUS.CONNECTED">
+      <view class="button-group-video">
+        <ne-microphone />
+        <ne-camera />
+        <ne-handsfree />
+        <hangup :size="32" :is-show-text="false" />
+      </view>
+    </view>
+    <view class="button-group" v-if="state.callStatus === CALL_STATUS.CALLING && state.callRole === CALL_ROLE.CALLEE">
+      <view class="button-group-row">
+        <reject />
+        <accept />
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup>
+  import {
+    state,
+    CALL_TYPE,
+    CALL_STATUS,
+    CALL_ROLE
+  } from "@/store/index.uts";
+  import accept from "./button/accept.uvue";
+  import hangup from "./button/hangup.uvue";
+  import reject from "./button/reject.uvue";
+  import neMicrophone from "./button/neMicrophone.uvue";
+  import neHandsfree from "./button/neHandsfree.uvue";
+  import neCamera from "./button/neCamera.uvue";
+</script>
+
+<style scoped>
+  .button-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .button-group-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .button-group-audio {
+    align-self: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    border-radius: 140px;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .button-group-video {
+    align-self: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 15px;
+    border-radius: 140px;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+</style>

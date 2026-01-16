@@ -1,0 +1,118 @@
+import NECallInfo from 'com.netease.yunxin.kit.call.p2p.model.NECallInfo';
+import NECallback from 'com.netease.yunxin.nertc.ui.callback.NECallback';
+import NEResultObserver from 'com.netease.yunxin.kit.call.NEResultObserver';
+import CommonResult from 'com.netease.yunxin.nertc.nertcvideocall.bean.CommonResult';
+import { NAME } from './const.uts';
+
+export type ICallback = {
+  apiName : string,
+  success : () => void,
+  fail : (errCode : number, errMsg : string) => void,
+}
+
+export class Callback implements NECallback<any> {
+  private apiName : string;
+  private success : () => void;
+  private fail : (errCode : number, errMsg : string) => void;
+  constructor(options : ICallback) {
+    this.apiName = options.apiName;
+    this.success = options.success;
+    this.fail = options.fail;
+  }
+
+  override onSuccess(data ?: any) : void {
+    console.log(`${NAME.PREFIX} ${this.apiName} success, data: ${data}`);
+    this.success?.();
+  }
+
+  override onError(errCode : Int, errMsg : string) : void {
+    console.error(`${NAME.PREFIX} ${this.apiName} fail, data:`, errCode, errMsg);
+    this.fail?.(errCode as number, errMsg);
+  }
+}
+
+export class CallbackVoid implements NECallback<Void> {
+  private apiName : string;
+  private success : () => void;
+  private fail : (errCode : number, errMsg : string) => void;
+  constructor(options : ICallback) {
+    this.apiName = options.apiName;
+    this.success = options.success;
+    this.fail = options.fail;
+  }
+
+  override onSuccess(data ?: Void) : void {
+    console.log(`${NAME.PREFIX} ${this.apiName} success`);
+    this.success?.();
+  }
+
+  override onError(errCode : Int, errMsg : string) : void {
+    console.error(`${NAME.PREFIX} ${this.apiName} fail, data:`, errCode, errMsg);
+    this.fail?.(errCode as number, errMsg);
+  }
+}
+
+export class CallbackNECallInfo implements NECallback<NECallInfo> {
+  private apiName : string;
+  private success : () => void;
+  private fail : (errCode : number, errMsg : string) => void;
+  constructor(options : ICallback) {
+    this.apiName = options.apiName;
+    this.success = options.success;
+    this.fail = options.fail;
+  }
+
+  override onSuccess(data ?: NECallInfo) : void {
+    console.log(`${NAME.PREFIX} ${this.apiName} success, data: ${data}`);
+    this.success?.();
+  }
+
+  override onError(errCode : Int, errMsg : string) : void {
+    console.error(`${NAME.PREFIX} ${this.apiName} fail, data:`, errCode, errMsg);
+    this.fail?.(errCode as number, errMsg);
+  }
+}
+
+export class CallResultObserver implements NEResultObserver<CommonResult<NECallInfo>> {
+	private apiName : string;
+	private success : () => void;
+	private fail : (errCode : number, errMsg : string) => void;
+	constructor(callback : ICallback) {
+	  this.apiName = callback.apiName;
+	  this.success = callback.success;
+	  this.fail = callback.fail;
+	}
+	
+	override onResult(result: CommonResult<NECallInfo>) : void {
+		console.log(`${NAME.PREFIX} result: ${result}`);
+		if (result.isSuccessful()) {
+			console.log(`${NAME.PREFIX} ${this.apiName} success, data: ${result.data}`);
+			this.success?.();
+		} else {
+			console.error(`${NAME.PREFIX} ${this.apiName} fail, data:`, result.code, result.msg);
+			this.fail?.(result.code as number, result.msg);
+		}
+	}
+}
+
+export class CallResultVoidObserver implements NEResultObserver<CommonResult<Void>> {
+	private apiName : string;
+	private success : () => void;
+	private fail : (errCode : number, errMsg : string) => void;
+	constructor(callback : ICallback) {
+	  this.apiName = callback.apiName;
+	  this.success = callback.success;
+	  this.fail = callback.fail;
+	}
+	
+	override onResult(result: CommonResult<Void>) : void {
+		console.log(`${NAME.PREFIX} result: ${result}`);
+		if (result.isSuccessful()) {
+			console.log(`${NAME.PREFIX} ${this.apiName} success`);
+			this.success?.();
+		} else {
+			console.error(`${NAME.PREFIX} ${this.apiName} fail, data:`, result.code, result.msg);
+			this.fail?.(result.code as number, result.msg);
+		}
+	}
+}

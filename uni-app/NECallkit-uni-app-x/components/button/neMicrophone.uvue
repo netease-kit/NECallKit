@@ -1,0 +1,66 @@
+<template>
+  <view class="btn" @tap="handleMic">
+    <image class="btn-img" :style="[style]" :src="micSrc"></image>
+    <text class="btn-text" v-if="isShowText">
+      麦克风
+    </text>
+  </view>
+</template>
+
+<script setup lang="uts">
+import { NECallKit, global } from '@/global/index.uts'
+import MIC_ON_SRC from "../assets/mic-on.png";
+import MIC_OFF_SRC from "../assets/mic-off.png";
+import MIC_ON_LARGE_SRC from "../assets/mic-on-large.png";
+import MIC_OFF_LARGE_SRC from "../assets/mic-off-large.png";
+
+const isOpenMic = ref(global.isLocalMicOpen as boolean);
+const props = defineProps({
+  isShowText: {
+    type: Boolean,
+    default: false,
+  },
+  size: {
+    type: String,
+    default: 'small',
+  },
+});
+
+const style = computed(() => ({
+  width: props.size == 'small' ? 24 : 75 + "px",
+  height: props.size == 'small' ? 24 : 75 + "px",
+}));
+
+const micSrc = computed(() => {
+  return !isOpenMic.value ? (props.size == 'small' ? MIC_OFF_SRC : MIC_OFF_LARGE_SRC) : (props.size == 'small' ? MIC_ON_SRC : MIC_ON_LARGE_SRC);
+});
+
+const handleMic = () => {
+  if (isOpenMic.value) {
+    NECallKit.muteLocalAudio(true);
+  } else {
+    NECallKit.muteLocalAudio(false);
+  }
+  isOpenMic.value = !isOpenMic.value;
+  global.isLocalMicOpen = isOpenMic.value;
+};
+</script>
+
+<style scoped>
+.btn {
+  margin: 0px 15px;
+}
+
+.btn-img {
+  width: 24px;
+  height: 24px;
+}
+
+.btn-text {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 400;
+  text-align: center;
+  margin-top: 10px;
+}
+</style>

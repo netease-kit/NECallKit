@@ -1,0 +1,85 @@
+<template>
+  <view class="btn" @tap="handleSwitchAudioPlay">
+    <image class="btn-img" :style="[style]" :src="handsFreeSrc"></image>
+    <text class="btn-text" v-if="isShowText">
+      扬声器
+    </text>
+  </view>
+</template>
+
+<script setup>
+import { NECallKit, global, AudioPlaybackDevice } from "@/global/index.uts";
+import {
+  state,
+  CALL_TYPE
+} from "@/store/index.uts";
+import HANDSFREE_ON_SRC from "../assets/handsfree-on.png";
+import HANDSFREE_OFF_SRC from "../assets/handsfree-off.png";
+import HANDSFREE_ON_LARGE_SRC from "../assets/handsfree-on-large.png";
+import HANDSFREE_OFF_LARGE_SRC from "../assets/handsfree-off-large.png";
+
+const props = defineProps({
+  isShowText: {
+    type: Boolean,
+    default: false,
+  },
+  size: {
+    type: String,
+    default: 'small',
+  },
+});
+
+const style = computed(() => ({
+  width: props.size == 'small' ? 24 : 75 + "px",
+  height: props.size == 'small' ? 24 : 75 + "px",
+}));
+
+const isEarPhone = ref(false);
+
+const handsFreeSrc = computed(() => {
+  return isEarPhone.value ? (props.size == 'small' ? HANDSFREE_OFF_SRC : HANDSFREE_OFF_LARGE_SRC) : (props.size == 'small' ? HANDSFREE_ON_SRC : HANDSFREE_ON_LARGE_SRC);
+});
+
+const handleSwitchAudioPlay = () => {
+  const targetAudioPlay = isEarPhone.value
+    ? AudioPlaybackDevice.Speakerphone
+    : AudioPlaybackDevice.Earpiece;
+  NECallKit.setSpeakerphoneOn(targetAudioPlay == AudioPlaybackDevice.Speakerphone);
+  isEarPhone.value = !isEarPhone.value;
+  global.currentSpeakerStatus = targetAudioPlay
+};
+
+onMounted(() => {
+  const savedSpeakerStatus = global.currentSpeakerStatus;
+
+  if (savedSpeakerStatus !== null) {
+    isEarPhone.value = savedSpeakerStatus === AudioPlaybackDevice.Earpiece;
+  } else {
+    const targetAudioPlay = state.callType === CALL_TYPE.AUDIO
+      ? AudioPlaybackDevice.Earpiece
+      : AudioPlaybackDevice.Speakerphone;
+    NECallKit.setSpeakerphoneOn(targetAudioPlay == AudioPlaybackDevice.Speakerphone);
+    
+    isEarPhone.value = state.callType === CALL_TYPE.AUDIO;
+  }
+});
+</script>
+
+<style>
+.btn {
+  margin: 0px 15px;
+}
+
+.btn-img {
+  width: 24px;
+  height: 24px;
+}
+
+.btn-text {
+  font-size: 14px;
+  color: #fff;
+  font-weight: 400;
+  text-align: center;
+  margin-top: 10px;
+}
+</style>

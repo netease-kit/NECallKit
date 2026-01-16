@@ -1,0 +1,47 @@
+<template>
+  <view v-if="state.callStatus === CALL_STATUS.CONNECTED" class="top-bar">
+    <view class="top-bar-time">
+      <timer></timer>
+    </view>
+    <view class="button-group-row">
+      <float-window />
+      <switch-camera v-if="state.callType === CALL_TYPE.VIDEO" />
+    </view>
+  </view>
+</template>
+
+<script setup>
+  import {
+    state,
+    CALL_TYPE,
+    CALL_STATUS,
+  } from "@/store/index.uts";
+  import timer from "./timer/timer.uvue";
+  import floatWindow from "./button/floatWindow.uvue";
+  import switchCamera from "./button/switchCamera.uvue";
+</script>
+
+<style scoped>
+  .top-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .button-group-row {
+    margin-left: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 10px;
+  }
+
+  .top-bar-time {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+  }
+</style>

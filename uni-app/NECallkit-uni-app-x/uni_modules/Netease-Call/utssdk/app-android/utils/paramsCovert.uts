@@ -1,0 +1,23 @@
+import NECallParam from 'com.netease.yunxin.kit.call.p2p.param.NECallParam';
+import NECallParamBuilder from 'com.netease.yunxin.kit.call.p2p.param.NECallParam.Builder';
+
+import { NAME } from "./const.uts";
+
+export class ParamsCovert { 
+  public static covertCallPrams(
+    accountId: string,
+    callType: number,
+    options: UTSJSONObject | null
+  ): NECallParam | null {
+    console.log(
+      `${NAME.PREFIX} covertCallPrams.start, accountId: ${accountId}, callType: ${callType}, data: ${JSON.stringify(options)}`
+    );
+
+    let builder = new NECallParamBuilder(accountId);
+    builder.callType(callType as Int);
+    if (options?.getString('rtcChannelName') != null) {
+      builder.rtcChannelName(options.getString('rtcChannelName'));
+    }
+    return builder.build();
+  }
+}

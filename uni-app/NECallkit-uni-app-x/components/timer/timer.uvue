@@ -1,0 +1,37 @@
+<template>
+  <text class="time">
+    {{ callDuration }}
+  </text>
+</template>
+
+<script setup lang="uts">
+const callDuration = ref('00:00')
+let timer: number | null = null
+let seconds = 0
+
+function formatTime(sec: number): string {
+  const m = Math.floor(sec / 60).toString().padStart(2, '0')
+  const s = (sec % 60).toString().padStart(2, '0')
+  return `${m}:${s}`
+}
+
+onMounted(() => {
+  timer = setInterval(() => {
+    seconds++
+    callDuration.value = formatTime(seconds)
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (timer != null) {
+    clearInterval(timer)
+  }
+})
+</script>
+
+<style scoped>
+.time {
+  font-size: 14px;
+  color: #d5e0f2;
+}
+</style>
