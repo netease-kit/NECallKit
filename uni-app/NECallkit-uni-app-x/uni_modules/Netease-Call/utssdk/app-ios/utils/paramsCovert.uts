@@ -1,0 +1,29 @@
+import { NERtcCallKit, NECallParam, NECallType, NECallSwitchState} from "NERtcCallKit";
+import { NAME } from "./const.uts";
+
+export class ParamsCovert {
+  public static covertMediaType(mediaType: number): NECallType {
+    switch (mediaType) {
+      case 1:
+        return NECallType.audio;
+      case 2:
+        return NECallType.video;
+      default:
+        return NECallType.audio;
+    }
+  }
+  
+  public static covertSwitchState(mediaType: number): NECallSwitchState {
+    switch (mediaType) {
+      case 1:
+        return NECallSwitchState.invite;
+      case 2:
+        return NECallSwitchState.agree;
+	  case 3:
+		return NECallSwitchState.reject;
+      default:
+        return NECallSwitchState.invite;
+    }
+  }
+
+}

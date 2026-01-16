@@ -1,0 +1,28 @@
+<template>
+  <view class="btn" @tap="startFloatWindow">
+    <image class="btn-img" :src="FLOAT_WINDOW_SRC"></image>
+  </view>
+</template>
+
+<script setup>
+import { CallbackParams } from '@/uni_modules/Netease-Call'
+import { NECallKit, _navigateBackCallPage } from "@/global/index.uts";
+import FLOAT_WINDOW_SRC from "../assets/float-window.png";
+
+const startFloatWindow = () => {
+  NECallKit.startFloatWindow({} as CallbackParams);
+  _navigateBackCallPage();
+};
+</script>
+
+<style scoped>
+.btn {
+  margin: 0px 5px;
+}
+
+.btn-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 140px;
+}
+</style>

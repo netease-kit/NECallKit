@@ -1,0 +1,45 @@
+export type CallType = 0 | 1 | 2
+export type CallRole = "unknown" | "callee" | "caller"
+export type CallStatus = "idle" | "calling" | "connected"
+
+export const CALL_TYPE = {
+  UNKNOWN: 0,
+  AUDIO: 1,
+  VIDEO: 2
+}
+
+export const CALL_ROLE = {
+  UNKNOWN: "unknown",
+  CALLEE: "callee",
+  CALLER: "caller"
+}
+
+export const CALL_STATUS = {
+  IDLE: "idle",
+  CALLING: "calling",
+  CONNECTED: "connected"
+}
+
+export type State = {
+  callType: CallType
+  callRole: CallRole
+  callStatus: CallStatus
+}
+
+export const state = reactive({
+  callType: CALL_TYPE.VIDEO as CallType,
+  callRole: CALL_ROLE.UNKNOWN as CallRole,
+  callStatus: CALL_STATUS.IDLE as CallStatus
+} as State)
+
+export const setCallType = (type: CallType) => {
+  state.callType = type
+}
+
+export const setCallRole = (role: CallRole) => {
+  state.callRole = role
+}
+
+export const setCallStatus = (status: CallStatus) => {
+  state.callStatus = status
+}

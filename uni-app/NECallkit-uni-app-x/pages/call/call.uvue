@@ -1,0 +1,68 @@
+<template>
+  <view style="flex: 1;">
+    <call-view style="flex: 1;" />
+    
+    <view style="position: absolute;top: 40px;left: 0;right: 0;">
+      <TopPanel />
+    </view>
+    <view style="position: absolute;bottom: 100px;left: 0;right: 0;">
+      <BottomPanel />
+    </view>
+  </view>
+</template>
+
+<script setup>
+  import { state, State, CALL_STATUS, CALL_ROLE } from '@/store/index.uts'
+  import TopPanel from '@/components/topPanel.uvue'
+  import BottomPanel from '@/components/bottomPanel.uvue'
+  
+  const innerAudioContext = ref(null as InnerAudioContext | null)
+  
+  const initAudio = () => {
+    innerAudioContext.value = uni.createInnerAudioContext()
+    innerAudioContext.value.loop = true
+    
+    if (state.callRole == CALL_ROLE.CALLER) {
+      innerAudioContext.value.src = '/static/audio/avchat_connecting.mp3'
+    } else {
+      innerAudioContext.value.src = '/static/audio/avchat_ring.mp3'
+    }
+    
+    innerAudioContext.value.play()
+  }
+  
+  const stopAudio = () => {
+    if (innerAudioContext.value != null) {
+      innerAudioContext.value.stop()
+    }
+  }
+  
+  watch(state, (newState: State, oldState: State) => {
+    if (newState.callStatus != CALL_STATUS.CALLING) {
+      stopAudio()
+    }
+  })
+  
+  onShow(() => {
+    if (state.callStatus == CALL_STATUS.CALLING) {
+      initAudio()
+    }
+  })
+  
+  onHide(() => {
+    if (innerAudioContext.value != null) {
+      innerAudioContext.value.destroy()
+    }
+  })
+  
+  onUnmounted(() => {
+    if (innerAudioContext.value != null) {
+      innerAudioContext.value.destroy()
+    }
+  })
+  
+</script>
+
+<style>
+    
+</style>
