@@ -20,7 +20,7 @@ export class CallEngineObserver implements NECallEngineDelegate {
 
   onReceiveInvited(info: NEInviteInfo) {
     console.log(`${NAME.PREFIX} onCallReceived ${JSON.stringify(info)}`);
-    this.listener("onCallReceived", { info: info });
+    this.listener("onCallReceived", { info: {callType: info.callType, callerAccId: info.callerAccId, channelId: info.channelId, extraInfo: info.extraInfo}});
   }
 
   onCallConnected(info: NECallInfo) {
@@ -35,7 +35,7 @@ export class CallEngineObserver implements NECallEngineDelegate {
 
   onCallEnd(info: NECallEndInfo) {
     console.log(`${NAME.PREFIX} onCallEnd ${JSON.stringify(info)}`);
-    this.listener("onCallEnd", { info: info });
+    this.listener("onCallEnd", { info: {reasonCode: info.reasonCode, message: info.message, extraString: info.extraString}});
   }
 
   onVideoAvailable(available: boolean, userID: string) {

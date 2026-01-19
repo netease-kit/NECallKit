@@ -9,12 +9,7 @@ import {
   type CallStatus
 } from '@/store/index.uts'
 
-// #ifdef APP-ANDROID
-import NEInviteInfo from 'com.netease.yunxin.kit.call.p2p.model.NEInviteInfo'
-import NECallEndInfo from 'com.netease.yunxin.kit.call.p2p.model.NECallEndInfo'
-// #endif
-
-const APP_KEY = "" // 请填写应用对应的AppKey，可在云信控制台的”AppKey管理“页面获取
+const APP_KEY = "" // 请填写应用对应的AppKey，可在云信控制台的“AppKey管理”页面获取
 
 export const global = {
   isLocalMicOpen: true,
@@ -52,10 +47,10 @@ const innerAudioContext = uni.createInnerAudioContext()
 
 NECallKit.on("onCallReceived", (res) => {
   console.log(`onCallReceived, data: ${JSON.stringify(res)}`)
-  const info = (res as UTSJSONObject)?.info as NEInviteInfo
+  const info = (res as UTSJSONObject)?.info as UTSJSONObject
 
   NECallKit.hasPermission({
-    type: info.callType,
+    type: info?.callType as number,
     success: () => {},
     fail: (errCode: number, errMsg: string) => {}
   })
@@ -81,7 +76,7 @@ NECallKit.on("onCallNotConnected", (res) => {
 
 NECallKit.on("onCallEnd", (res) => {
   console.log(`onCallEnd, data: ${JSON.stringify(res)}`)
-  const info = (res as UTSJSONObject)?.info as NECallEndInfo
+  const info = (res as UTSJSONObject)?.info as UTSJSONObject
   
   NECallKit.stopService(state.callType)
   setCallRole(CALL_ROLE.UNKNOWN as CallRole)
@@ -89,22 +84,11 @@ NECallKit.on("onCallEnd", (res) => {
   _navigateBackCallPage()
   
   //呼叫超时
-  if (info?.reasonCode == 2) {   
+  if (info?.reasonCode == 2) {
     uni.showToast({
       title: '呼叫超时',
       icon: 'none'
     })
-  }
-  
-  //对方已拒绝
-  if (info?.reasonCode == 14) {
-    uni.showToast({
-      title: '对方已拒绝',
-      icon: 'none'
-    })
-    
-    innerAudioContext.src = '/static/audio/avchat_peer_reject.mp3';
-    innerAudioContext.play();
   }
   
   //对方忙线
@@ -115,6 +99,17 @@ NECallKit.on("onCallEnd", (res) => {
     })
     
     innerAudioContext.src = '/static/audio/avchat_peer_busy.mp3';
+    innerAudioContext.play();
+  }
+  
+  //对方已拒绝
+  if (info?.reasonCode == 14) {
+    uni.showToast({
+      title: '对方已拒绝',
+      icon: 'none'
+    })
+    
+    innerAudioContext.src = '/static/audio/avchat_peer_reject.mp3';
     innerAudioContext.play();
   }
   
