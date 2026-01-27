@@ -6,16 +6,16 @@
 
 <script setup>
 import { CallbackParams } from '@/uni_modules/Netease-Call'
-import { _navigateBackCallPage } from "@/global/index.uts";
+import { NECallKit, _navigateBackCallPage } from "@/global/index.uts";
 import FLOAT_WINDOW_SRC from "../assets/float-window.png";
 
 const startFloatWindow = () => {
-  uni.$NECallKit.startFloatWindow({
+  NECallKit.startFloatWindow({
     success: () => {
       console.log('startFloatWindow success');
       _navigateBackCallPage();
     },
-    fail: () => {
+    fail: (errCode: number, errMsg: string) => {
       console.log('startFloatWindow fail');
     },
   } as CallbackParams);

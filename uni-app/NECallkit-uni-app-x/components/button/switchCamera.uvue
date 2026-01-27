@@ -8,6 +8,7 @@
 </template>
 
 <script setup lang="uts">
+import { NECallKit } from "@/global/index.uts";
 import SWITCH_CAMERA_SRC from "../assets/switch-camera.png";
 
 const isFrontCamera = ref(true);
@@ -30,9 +31,9 @@ const style = computed(() => ({
 
 const handleSwitchCamera = () => {
   if (isFrontCamera.value) {
-    uni.$NECallKit.switchCamera(1);
+    NECallKit.switchCamera(1);
   } else {
-    uni.$NECallKit.switchCamera(0);
+    NECallKit.switchCamera(0);
   }
   isFrontCamera.value = !isFrontCamera.value;
 };

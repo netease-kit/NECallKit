@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="uts">
-import { global } from '@/global/index.uts'
+import { NECallKit, global } from '@/global/index.uts'
 import CAMERA_ON_SRC from "../assets/camera-on.png";
 import CAMERA_OFF_SRC from "../assets/camera-off.png";
 
@@ -31,9 +31,9 @@ const imgSrc = computed(() => {
 
 const handleCamera = () => {
   if (isOpenCamera.value) {
-    uni.$NECallKit.muteLocalVideo(true);
+    NECallKit.muteLocalVideo(true);
   } else {
-    uni.$NECallKit.muteLocalVideo(false);
+    NECallKit.muteLocalVideo(false);
   }
   isOpenCamera.value = !isOpenCamera.value;
   global.isLocalCameraOpen = isOpenCamera.value

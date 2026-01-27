@@ -43,7 +43,7 @@
 
 <script setup>
   import { CallParams } from '@/uni_modules/Netease-Call'
-  import { _navigateToCallPage } from '@/global/index.uts'
+  import { NECallKit, _navigateToCallPage } from '@/global/index.uts'
   import {
     state,
     CALL_TYPE,
@@ -65,7 +65,7 @@
   
 	const login = () => {
     loading.value = true
-		uni.$NECallKit.login({
+		NECallKit.login({
 		  accountId: account.value,
 		  token: token.value,
 		  success: () => {
@@ -90,7 +90,7 @@
       accountId: callee.value,
       callType: state.callType,
       success: () => {
-        uni.$NECallKit.hasPermission({
+        NECallKit.hasPermission({
           type: state.callType,
           success: () => {},
           fail: (errCode: number, errMsg: string) => {}
@@ -109,7 +109,7 @@
       },
     }
     
-    uni.$NECallKit.call(params)
+    NECallKit.call(params)
   }
 </script>
 

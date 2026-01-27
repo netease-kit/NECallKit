@@ -9,7 +9,7 @@
 
 <script setup>
 import { AcceptParams } from '@/uni_modules/Netease-Call'
-import { global } from "@/global/index.uts";
+import { NECallKit, global } from "@/global/index.uts";
 import {
   state,
   CALL_TYPE
@@ -35,7 +35,7 @@ const imgSrc = computed(() => {
 });
 
 const handleAccept = () => {
-  uni.$NECallKit.accept({} as AcceptParams);
+  NECallKit.accept({} as AcceptParams);
 };
 </script>
 
