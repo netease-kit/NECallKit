@@ -1,0 +1,6 @@
+framework module NEXKitBase {
+  umbrella header "NEXKitBase.h"
+  export *
+
+  module * { export * }
+}

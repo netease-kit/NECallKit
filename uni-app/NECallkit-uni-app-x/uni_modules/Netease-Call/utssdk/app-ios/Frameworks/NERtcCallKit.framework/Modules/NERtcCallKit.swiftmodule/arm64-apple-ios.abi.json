@@ -1,0 +1,795 @@
+{
+  "ABIRoot": {
+    "kind": "Root",
+    "name": "TopLevel",
+    "printedName": "TopLevel",
+    "children": [
+      {
+        "kind": "Import",
+        "name": "AVFAudio",
+        "printedName": "AVFAudio",
+        "declKind": "Import",
+        "moduleName": "NERtcCallKit",
+        "declAttributes": [
+          "RawDocComment"
+        ]
+      },
+      {
+        "kind": "Import",
+        "name": "Foundation",
+        "printedName": "Foundation",
+        "declKind": "Import",
+        "moduleName": "NERtcCallKit"
+      },
+      {
+        "kind": "Import",
+        "name": "LiveCommunicationKit",
+        "printedName": "LiveCommunicationKit",
+        "declKind": "Import",
+        "moduleName": "NERtcCallKit"
+      },
+      {
+        "kind": "Import",
+        "name": "UIKit",
+        "printedName": "UIKit",
+        "declKind": "Import",
+        "moduleName": "NERtcCallKit"
+      },
+      {
+        "kind": "Import",
+        "name": "NERtcCallKit_Private",
+        "printedName": "NERtcCallKit_Private",
+        "declKind": "Import",
+        "moduleName": "NERtcCallKit",
+        "declAttributes": [
+          "ImplementationOnly"
+        ]
+      },
+      {
+        "kind": "TypeDecl",
+        "name": "NECallLCKManager",
+        "printedName": "NECallLCKManager",
+        "children": [
+          {
+            "kind": "Var",
+            "name": "shared",
+            "printedName": "shared",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "NECallLCKManager",
+                "printedName": "NERtcCallKit.NECallLCKManager",
+                "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager"
+              }
+            ],
+            "declKind": "Var",
+            "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager(cpy)shared",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC6sharedACvpZ",
+            "moduleName": "NERtcCallKit",
+            "static": true,
+            "declAttributes": [
+              "HasInitialValue",
+              "Final",
+              "HasStorage",
+              "AccessControl",
+              "ObjC"
+            ],
+            "isLet": true,
+            "hasStorage": true,
+            "accessors": [
+              {
+                "kind": "Accessor",
+                "name": "Get",
+                "printedName": "Get()",
+                "children": [
+                  {
+                    "kind": "TypeNominal",
+                    "name": "NECallLCKManager",
+                    "printedName": "NERtcCallKit.NECallLCKManager",
+                    "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager"
+                  }
+                ],
+                "declKind": "Accessor",
+                "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager(cm)shared",
+                "mangledName": "$s12NERtcCallKit16NECallLCKManagerC6sharedACvgZ",
+                "moduleName": "NERtcCallKit",
+                "static": true,
+                "implicit": true,
+                "declAttributes": [
+                  "Final",
+                  "ObjC"
+                ],
+                "accessorKind": "get"
+              }
+            ]
+          },
+          {
+            "kind": "Function",
+            "name": "setLocalVideo",
+            "printedName": "setLocalVideo(enable:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager(im)setLocalVideoWithEnable:",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC13setLocalVideo6enableySb_tF",
+            "moduleName": "NERtcCallKit",
+            "objc_name": "setLocalVideoWithEnable:",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "reportIncomingConversation",
+            "printedName": "reportIncomingConversation(type:displayName:userId:requestId:autoAccept:ringtoneName:acceptCompletion:hangupCompletion:muteCompletion:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "UInt",
+                "printedName": "Swift.UInt",
+                "usr": "s:Su"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Int",
+                "printedName": "Swift.Int",
+                "usr": "s:Si"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(((any Swift.Error)?, NERtcCallKit.NECallInfo?) -> ())?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "((any Swift.Error)?, NERtcCallKit.NECallInfo?) -> ()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "((any Swift.Error)?, NERtcCallKit.NECallInfo?)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "(any Swift.Error)?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Error",
+                                "printedName": "any Swift.Error",
+                                "usr": "s:s5ErrorP"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "NERtcCallKit.NECallInfo?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "NECallInfo",
+                                "printedName": "NERtcCallKit.NECallInfo",
+                                "usr": "c:objc(cs)NECallInfo"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(((any Swift.Error)?) -> ())?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "((any Swift.Error)?) -> ()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Optional",
+                        "printedName": "(any Swift.Error)?",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Error",
+                            "printedName": "any Swift.Error",
+                            "usr": "s:s5ErrorP"
+                          }
+                        ],
+                        "usr": "s:Sq"
+                      }
+                    ]
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Optional",
+                "printedName": "(((any Swift.Error)?, Swift.Bool) -> ())?",
+                "children": [
+                  {
+                    "kind": "TypeFunc",
+                    "name": "Function",
+                    "printedName": "((any Swift.Error)?, Swift.Bool) -> ()",
+                    "children": [
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Void",
+                        "printedName": "()"
+                      },
+                      {
+                        "kind": "TypeNominal",
+                        "name": "Tuple",
+                        "printedName": "((any Swift.Error)?, Swift.Bool)",
+                        "children": [
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Optional",
+                            "printedName": "(any Swift.Error)?",
+                            "children": [
+                              {
+                                "kind": "TypeNominal",
+                                "name": "Error",
+                                "printedName": "any Swift.Error",
+                                "usr": "s:s5ErrorP"
+                              }
+                            ],
+                            "usr": "s:Sq"
+                          },
+                          {
+                            "kind": "TypeNominal",
+                            "name": "Bool",
+                            "printedName": "Swift.Bool",
+                            "usr": "s:Sb"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "hasDefaultArg": true,
+                "usr": "s:Sq"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager(im)reportIncomingConversationWithType:displayName:userId:requestId:autoAccept:ringtoneName:acceptCompletion:hangupCompletion:muteCompletion:",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC26reportIncomingConversation4type11displayName6userId07requestM010autoAccept08ringtoneK016acceptCompletion06hangupS004muteS0SuSi_S3SSbSSys5Error_pSg_So0D4InfoCSgtcSgyAOcSgyAO_SbtcSgtF",
+            "moduleName": "NERtcCallKit",
+            "objc_name": "reportIncomingConversationWithType:displayName:userId:requestId:autoAccept:ringtoneName:acceptCompletion:hangupCompletion:muteCompletion:",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "acceptIncomingConversation",
+            "printedName": "acceptIncomingConversation()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager(im)acceptIncomingConversationWithCompletionHandler:",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC26acceptIncomingConversationyyYaF",
+            "moduleName": "NERtcCallKit",
+            "objc_name": "acceptIncomingConversationWithCompletionHandler:",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "cancelIncomingConversation",
+            "printedName": "cancelIncomingConversation(requestId:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "String",
+                "printedName": "Swift.String",
+                "usr": "s:SS"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager(im)cancelIncomingConversationWithRequestId:completionHandler:",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC26cancelIncomingConversation9requestIdySS_tYaF",
+            "moduleName": "NERtcCallKit",
+            "objc_name": "cancelIncomingConversationWithRequestId:completionHandler:",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "muteIncomingConversation",
+            "printedName": "muteIncomingConversation(mute:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Bool",
+                "printedName": "Swift.Bool",
+                "usr": "s:Sb"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager(im)muteIncomingConversationWithMute:completionHandler:",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC24muteIncomingConversation0F0ySb_tYaF",
+            "moduleName": "NERtcCallKit",
+            "objc_name": "muteIncomingConversationWithMute:completionHandler:",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "dismissIncomingCall",
+            "printedName": "dismissIncomingCall()",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager(im)dismissIncomingCallWithCompletionHandler:",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC015dismissIncomingB0yyYaF",
+            "moduleName": "NERtcCallKit",
+            "objc_name": "dismissIncomingCallWithCompletionHandler:",
+            "declAttributes": [
+              "AccessControl",
+              "ObjC"
+            ],
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "conversationManager",
+            "printedName": "conversationManager(_:conversationChanged:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ConversationManager",
+                "printedName": "LiveCommunicationKit.ConversationManager",
+                "usr": "s:20LiveCommunicationKit19ConversationManagerC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "Conversation",
+                "printedName": "LiveCommunicationKit.Conversation",
+                "usr": "s:20LiveCommunicationKit12ConversationC"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12NERtcCallKit16NECallLCKManagerC19conversationManager_0F7Changedy017LiveCommunicationC0012ConversationG0C_AF0K0CtF",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC19conversationManager_0F7Changedy017LiveCommunicationC0012ConversationG0C_AF0K0CtF",
+            "moduleName": "NERtcCallKit",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "conversationManagerDidBegin",
+            "printedName": "conversationManagerDidBegin(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ConversationManager",
+                "printedName": "LiveCommunicationKit.ConversationManager",
+                "usr": "s:20LiveCommunicationKit19ConversationManagerC"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12NERtcCallKit16NECallLCKManagerC27conversationManagerDidBeginyy017LiveCommunicationC0012ConversationG0CF",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC27conversationManagerDidBeginyy017LiveCommunicationC0012ConversationG0CF",
+            "moduleName": "NERtcCallKit",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "conversationManagerDidReset",
+            "printedName": "conversationManagerDidReset(_:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ConversationManager",
+                "printedName": "LiveCommunicationKit.ConversationManager",
+                "usr": "s:20LiveCommunicationKit19ConversationManagerC"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12NERtcCallKit16NECallLCKManagerC27conversationManagerDidResetyy017LiveCommunicationC0012ConversationG0CF",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC27conversationManagerDidResetyy017LiveCommunicationC0012ConversationG0CF",
+            "moduleName": "NERtcCallKit",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "conversationManager",
+            "printedName": "conversationManager(_:perform:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ConversationManager",
+                "printedName": "LiveCommunicationKit.ConversationManager",
+                "usr": "s:20LiveCommunicationKit19ConversationManagerC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ConversationAction",
+                "printedName": "LiveCommunicationKit.ConversationAction",
+                "usr": "s:20LiveCommunicationKit18ConversationActionC"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12NERtcCallKit16NECallLCKManagerC19conversationManager_7performy017LiveCommunicationC0012ConversationG0C_AF0K6ActionCtF",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC19conversationManager_7performy017LiveCommunicationC0012ConversationG0C_AF0K6ActionCtF",
+            "moduleName": "NERtcCallKit",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "conversationManager",
+            "printedName": "conversationManager(_:timedOutPerforming:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ConversationManager",
+                "printedName": "LiveCommunicationKit.ConversationManager",
+                "usr": "s:20LiveCommunicationKit19ConversationManagerC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ConversationAction",
+                "printedName": "LiveCommunicationKit.ConversationAction",
+                "usr": "s:20LiveCommunicationKit18ConversationActionC"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12NERtcCallKit16NECallLCKManagerC19conversationManager_18timedOutPerformingy017LiveCommunicationC0012ConversationG0C_AF0M6ActionCtF",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC19conversationManager_18timedOutPerformingy017LiveCommunicationC0012ConversationG0C_AF0M6ActionCtF",
+            "moduleName": "NERtcCallKit",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "conversationManager",
+            "printedName": "conversationManager(_:didActivate:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ConversationManager",
+                "printedName": "LiveCommunicationKit.ConversationManager",
+                "usr": "s:20LiveCommunicationKit19ConversationManagerC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "AVAudioSession",
+                "printedName": "AVFAudio.AVAudioSession",
+                "usr": "c:objc(cs)AVAudioSession"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12NERtcCallKit16NECallLCKManagerC19conversationManager_11didActivatey017LiveCommunicationC0012ConversationG0C_So14AVAudioSessionCtF",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC19conversationManager_11didActivatey017LiveCommunicationC0012ConversationG0C_So14AVAudioSessionCtF",
+            "moduleName": "NERtcCallKit",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          },
+          {
+            "kind": "Function",
+            "name": "conversationManager",
+            "printedName": "conversationManager(_:didDeactivate:)",
+            "children": [
+              {
+                "kind": "TypeNominal",
+                "name": "Void",
+                "printedName": "()"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "ConversationManager",
+                "printedName": "LiveCommunicationKit.ConversationManager",
+                "usr": "s:20LiveCommunicationKit19ConversationManagerC"
+              },
+              {
+                "kind": "TypeNominal",
+                "name": "AVAudioSession",
+                "printedName": "AVFAudio.AVAudioSession",
+                "usr": "c:objc(cs)AVAudioSession"
+              }
+            ],
+            "declKind": "Func",
+            "usr": "s:12NERtcCallKit16NECallLCKManagerC19conversationManager_13didDeactivatey017LiveCommunicationC0012ConversationG0C_So14AVAudioSessionCtF",
+            "mangledName": "$s12NERtcCallKit16NECallLCKManagerC19conversationManager_13didDeactivatey017LiveCommunicationC0012ConversationG0C_So14AVAudioSessionCtF",
+            "moduleName": "NERtcCallKit",
+            "declAttributes": [
+              "AccessControl"
+            ],
+            "isFromExtension": true,
+            "funcSelfKind": "NonMutating"
+          }
+        ],
+        "declKind": "Class",
+        "usr": "c:@M@NERtcCallKit@objc(cs)NECallLCKManager",
+        "mangledName": "$s12NERtcCallKit16NECallLCKManagerC",
+        "moduleName": "NERtcCallKit",
+        "intro_iOS": "17.4",
+        "declAttributes": [
+          "AccessControl",
+          "ObjC",
+          "Available"
+        ],
+        "superclassUsr": "c:objc(cs)NSObject",
+        "hasMissingDesignatedInitializers": true,
+        "inheritsConvenienceInitializers": true,
+        "superclassNames": [
+          "ObjectiveC.NSObject"
+        ],
+        "conformances": [
+          {
+            "kind": "Conformance",
+            "name": "ConversationManagerDelegate",
+            "printedName": "ConversationManagerDelegate",
+            "usr": "s:20LiveCommunicationKit27ConversationManagerDelegateP",
+            "mangledName": "$s20LiveCommunicationKit27ConversationManagerDelegateP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Equatable",
+            "printedName": "Equatable",
+            "usr": "s:SQ",
+            "mangledName": "$sSQ"
+          },
+          {
+            "kind": "Conformance",
+            "name": "Hashable",
+            "printedName": "Hashable",
+            "usr": "s:SH",
+            "mangledName": "$sSH"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CVarArg",
+            "printedName": "CVarArg",
+            "usr": "s:s7CVarArgP",
+            "mangledName": "$ss7CVarArgP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObservingPublishing",
+            "printedName": "_KeyValueCodingAndObservingPublishing",
+            "usr": "s:10Foundation37_KeyValueCodingAndObservingPublishingP",
+            "mangledName": "$s10Foundation37_KeyValueCodingAndObservingPublishingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "_KeyValueCodingAndObserving",
+            "printedName": "_KeyValueCodingAndObserving",
+            "usr": "s:10Foundation27_KeyValueCodingAndObservingP",
+            "mangledName": "$s10Foundation27_KeyValueCodingAndObservingP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomStringConvertible",
+            "printedName": "CustomStringConvertible",
+            "usr": "s:s23CustomStringConvertibleP",
+            "mangledName": "$ss23CustomStringConvertibleP"
+          },
+          {
+            "kind": "Conformance",
+            "name": "CustomDebugStringConvertible",
+            "printedName": "CustomDebugStringConvertible",
+            "usr": "s:s28CustomDebugStringConvertibleP",
+            "mangledName": "$ss28CustomDebugStringConvertibleP"
+          }
+        ]
+      }
+    ],
+    "json_format_version": 8
+  },
+  "ConstValues": [
+    {
+      "filePath": "\/Users\/yunxin\/workspace\/XKit-iOS-Build\/CallKit\/NERtcCallKit\/NERtcCallKit\/Classes\/project\/LIveCommunicationKit\/NECallLCKManager.swift",
+      "kind": "StringLiteral",
+      "offset": 376,
+      "length": 18,
+      "value": "\"NECallLCKManager\""
+    },
+    {
+      "filePath": "\/Users\/yunxin\/workspace\/XKit-iOS-Build\/CallKit\/NERtcCallKit\/NERtcCallKit\/Classes\/project\/LIveCommunicationKit\/NECallLCKManager.swift",
+      "kind": "Dictionary",
+      "offset": 623,
+      "length": 3,
+      "value": "[]"
+    },
+    {
+      "filePath": "\/Users\/yunxin\/workspace\/XKit-iOS-Build\/CallKit\/NERtcCallKit\/NERtcCallKit\/Classes\/project\/LIveCommunicationKit\/NECallLCKManager.swift",
+      "kind": "Dictionary",
+      "offset": 667,
+      "length": 3,
+      "value": "[]"
+    },
+    {
+      "filePath": "\/Users\/yunxin\/workspace\/XKit-iOS-Build\/CallKit\/NERtcCallKit\/NERtcCallKit\/Classes\/project\/LIveCommunicationKit\/NECallLCKManager.swift",
+      "kind": "StringLiteral",
+      "offset": 719,
+      "length": 36,
+      "value": "\"com.netease.NECallLCKManager.queue\""
+    },
+    {
+      "filePath": "\/Users\/yunxin\/workspace\/XKit-iOS-Build\/CallKit\/NERtcCallKit\/NERtcCallKit\/Classes\/project\/LIveCommunicationKit\/NECallLCKManager.swift",
+      "kind": "IntegerLiteral",
+      "offset": 791,
+      "length": 1,
+      "value": "1"
+    },
+    {
+      "filePath": "\/Users\/yunxin\/workspace\/XKit-iOS-Build\/CallKit\/NERtcCallKit\/NERtcCallKit\/Classes\/project\/LIveCommunicationKit\/NECallLCKManager.swift",
+      "kind": "BooleanLiteral",
+      "offset": 826,
+      "length": 4,
+      "value": "true"
+    },
+    {
+      "filePath": "\/Users\/yunxin\/workspace\/XKit-iOS-Build\/CallKit\/NERtcCallKit\/NERtcCallKit\/Classes\/project\/LIveCommunicationKit\/NECallLCKManager.swift",
+      "kind": "BooleanLiteral",
+      "offset": 917,
+      "length": 5,
+      "value": "false"
+    },
+    {
+      "filePath": "\/Users\/yunxin\/workspace\/XKit-iOS-Build\/CallKit\/NERtcCallKit\/NERtcCallKit\/Classes\/project\/LIveCommunicationKit\/NECallLCKManager.swift",
+      "kind": "BooleanLiteral",
+      "offset": 1071,
+      "length": 5,
+      "value": "false"
+    },
+    {
+      "filePath": "\/Users\/yunxin\/workspace\/XKit-iOS-Build\/CallKit\/NERtcCallKit\/NERtcCallKit\/Classes\/project\/LIveCommunicationKit\/NECallLCKManager.swift",
+      "kind": "BooleanLiteral",
+      "offset": 1112,
+      "length": 5,
+      "value": "false"
+    }
+  ]
+}

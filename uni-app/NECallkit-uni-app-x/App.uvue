@@ -1,10 +1,141 @@
 <script lang="uts">
+	import { CallEngine } from '@/uni_modules/Netease-Call'
+	import {
+		state,
+		CALL_ROLE,
+		CALL_STATUS,
+		setCallType,
+		setCallRole,
+		setCallStatus,
+		type CallType,
+		type CallRole,
+		type CallStatus
+	} from '@/store/index.uts'
+	import { _navigateToCallPage, _navigateBackCallPage, global } from '@/global/index.uts'
+
 	// #ifdef APP-ANDROID || APP-HARMONY
 	let firstBackTime = 0
 	// #endif
+
+	const APP_KEY = "3c576300158e8ad9f81963f318b87d3d" // 请填写应用对应的AppKey
+
 	export default {
 		onLaunch() {
 			console.log('App Launch')
+			
+			// 初始化 CallEngine
+			const NECallKit = new CallEngine()
+			NECallKit.setup({appKey: APP_KEY})
+			
+			// 注册全局实例
+			uni.$NECallKit = NECallKit
+			
+			const innerAudioContext = uni.createInnerAudioContext()
+			
+			// 注册事件监听
+			NECallKit.on("onCallReceived", (res) => {
+        console.log('onCallReceived', res)
+				console.log(`onCallReceived, data: ${JSON.stringify(res)}`)
+				const info = JSON.parse(res as UTSJSONObject)?.info as UTSJSONObject
+
+				NECallKit.hasPermission({
+					type: 2, //info?.callType as number
+					success: () => {},
+					fail: (errCode: number, errMsg: string) => {}
+				})
+
+				setCallRole(CALL_ROLE.CALLEE as CallRole)
+				setCallStatus(CALL_STATUS.CALLING as CallStatus)
+				
+				_navigateToCallPage()
+			})
+
+			NECallKit.on("onCallConnected", (res) => {
+				console.log(`onCallConnected, data: ${JSON.stringify(res)}`)
+				NECallKit.startService(state.callType)
+				setCallStatus(CALL_STATUS.CONNECTED as CallStatus)
+			})
+
+			NECallKit.on("onCallNotConnected", (res) => {
+				console.log(`onCallNotConnected, data: ${JSON.stringify(res)}`)
+				setCallRole(CALL_ROLE.UNKNOWN as CallRole)
+				setCallStatus(CALL_STATUS.IDLE as CallStatus)
+				_navigateBackCallPage()
+        NECallKit.stopFloatWindow()
+			})
+
+			NECallKit.on("onCallEnd", (res) => {
+        console.log('onCallEnd', res)
+				console.log(`onCallEnd, data: ${JSON.stringify(res)}`)
+				const info = (res as UTSJSONObject)?.info as UTSJSONObject
+				
+				NECallKit.stopService(state.callType)
+				setCallRole(CALL_ROLE.UNKNOWN as CallRole)
+				setCallStatus(CALL_STATUS.IDLE as CallStatus)
+				_navigateBackCallPage()
+        NECallKit.stopFloatWindow()
+				
+				//呼叫超时
+				if (info?.reasonCode == 2) {
+					uni.showToast({
+						title: '呼叫超时',
+						icon: 'none'
+					})
+				}
+				
+				//对方忙线
+				if (info?.reasonCode == 3) {
+					uni.showToast({
+						title: '对方忙线',
+						icon: 'none'
+					})
+					
+					innerAudioContext.src = '/static/audio/avchat_peer_busy.mp3';
+					innerAudioContext.play();
+				}
+				
+				//对方已拒绝
+				if (info?.reasonCode == 14) {
+					uni.showToast({
+						title: '对方已拒绝',
+						icon: 'none'
+					})
+					
+					innerAudioContext.src = '/static/audio/avchat_peer_reject.mp3';
+					innerAudioContext.play();
+				}
+				
+				//对方已挂断
+				if (info?.reasonCode == 16) {
+					uni.showToast({
+						title: '对方已挂断',
+						icon: 'none'
+					})
+				}
+				
+				//其他端已拒绝
+				if (info?.reasonCode == 17) {
+					uni.showToast({
+						title: '其他端已拒绝',
+						icon: 'none'
+					})
+				}
+				
+				//其他端已接听
+				if (info?.reasonCode == 18) {
+					uni.showToast({
+						title: '其他端已接听',
+						icon: 'none'
+					})
+				}
+			})
+
+			NECallKit.on("onFloatWindowClick", (res) => {
+				console.log(`onFloatWindowClick, data: ${JSON.stringify(res)}`)
+				NECallKit.stopFloatWindow()
+				
+				_navigateToCallPage()
+			})
 		},
 		onShow() {
 			console.log('App Show')

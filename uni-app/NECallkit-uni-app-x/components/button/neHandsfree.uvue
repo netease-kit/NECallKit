@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-import { NECallKit, global, AudioPlaybackDevice } from "@/global/index.uts";
+import { global, AudioPlaybackDevice } from "@/global/index.uts";
 import {
   state,
   CALL_TYPE
@@ -44,7 +44,7 @@ const handleSwitchAudioPlay = () => {
   const targetAudioPlay = isEarPhone.value
     ? AudioPlaybackDevice.Speakerphone
     : AudioPlaybackDevice.Earpiece;
-  NECallKit.setSpeakerphoneOn(targetAudioPlay == AudioPlaybackDevice.Speakerphone);
+  uni.$NECallKit.setSpeakerphoneOn(targetAudioPlay == AudioPlaybackDevice.Speakerphone);
   isEarPhone.value = !isEarPhone.value;
   global.currentSpeakerStatus = targetAudioPlay
 };
@@ -58,7 +58,7 @@ onMounted(() => {
     const targetAudioPlay = state.callType === CALL_TYPE.AUDIO
       ? AudioPlaybackDevice.Earpiece
       : AudioPlaybackDevice.Speakerphone;
-    NECallKit.setSpeakerphoneOn(targetAudioPlay == AudioPlaybackDevice.Speakerphone);
+    uni.$NECallKit.setSpeakerphoneOn(targetAudioPlay == AudioPlaybackDevice.Speakerphone);
     
     isEarPhone.value = state.callType === CALL_TYPE.AUDIO;
   }

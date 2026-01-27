@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { HangupParams } from '@/uni_modules/Netease-Call'
-import { NECallKit, global } from '@/global/index.uts'
+import { global } from '@/global/index.uts'
 import REJECT_SRC from "../assets/hangup.png";
 
 const props = defineProps({
@@ -20,7 +20,7 @@ const props = defineProps({
 });
 
 const handleReject = () => {
-  NECallKit.hangup({} as HangupParams);
+  uni.$NECallKit.hangup({} as HangupParams);
 };
 </script>
 

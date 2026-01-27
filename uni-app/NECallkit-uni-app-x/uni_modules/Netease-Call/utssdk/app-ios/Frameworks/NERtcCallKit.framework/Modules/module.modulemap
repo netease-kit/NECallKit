@@ -1,0 +1,11 @@
+framework module NERtcCallKit {
+  umbrella header "NERtcCallKit-umbrella.h"
+
+  export *
+  module * { export * }
+}
+
+module NERtcCallKit.Swift {
+  header "NERtcCallKit-Swift.h"
+  requires objc
+}

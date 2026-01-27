@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="uts">
-import { NECallKit, global } from '@/global/index.uts'
+import { global } from '@/global/index.uts'
 import MIC_ON_SRC from "../assets/mic-on.png";
 import MIC_OFF_SRC from "../assets/mic-off.png";
 import MIC_ON_LARGE_SRC from "../assets/mic-on-large.png";
@@ -37,9 +37,9 @@ const micSrc = computed(() => {
 
 const handleMic = () => {
   if (isOpenMic.value) {
-    NECallKit.muteLocalAudio(true);
+    uni.$NECallKit.muteLocalAudio(true);
   } else {
-    NECallKit.muteLocalAudio(false);
+    uni.$NECallKit.muteLocalAudio(false);
   }
   isOpenMic.value = !isOpenMic.value;
   global.isLocalMicOpen = isOpenMic.value;

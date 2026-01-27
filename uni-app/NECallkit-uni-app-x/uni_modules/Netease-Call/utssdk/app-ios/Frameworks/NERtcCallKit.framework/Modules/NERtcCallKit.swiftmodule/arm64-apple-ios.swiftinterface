@@ -1,0 +1,41 @@
+// swift-interface-format-version: 1.0
+// swift-compiler-version: Apple Swift version 5.10 (swiftlang-5.10.0.13 clang-1500.3.9.4)
+// swift-module-flags: -target arm64-apple-ios13.0 -enable-objc-interop -enable-library-evolution -swift-version 5 -enforce-exclusivity=checked -O -enable-bare-slash-regex -module-name NERtcCallKit
+import AVFAudio
+import Foundation
+import LiveCommunicationKit
+@_exported import NERtcCallKit
+import Swift
+import UIKit
+import _Concurrency
+import _StringProcessing
+import _SwiftConcurrencyShims
+@_inheritsConvenienceInitializers @_hasMissingDesignatedInitializers @available(iOS 17.4, *)
+@objc public class NECallLCKManager : ObjectiveC.NSObject {
+  @objc public static let shared: NECallLCKManager
+  @objc public func setLocalVideo(enable: Swift.Bool)
+  @objc public func reportIncomingConversation(type: Swift.Int, displayName: Swift.String, userId: Swift.String, requestId: Swift.String, autoAccept: Swift.Bool, ringtoneName: Swift.String, acceptCompletion: (((any Swift.Error)?, NECallInfo?) -> Swift.Void)? = nil, hangupCompletion: (((any Swift.Error)?) -> Swift.Void)? = nil, muteCompletion: (((any Swift.Error)?, Swift.Bool) -> Swift.Void)? = nil) -> Swift.UInt
+  #if compiler(>=5.3) && $AsyncAwait
+  @objc public func acceptIncomingConversation() async
+  #endif
+  #if compiler(>=5.3) && $AsyncAwait
+  @objc public func cancelIncomingConversation(requestId: Swift.String) async
+  #endif
+  #if compiler(>=5.3) && $AsyncAwait
+  @objc public func muteIncomingConversation(mute: Swift.Bool) async
+  #endif
+  #if compiler(>=5.3) && $AsyncAwait
+  @objc public func dismissIncomingCall() async
+  #endif
+  @objc deinit
+}
+@available(iOS 17.4, *)
+extension NECallLCKManager : LiveCommunicationKit.ConversationManagerDelegate {
+  public func conversationManager(_ manager: LiveCommunicationKit.ConversationManager, conversationChanged conversation: LiveCommunicationKit.Conversation)
+  public func conversationManagerDidBegin(_ manager: LiveCommunicationKit.ConversationManager)
+  public func conversationManagerDidReset(_ manager: LiveCommunicationKit.ConversationManager)
+  public func conversationManager(_ manager: LiveCommunicationKit.ConversationManager, perform action: LiveCommunicationKit.ConversationAction)
+  public func conversationManager(_ manager: LiveCommunicationKit.ConversationManager, timedOutPerforming action: LiveCommunicationKit.ConversationAction)
+  public func conversationManager(_ manager: LiveCommunicationKit.ConversationManager, didActivate audioSession: AVFAudio.AVAudioSession)
+  public func conversationManager(_ manager: LiveCommunicationKit.ConversationManager, didDeactivate audioSession: AVFAudio.AVAudioSession)
+}
