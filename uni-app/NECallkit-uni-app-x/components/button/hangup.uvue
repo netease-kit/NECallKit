@@ -9,7 +9,7 @@
 
 <script setup lang="uts">
 import { HangupParams } from '@/uni_modules/Netease-Call'
-import { NECallKit, global, _navigateBackCallPage } from '@/global/index.uts'
+import { NECallKit, _navigateBackCallPage } from '@/global/index.uts'
 import HANGUP_SRC from "../assets/hangup.png";
 
 const props = defineProps({

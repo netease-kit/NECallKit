@@ -10,8 +10,15 @@ import { NECallKit, _navigateBackCallPage } from "@/global/index.uts";
 import FLOAT_WINDOW_SRC from "../assets/float-window.png";
 
 const startFloatWindow = () => {
-  NECallKit.startFloatWindow({} as CallbackParams);
-  _navigateBackCallPage();
+  NECallKit.startFloatWindow({
+    success: () => {
+      console.log('startFloatWindow success');
+      _navigateBackCallPage();
+    },
+    fail: (errCode: number, errMsg: string) => {
+      console.log('startFloatWindow fail');
+    },
+  } as CallbackParams);
 };
 </script>
 

@@ -3,8 +3,10 @@ import {
   state,
   CALL_ROLE,
   CALL_STATUS,
+  setCallType,
   setCallRole,
   setCallStatus,
+  type CallType,
   type CallRole,
   type CallStatus
 } from '@/store/index.uts'
@@ -45,6 +47,7 @@ NECallKit.setup({appKey: APP_KEY})
 
 const innerAudioContext = uni.createInnerAudioContext()
 
+// 注册事件监听
 NECallKit.on("onCallReceived", (res) => {
   console.log(`onCallReceived, data: ${JSON.stringify(res)}`)
   const info = (res as UTSJSONObject)?.info as UTSJSONObject
@@ -55,6 +58,7 @@ NECallKit.on("onCallReceived", (res) => {
     fail: (errCode: number, errMsg: string) => {}
   })
 
+  setCallType(info?.callType as CallType)
   setCallRole(CALL_ROLE.CALLEE as CallRole)
   setCallStatus(CALL_STATUS.CALLING as CallStatus)
   
@@ -72,6 +76,7 @@ NECallKit.on("onCallNotConnected", (res) => {
   setCallRole(CALL_ROLE.UNKNOWN as CallRole)
   setCallStatus(CALL_STATUS.IDLE as CallStatus)
   _navigateBackCallPage()
+  NECallKit.stopFloatWindow()
 })
 
 NECallKit.on("onCallEnd", (res) => {
@@ -82,6 +87,7 @@ NECallKit.on("onCallEnd", (res) => {
   setCallRole(CALL_ROLE.UNKNOWN as CallRole)
   setCallStatus(CALL_STATUS.IDLE as CallStatus)
   _navigateBackCallPage()
+  NECallKit.stopFloatWindow()
   
   //呼叫超时
   if (info?.reasonCode == 2) {

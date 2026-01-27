@@ -9,7 +9,7 @@
         <view>Token</view>
         <input class="input" v-model="token" maxlength="50" placeholder="请输入Token" />
       </view>
-      <button style="margin-top: 20px;" @click="login" disabled="loading" type="primary">登录</button>
+      <button style="margin-top: 20px;" @click="login" :disabled="loading" type="primary">登录</button>
     </template>
     
     <template v-else>
@@ -18,20 +18,20 @@
       </view>
       <view style="display: flex;flex-direction: row;align-items: center;margin-top: 20px;">
         <input style="flex: 1;" class="input" v-model="callee" placeholder="请输入被叫账号ID" />
-        <button style="width: 100px;margin-left: 10px;" @click="call" disabled="loading" type="primary">呼叫</button>
+        <button style="width: 100px;margin-left: 10px;" @click="call" :disabled="loading" type="primary">呼叫</button>
       </view>
       <view style="display: flex;flex-direction: row;align-items: center;margin-top: 20px;">
         <view>呼叫类型</view>
         <radio-group style="margin-left: 15px;display: flex;flex-direction: row;align-items: center;" @change="handleCallTypeChange">
           <view style="display: flex;flex-direction: row;align-items: center;">
             <view>
-              <radio :value="CALL_TYPE.VIDEO" :checked="state.callType === CALL_TYPE.VIDEO " />
+              <radio value="2" :checked="state.callType === CALL_TYPE.VIDEO " />
             </view>
             <view>视频呼叫</view>
           </view>
           <view style="margin-left: 15px;display: flex;flex-direction: row;align-items: center;">
             <view>
-              <radio :value="CALL_TYPE.AUDIO" :checked="state.callType === CALL_TYPE.AUDIO " />
+              <radio value="1" :checked="state.callType === CALL_TYPE.AUDIO " />
             </view>
             <view>音频呼叫</view>
           </view>

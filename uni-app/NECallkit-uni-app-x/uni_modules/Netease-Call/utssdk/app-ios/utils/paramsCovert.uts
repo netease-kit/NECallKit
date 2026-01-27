@@ -1,6 +1,8 @@
 import { NERtcCallKit, NECallParam, NECallType, NECallSwitchState} from "NERtcCallKit";
 import { NAME } from "./const.uts";
 
+import { Int } from 'Swift';
+
 export class ParamsCovert {
   public static covertMediaType(mediaType: number): NECallType {
     switch (mediaType) {
@@ -10,6 +12,17 @@ export class ParamsCovert {
         return NECallType.video;
       default:
         return NECallType.audio;
+    }
+  }
+  
+  public static covertCallType(callType: NECallType): number {
+    switch (callType) {
+      case NECallType.audio:
+        return 1;
+      case NECallType.video:
+        return 2;
+      default:
+        return 1;
     }
   }
   

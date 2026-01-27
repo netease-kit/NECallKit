@@ -315,7 +315,7 @@ export class CallEngine {
   public stopFloatWindow() {
     console.log(`${NAME.PREFIX} stopFloatWindow.start`);
     this.callBridge.stopFloatWindow();   
-	this.callBridge.remove(this.floatWindowObserver as NEFloatWindowObserver);
+    // this.callBridge.remove(this.floatWindowObserver as NEFloatWindowObserver);
   }
 
   /**

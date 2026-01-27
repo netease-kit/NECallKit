@@ -2,6 +2,7 @@
 	// #ifdef APP-ANDROID || APP-HARMONY
 	let firstBackTime = 0
 	// #endif
+
 	export default {
 		onLaunch() {
 			console.log('App Launch')

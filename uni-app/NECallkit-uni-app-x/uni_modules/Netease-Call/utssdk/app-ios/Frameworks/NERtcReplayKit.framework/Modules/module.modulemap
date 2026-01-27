@@ -1,0 +1,6 @@
+framework module NERtcReplayKit {
+  umbrella header "NERtcReplayKit.h"
+
+  export *
+  module * { export * }
+}
