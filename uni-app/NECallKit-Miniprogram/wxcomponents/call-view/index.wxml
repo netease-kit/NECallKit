@@ -35,7 +35,6 @@
     <view hidden="{{callType === '1'}}">
       <view class="necall-in-call-duration">{{durationText}}</view>
       <view class="necall-in-call-video-mute-tips" hidden="{{!player.videoMute}}">对方关闭了摄像头</view>
-      <image class="necall-camera-revert-btn" src="{{cameraRevertImg}}" bindtap="handleCameraRevert" />
       <live-player class="necall-remote-view" wx:if="{{player.url}}" hidden="{{player.videoMute}}" src="{{player.url}}" object-fit="{{player.objectFit}}" mode="{{player.mode}}" autoplay="{{player.autoplay}}" picture-in-picture-mode="{{player.pictureInPictureMode}}" />
       <live-pusher class="necall-local-view" wx:if="{{pusher.url}}" hidden="{{!pusher.enableCamera}}" url="{{pusher.url}}" mode="{{pusher.mode}}" waiting-image="{{pusher.waitingImage}}" autopush="{{pusher.autopush}}" enable-camera="{{pusher.enableCamera}}" enable-mic="{{pusher.enableMic}}" muted="{{!pusher.enableMic}}" picture-in-picture-mode="{{pusher.pictureInPictureMode}}" />
     </view>
@@ -47,7 +46,7 @@
     <view class="necall-in-call-btn-group">
       <image class="necall-microphone-btn" src="{{pusher.enableMic ? microphoneImg.open : microphoneImg.close}}" bindtap="handleEnableLocalAudio" />
       <image wx:if="{{callType === '2'}}" class="necall-video-btn" src="{{pusher.enableCamera ? videoImg.open : videoImg.close}}" bindtap="handleEnableLocalVideo" />
-      <image class="necall-switch-btn" src="{{callType === '1' ? switchImg.video : switchImg.audio}}" bindtap="handleSwitchCallType" />
+      <image wx:if="{{callType === '2'}}" class="necall-camera-revert-btn" src="{{cameraRevertImg}}" bindtap="handleCameraRevert" />
       <image class="necall-hangup-btn" src="{{hangupImg}}" bindtap="onHangup" />
     </view>
   </view>

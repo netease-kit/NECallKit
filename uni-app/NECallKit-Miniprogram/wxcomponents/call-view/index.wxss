@@ -1,10 +1,25 @@
-.necall-container,
+page {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background-color: #000; /* 兜底背景色 */
+}
+
+.necall-container {
+  position: fixed; /* 使用 fixed 替代 relative 确保覆盖全屏 */
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  z-index: 1;
+}
+
 .necall-invite-container,
 .necall-be-invited-container,
 .necall-in-call-container {
-  position: relative;
-  height: 100%;
   width: 100%;
+  height: 100%;
+  position: relative;
 }
 
 .necall-callee-info {
@@ -73,8 +88,10 @@
 
 .necall-remote-view {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   background-color: #292932;
 }
 
@@ -125,14 +142,6 @@
   z-index: 10;
 }
 
-.necall-camera-revert-btn {
-  position: absolute;
-  top: 10px;
-  height: 30px;
-  width: 30px;
-  left: 10px;
-  z-index: 10;
-}
 .necall-in-call-duration {
   position: absolute;
   top: 10px;
@@ -156,7 +165,7 @@
   height: 24px;
 }
 
-.necall-switch-btn {
+.necall-camera-revert-btn {
   width: 24px;
   height: 24px;
 }

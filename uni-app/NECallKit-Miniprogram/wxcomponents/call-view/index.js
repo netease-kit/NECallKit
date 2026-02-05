@@ -7,7 +7,7 @@ Component({
   },
   data: {
     callStatus: 0, // 状态 0：闲置 1：正在呼叫 2：正在被呼叫 3：通话中
-    callType: '1', // 通话类型 1：语音通话 2：视频通话
+    callType: '2', // 通话类型 1：语音通话 2：视频通话
     durationText: '00:00', // 通话时长
     userInfo: {},
     microphoneImg: {
@@ -22,10 +22,7 @@ Component({
       audio: './assets/audio-accept.png',
       video: './assets/video-accept.png',
     },
-    switchImg: {
-      audio: './assets/switch-audio.png',
-      video: './assets/switch-video.png',
-    },
+
     hangupImg: './assets/hangup.png',
     cameraRevertImg: './assets/camera-revert.png',
     pusher: {
@@ -48,7 +45,7 @@ Component({
     },
   },
   lifetimes: {
-    attached() {
+    async attached() {
       const neCall = app.globalData.neCall
       const nim = app.globalData.nim
       if (!neCall || !nim) {
@@ -61,16 +58,26 @@ Component({
         callStatus === 1
           ? neCall.signalController._channelInfo.calleeId
           : neCall.signalController._channelInfo.callerId
-      // nim.getUser({
-      //   account: userAccId,
-      //   done: (error, user) => {
-      //     if (!error && user) {
-      //       this.setData({
-      //         userInfo: user,
-      //       })
-      //     }
-      //   },
-      // })
+          
+      try {
+        if (userAccId) {
+          const userProfiles = await nim.V2NIMUserService.getUserList([userAccId])
+          if (userProfiles && userProfiles.length > 0) {
+            const user = userProfiles[0]
+            this.setData({
+              userInfo: {
+                nick: user.name,
+                avatar: user.avatar,
+                tel: user.mobile,
+                ...user
+              }
+            })
+          }
+        }
+      } catch (error) {
+        console.error('获取用户信息失败:', error)
+      }
+
       this.setData({
         callStatus: neCall.signalController.callStatus,
         callType: neCall._callType,
@@ -88,40 +95,7 @@ Component({
           })
         }, 1000)
       })
-      neCall.on('onSwtichCallType', (value) => {
-        const callType = value.callType
-        if (value.state === 1) {
-          const content =
-            callType === '1'
-              ? '对方请求将视频转为音频，将直接关闭您的摄像头'
-              : '对方请求将转音频为视频，需要打开您的摄像头'
-          wx.showModal({
-            title: '权限请求',
-            content,
-            cancelText: '拒绝',
-            confirmText: '同意',
-            success(res) {
-              if (res.confirm) {
-                neCall.switchCallType({ callType, state: 2 })
-              } else if (res.cancel) {
-                neCall.switchCallType({ callType, state: 3 })
-              }
-            },
-          })
-        }
-        if (value.state === 2) {
-          this.setData({
-            callType: value.callType,
-            pusher: {
-              ...this.data.pusher,
-              enableCamera: value.callType === '2',
-            },
-            pusher: { ...this.data.pusher, enableMic: true },
-          })
-        }
-        if (value.state === 3) {
-        }
-      })
+
       neCall.on('onVideoMuteOrUnmute', (mute) => {
         this.setData({
           player: { ...this.data.player, videoMute: mute },
@@ -139,20 +113,31 @@ Component({
       })
       neCall.on('onCallEnd', () => {
         duration = 0
-        durationTimer && clearInterval(durationTimer)
+        if (durationTimer) clearInterval(durationTimer)
+      
+        // 1. 尝试调用 API 退出
+        if (wx.exitPictureInPicture) {
+          wx.exitPictureInPicture().catch(() => {})
+        }
+      
+        // 2. 清空配置并切断显示状态
         this.setData({
-          player: { ...this.data.player, pictureInPictureMode: [] },
-          pusher: { ...this.data.pusher, pictureInPictureMode: [] },
+          callStatus: 0, // 销毁 live-pusher/player 组件
+          'player.pictureInPictureMode': [],
+          'pusher.pictureInPictureMode': []
+        }, () => {
+          // 3. 稍微延迟返回，防止微信内部引擎没反应过来
+          setTimeout(() => {
+            wx.navigateBack({
+              delta: 1
+            })
+          }, 200)
         })
-        setTimeout(() => {
-          wx.navigateBack()
-        }, 500)
       })
     },
     detached() {
       const neCall = app.globalData.neCall
       neCall.off('onCallConnected')
-      neCall.off('onSwtichCallType')
       neCall.off('onStreamPublish')
       neCall.off('onStreamSubscribed')
       neCall.off('onCallEnd')
@@ -183,11 +168,7 @@ Component({
         pusher: { ...this.data.pusher, enableCamera: !enable },
       })
     },
-    handleSwitchCallType() {
-      const neCall = app.globalData.neCall
-      const callType = this.data.callType === '1' ? '2' : '1'
-      neCall.switchCallType({ callType, state: 1 })
-    },
+
     handleCameraRevert() {
       const livePusherContext = wx.createLivePusherContext()
       livePusherContext.switchCamera()
