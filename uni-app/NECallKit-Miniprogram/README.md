@@ -28,7 +28,7 @@
 
 4. HBuilder X 中导入项目
 
-5. 修改 `./NECallKit/uni-app/NECallKit-Miniprogram/App.vue` 文件 的 appkey、account、token（阅读文末 [开通服务](#开通服务)）
+5. 修改 `./NECallKit/uni-app/NECallKit-Miniprogram/App.vue` 文件 的 appkey（阅读文末 [开通服务](#开通服务)）
 
 6. 在manifest.json微信小程序配置中设置自己的微信小程序AppID，勾选ES6转ES5
 
