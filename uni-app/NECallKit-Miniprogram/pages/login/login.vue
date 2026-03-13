@@ -81,17 +81,15 @@ export default {
       try {
         const app = getApp()
         const appkey = app.globalData.appkey
-        console.log('app.globalData:', app.globalData)
-        console.log('appkey:', appkey)
 
         const nim = V2NIM.getInstance({
           appkey,
           account: this.accountId,
           token: this.token,
           apiVersion: 'v2',
-          debugLevel: 'debug',
+          debugLevel: 'off',
         })
-
+        
         await nim.V2NIMLoginService.login(this.accountId, this.token)
 
         const neCall = NECall.getInstance()

@@ -2,11 +2,14 @@
   <view class="container">
     <view class="content-wrapper">
       <view class="header">
+        <view class="header-left" @tap="logout">
+          <text class="logout-text">退出登录</text>
+        </view>
         <view class="header-center">
           <text class="header-title">一对一音视频通话</text>
         </view>
-        <view class="header-right" @tap="logout">
-          <text class="logout-text">退出登录</text>
+        <view class="header-right">
+          <text class="logout-text-hidden">退出登录</text>
         </view>
       </view>
 
@@ -170,7 +173,7 @@ export default {
       uni.showModal({
         title: '退出账号',
         content: '是否退出当前账号？',
-        success: (res) => {
+        success: async (res) => {
           if (res.confirm) {
             const app = getApp();
             
@@ -179,7 +182,13 @@ export default {
             }
             
             if (app.globalData.nim) {
-              app.globalData.nim.V2NIMLoginService.logout();
+              try {
+                await app.globalData.nim.V2NIMLoginService.logout();
+                await app.globalData.nim.destroy();
+                console.log('logout success!')
+              } catch (err) {
+                console.log(err)
+              }
             }
             
             app.globalData.nim = null;
@@ -204,7 +213,7 @@ export default {
   height: 100vh;
   overflow: hidden;
   margin: 0;
-  padding-top: 80px;
+  padding-top: 40px;
   background-color: #1f1f26;
   box-sizing: border-box;
   display: flex;
@@ -230,7 +239,7 @@ export default {
 
 .header-left {
   flex: none;
-  padding: 10rpx 20rpx;
+  padding: 10rpx;
 }
 
 .header-text {
@@ -257,6 +266,10 @@ export default {
 .logout-text {
   font-size: 28rpx;
   color: #ff4757;
+}
+
+.logout-text-hidden {
+  visibility: hidden;
 }
 
 .user-id-row {
