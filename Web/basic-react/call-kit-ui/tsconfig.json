@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2018",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "lib": ["ES2018", "DOM"],
+    "jsx": "react-jsx",
+    "strict": false,
+    "declaration": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "."
+  },
+  "include": ["src/**/*", "demo/**/*", "package.json"],
+  "exclude": ["lib", "es", "dist", "node_modules"]
+}
