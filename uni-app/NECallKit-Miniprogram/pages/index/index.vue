@@ -51,9 +51,6 @@
 </template>
 
 <script lang="ts">
-import V2NIM from 'nim-web-sdk-ng/dist/v2/NIM_MINIAPP_SDK'
-import { NECall } from '@xkit-yx/call-kit/miniprogram_dist/index'
-
 type SignalControllerCallType = "1" | "2";
 
 export default {
@@ -61,66 +58,17 @@ export default {
     return {
       callType: "2" as SignalControllerCallType,
       imAccid: "",
-      accountId: "",
+      accountId: getApp().globalData.accountId,
     };
   },
-  
-  async onLoad() {
-    await this.checkLogin();
+
+  onShow() {
+    // 确保账号ID始终是最新的（防止杀进程后重进时globalData已恢复但data未更新）
+    const app = getApp<{ globalData: { accountId: string; neCall?: any } }>();
+    this.accountId = app.globalData.accountId;
   },
-  
+
   methods: {
-    async checkLogin() {
-      const app = getApp();
-      
-      if (app.globalData && app.globalData.isLoggedIn) {
-        this.accountId = app.globalData.accountId;
-        return;
-      }
-
-      const userConfig = uni.getStorageSync('userConfig');
-      if (userConfig && userConfig.accountId && userConfig.token) {
-        try {
-          const appkey = app.globalData.appkey;
-          
-          const nim = V2NIM.getInstance({
-            appkey,
-            account: userConfig.accountId,
-            token: userConfig.token,
-            apiVersion: 'v2',
-            debugLevel: 'debug',
-          });
-
-          await nim.V2NIMLoginService.login(userConfig.accountId, userConfig.token);
-
-          const neCall = NECall.getInstance();
-          neCall.setup({
-            nim,
-            appkey,
-          });
-
-          neCall?.on('onReceiveInvited', () => {
-            uni.navigateTo({
-              url: '/pages/call/call',
-            });
-          });
-
-          app.globalData.nim = nim;
-          app.globalData.neCall = neCall;
-          app.globalData.accountId = userConfig.accountId;
-          app.globalData.isLoggedIn = true;
-          
-          this.accountId = userConfig.accountId;
-        } catch (err) {
-          console.error('自动登录失败:', err);
-          uni.removeStorageSync('userConfig');
-          uni.redirectTo({ url: '/pages/login/login' });
-        }
-      } else {
-        uni.redirectTo({ url: '/pages/login/login' });
-      }
-    },
-    
     changeCallType(e: any) {
       this.callType = e.detail.value as SignalControllerCallType;
     },

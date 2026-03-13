@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@xkit-yx/call-kit": "^3.3.2",
+    "@xkit-yx/call-kit": "^4.2.0",
     "nim-web-sdk-ng": "^10.9.70"
   }
 }

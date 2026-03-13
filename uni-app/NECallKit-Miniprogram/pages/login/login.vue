@@ -7,24 +7,24 @@
       <view class="box">
         <view class="list-item">
           <label class="list-item-label">账号ID</label>
-          <input 
-            class="input-box" 
-            type="text" 
-            v-model="accountId" 
-            maxlength="50" 
+          <input
+            class="input-box"
+            type="text"
+            v-model="accountId"
+            maxlength="50"
             placeholder="请输入账号ID"
-            placeholder-style="color:#BBBBBB;" 
+            placeholder-style="color:#BBBBBB;"
           />
         </view>
         <view class="list-item" style="margin-top: 15px;">
           <label class="list-item-label">Token</label>
-          <input 
-            class="input-box" 
-            type="text" 
-            v-model="token" 
-            maxlength="50" 
+          <input
+            class="input-box"
+            type="text"
+            v-model="token"
+            maxlength="50"
             placeholder="请输入Token"
-            placeholder-style="color:#BBBBBB;" 
+            placeholder-style="color:#BBBBBB;"
           />
         </view>
         <view class="login">
@@ -41,9 +41,6 @@
 </template>
 
 <script>
-import V2NIM from 'nim-web-sdk-ng/dist/v2/NIM_MINIAPP_SDK'
-import { NECall } from '@xkit-yx/call-kit/miniprogram_dist/index'
-
 export default {
   data() {
     return {
@@ -54,7 +51,7 @@ export default {
   },
   onLoad() {
     const app = getApp()
-    if (app.globalData && app.globalData.isLoggedIn) {
+    if (app.globalData && app.globalData.accountId) {
       uni.redirectTo({ url: '/pages/index/index' })
     }
   },
@@ -80,34 +77,9 @@ export default {
 
       try {
         const app = getApp()
-        const appkey = app.globalData.appkey
 
-        const nim = V2NIM.getInstance({
-          appkey,
-          account: this.accountId,
-          token: this.token,
-          apiVersion: 'v2',
-          debugLevel: 'off',
-        })
-        
-        await nim.V2NIMLoginService.login(this.accountId, this.token)
-
-        const neCall = NECall.getInstance()
-        neCall.setup({
-          nim,
-          appkey,
-        })
-
-        neCall?.on('onReceiveInvited', () => {
-          uni.navigateTo({
-            url: '/pages/call/call',
-          })
-        })
-
-        app.globalData.nim = nim
-        app.globalData.neCall = neCall
-        app.globalData.accountId = this.accountId
-        app.globalData.isLoggedIn = true
+        // 使用 App 中统一的初始化方法（避免重复注册事件）
+        await app.initNIM(this.accountId, this.token)
 
         uni.setStorageSync('userConfig', {
           accountId: this.accountId,
@@ -120,9 +92,7 @@ export default {
           icon: 'success',
         })
 
-        setTimeout(() => {
-          uni.redirectTo({ url: '/pages/index/index' })
-        }, 500)
+        uni.redirectTo({ url: '/pages/index/index' })
       } catch (err) {
         uni.hideLoading()
         console.error('登录失败:', err)
