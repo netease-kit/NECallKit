@@ -1,3 +1,24 @@
 {
-  "extends": "./src/.umi/tsconfig.json"
+  "compilerOptions": {
+    "module": "esnext",
+    "target": "ES5",
+    "lib": ["DOM", "ES2020"],
+    "sourceMap": false,
+    "moduleResolution": "node",
+    "strict": true,
+    "declaration": true,
+    "downlevelIteration": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": ["./node_modules/@types"],
+    "resolveJsonModule": true,
+    "noImplicitAny": false,
+    "composite": true,
+    "types": ["node", "jest"],
+    "jsx": "react",
+    "esModuleInterop": true,
+    "experimentalDecorators": true
+  },
+  "include": ["./packages/**/*.(ts|tsx)", "./packages/**/*.d.ts"],
+  "exclude": ["./lib", "./dist"]
 }

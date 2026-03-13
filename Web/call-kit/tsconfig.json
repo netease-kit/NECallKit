@@ -1,0 +1,20 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "target": "ES5",
+    "rootDir": "./src",
+    "declarationDir": "./dist/types",
+    "resolveJsonModule": false,
+    "types": ["node"]
+  },
+  "include": ["./src/**/*.ts"],
+  "typedocOptions": {
+    "plugin": ["typedoc-plugin-markdown", "typedoc-plugin-no-inherit"],
+    "entryPoints": ["./src/index.ts"],
+    "includes": ["./src/**/*.ts"],
+    "out": "./doc",
+    "disableSources": true,
+    "excludePrivate": true,
+    "excludeInternal": true
+  }
+}
