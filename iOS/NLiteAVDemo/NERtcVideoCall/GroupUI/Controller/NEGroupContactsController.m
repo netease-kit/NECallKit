@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 
 #import "NEGroupContactsController.h"
+#import <NERtcCallUIKit/NEGroupUser.h>
+#import <NERtcCallUIKit/NEUIGroupCallParam.h>
 
 #import <NERtcCallUIKit/NERtcCallUIKit.h>
 #import "Attachment.h"

@@ -9,8 +9,10 @@
 #import <NERtcSDK/NERtcSDK.h>
 #import <NEXKitBase/NEXKitBase.h>
 #import <SDWebImage/SDWebImage.h>
+#import "NEAISubtitleView.h"
 #import "NEBufferDisplayView.h"
 #import "NECallKitUtil.h"
+#import "NECallViewController.h"
 #import "NEDataManager.h"
 #import "NEGroupCallViewController.h"
 #import "NEUIGroupCallParam.h"
@@ -138,6 +140,7 @@ const NSInteger kGroupCallMaxUsers = 10;
   if (self) {
     [NetManager shareInstance];
     [[NECallEngine sharedInstance] addCallDelegate:self];
+    [NECallEngine sharedInstance].engineDelegate = self;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(didDismiss:)
                                                  name:kCallKitDismissNoti
@@ -758,6 +761,45 @@ const NSInteger kGroupCallMaxUsers = 10;
   }
 }
 
+- (void)onNERtcEngineAsrCaptionResult:(NSArray<NERtcAsrCaptionResult *> *)results {
+  if (!results || results.count == 0) {
+    return;
+  }
+
+  // 通过 keywindow 获取当前显示的 NECallViewController
+  NECallViewController *callVC = [self getCurrentCallViewController];
+  if (callVC && callVC.aiSubtitleView) {
+    // 处理每个字幕结果
+    for (NERtcAsrCaptionResult *result in results) {
+      [callVC.aiSubtitleView updateSubtitle:result];
+    }
+  }
+}
+
+/// 获取当前显示的通话控制器
+- (NECallViewController *)getCurrentCallViewController {
+  if (!self.keywindow || !self.keywindow.rootViewController) {
+    return nil;
+  }
+
+  // 从 keywindow 的 presentedViewController 中查找
+  UIViewController *presentedVC = self.keywindow.rootViewController.presentedViewController;
+  if ([presentedVC isKindOfClass:[UINavigationController class]]) {
+    UINavigationController *nav = (UINavigationController *)presentedVC;
+    UIViewController *topVC = nav.topViewController;
+    if ([topVC isKindOfClass:[NECallViewController class]]) {
+      return (NECallViewController *)topVC;
+    }
+  }
+
+  return nil;
+}
+
+- (void)onNERtcEngineAsrCaptionStateChanged:(NERtcAsrCaptionState)state
+                                       code:(int)code
+                                    message:(NSString *)message {
+}
+
 #pragma mark - pip delegate
 
 - (void)pictureInPictureControllerDidStopPictureInPicture:
@@ -796,7 +838,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 #pragma mark - Version
 
 + (NSString *)version {
-  return @"3.8.0";
+  return @"4.1.0";
 }
 
 #pragma mark - Group Call

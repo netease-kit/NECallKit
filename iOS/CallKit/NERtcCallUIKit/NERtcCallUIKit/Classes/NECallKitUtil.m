@@ -3,8 +3,32 @@
 // found in the LICENSE file.
 
 #import "NECallKitUtil.h"
+#import <AVFoundation/AVFoundation.h>
 #import <NECommonUIKit/UIView+YXToast.h>
+#import <NERtcCallKit/NERtcCallKit.h>
 #import "NERtcCallUIKit.h"
+
+#pragma mark-- nertc main queue
+
+void necallkit_async_main_safe(dispatch_block_t block) {
+  if ([NSThread isMainThread]) {
+    block();
+  } else {
+    dispatch_async(dispatch_get_main_queue(), block);
+  }
+}
+
+void necallkit_sync_main_safe(dispatch_block_t block) {
+  if ([NSThread isMainThread]) {
+    block();
+  } else {
+    dispatch_sync(dispatch_get_main_queue(), block);
+  }
+}
+
+void necallkit_async_main(dispatch_block_t block) {
+  dispatch_async(dispatch_get_main_queue(), block);
+}
 
 static NECallUILanguage _language = NECallUILanguageAuto;
 
@@ -70,5 +94,66 @@ static NECallUILanguage _language = NECallUILanguageAuto;
     [window makeKeyAndVisible];
     [window ne_makeToast:message];
   }
+}
+
++ (void)checkAuthorizationForCallType:(NSInteger)callType
+                           completion:(void (^)(NSError *_Nullable error))completion {
+  NERtcCallType type = (callType == 2) ? NERtcCallTypeVideo : NERtcCallTypeAudio;
+  NSMutableArray<AVMediaType> *mediaTypes = [NSMutableArray arrayWithObject:AVMediaTypeAudio];
+  if (type == NERtcCallTypeVideo) {
+    [mediaTypes addObject:AVMediaTypeVideo];
+  }
+
+  NSDictionary<AVMediaType, NSNumber *> *errorCodes = @{
+    AVMediaTypeAudio : @(21000),  // kNERtcCallKitAudioAuthError
+    AVMediaTypeVideo : @(21001)   // kNERtcCallKitVideoAuthError
+  };
+  NSDictionary<AVMediaType, NSString *> *errorDescriptions =
+      @{AVMediaTypeAudio : @"未开启麦克风权限", AVMediaTypeVideo : @"未开启摄像头权限"};
+
+  dispatch_queue_t queue =
+      dispatch_queue_create("com.netease.yunxin.callkit.check_auth", DISPATCH_QUEUE_SERIAL);
+  dispatch_semaphore_t sema = dispatch_semaphore_create(0);
+  dispatch_async(queue, ^{
+    __block NSError *error;
+    for (AVMediaType mediaType in mediaTypes) {
+      __block BOOL authGood = YES;
+      AVAuthorizationStatus status = [AVCaptureDevice authorizationStatusForMediaType:mediaType];
+      switch (status) {
+        case AVAuthorizationStatusNotDetermined: {
+          [AVCaptureDevice requestAccessForMediaType:mediaType
+                                   completionHandler:^(BOOL granted) {
+                                     if (!granted) {
+                                       authGood = NO;
+                                     }
+                                     dispatch_semaphore_signal(sema);
+                                   }];
+          dispatch_semaphore_wait(sema, DISPATCH_TIME_FOREVER);
+          break;
+        }
+        case AVAuthorizationStatusRestricted:
+        case AVAuthorizationStatusDenied: {
+          authGood = NO;
+          break;
+        }
+        case AVAuthorizationStatusAuthorized:
+          break;
+        default:
+          break;
+      }
+      if (!authGood) {
+        error =
+            [NSError errorWithDomain:kNERtcCallKitUIErrorDomain
+                                code:errorCodes[mediaType].integerValue
+                            userInfo:@{NSLocalizedDescriptionKey : errorDescriptions[mediaType]}];
+        break;
+      }
+    }
+    if (completion) {
+      dispatch_async(dispatch_get_main_queue(), ^{
+        completion(error);
+      });
+    }
+  });
 }
 @end

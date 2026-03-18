@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #import "NEVideoInCallController.h"
+#import "NEAISubtitleView.h"
 
 @interface NEVideoInCallController ()
 

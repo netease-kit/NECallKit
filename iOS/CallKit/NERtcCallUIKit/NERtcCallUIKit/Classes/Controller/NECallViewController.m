@@ -10,6 +10,7 @@
 #import <NEXKitBase/NEXKitBase.h>
 #import <SDWebImage/SDWebImage.h>
 #include <mach/mach_time.h>
+#import "NEAISubtitleView.h"
 #import "NECallKitUtil.h"
 #import "NECallUIStateController.h"
 #import "NECustomButton.h"
@@ -60,6 +61,8 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
 @property(nonatomic, strong) NECalledViewController *calledController;
 
 @property(nonatomic, weak) NECallUIStateController *stateUIController;
+
+@property(nonatomic, strong) NEAISubtitleView *aiSubtitleView;
 
 @property(nonatomic, assign) BOOL isClickVirtual;
 
@@ -248,6 +251,16 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
                                                     constant:-50.0 * self.factor]
   ]];
 
+  // 添加 ASR 字幕视图
+  [self.view addSubview:self.aiSubtitleView];
+  [NSLayoutConstraint activateConstraints:@[
+    [self.aiSubtitleView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+    [self.aiSubtitleView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+    [self.aiSubtitleView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+    [self.aiSubtitleView.bottomAnchor constraintEqualToAnchor:self.operationView.topAnchor
+                                                     constant:-10]
+  ]];
+
   /// 未接通状态下的音视频切换按钮
   self.mediaSwitchBtn = [[NECustomButton alloc] init];
   self.mediaSwitchBtn.maskBtn.accessibilityIdentifier = @"inCallSwitch";
@@ -332,6 +345,7 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
     case NERtcCallStatusCalling: {
       [self setCallingTypeSwith:YES];
       self.operationView.hidden = YES;
+      self.aiSubtitleView.hidden = YES;
       self.stateUIController.view.hidden = YES;
       if (self.callParam.callType == NECallTypeVideo) {
         self.stateUIController = self.videoCallingController;
@@ -348,6 +362,7 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
     case NERtcCallStatusCalled: {
       [self setCallingTypeSwith:YES];
       self.operationView.hidden = YES;
+      self.aiSubtitleView.hidden = YES;
       self.stateUIController.view.hidden = YES;
       self.stateUIController = self.calledController;
       self.stateUIController.view.hidden = NO;
@@ -395,6 +410,7 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
     case NERtcCallStatusInCall: {
       [self setCallingTypeSwith:NO];
       self.operationView.hidden = NO;
+      self.aiSubtitleView.hidden = NO;
       self.stateUIController.view.hidden = YES;
       self.calledController.rejectBtn.userInteractionEnabled = YES;
       self.calledController.acceptBtn.userInteractionEnabled = YES;
@@ -1128,6 +1144,15 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
     _timerLabel.translatesAutoresizingMaskIntoConstraints = NO;
   }
   return _timerLabel;
+}
+
+- (NEAISubtitleView *)aiSubtitleView {
+  if (!_aiSubtitleView) {
+    _aiSubtitleView = [[NEAISubtitleView alloc] init];
+    _aiSubtitleView.translatesAutoresizingMaskIntoConstraints = NO;
+    _aiSubtitleView.hidden = YES;
+  }
+  return _aiSubtitleView;
 }
 
 - (void)dealloc {
