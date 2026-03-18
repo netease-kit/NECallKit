@@ -25,12 +25,13 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/tvRemoteVideoCloseTip"
+            android:id="@+id/tvSmallVideoCloseTip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/ui_tip_close_camera_by_other"
             android:background="@drawable/close_video_tip_bg"
             android:textSize="11sp"
+            android:gravity="center"
             android:padding="10dp"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"

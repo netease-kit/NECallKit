@@ -13,10 +13,13 @@ androidGradlePlugin = "8.2.2"
 
 # Testing
 junit4 = "4.13.2"
+androidxTestExtJunit = "1.1.5"
+androidxTestEspresso = "3.5.1"
 
 # Networking
 retrofit = "2.9.0"
 okhttp = "4.12.0"
+gson = "2.10.1"
 
 # Image Loading
 glide = "4.13.1"
@@ -27,6 +30,8 @@ nertcVersion = "5.9.10"
 v2NimVersion = "10.9.45"
 alog = "1.1.1"
 commonUiVersion = "1.9.0"
+hawk = "1.7.13"
+androidxMultidex = "2.0.1"
 
 [libraries]
 # Android & Kotlin
@@ -38,6 +43,10 @@ androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifec
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "androidxRecyclerView" }
 androidx-viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "androidxViewPager2" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }
+androidx-multidex = { group = "androidx.multidex", name = "multidex", version.ref = "androidxMultidex" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
+androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidxTestEspresso" }
+androidx-test-espresso-contrib = { group = "androidx.test.espresso", name = "espresso-contrib", version.ref = "androidxTestEspresso" }
 kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
@@ -48,6 +57,7 @@ retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.r
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging-interceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 
 # Image Loading
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
@@ -56,6 +66,9 @@ glide-transformations = { group = "jp.wasabeef", name = "glide-transformations",
 # NetEase SDKs
 yunxin-kit-alog = { group = "com.netease.yunxin.kit", name = "alog", version.ref = "alog" }
 yunxin-common-ui = { group = "com.netease.yunxin.kit.common", name = "common-ui", version.ref = "commonUiVersion" }
+yunxin-kit-hawk = { group = "com.netease.yunxin.kit.hawk", name = "hawk", version.ref = "hawk" }
+yunxin-nertc-nenn = { group = "com.netease.yunxin", name = "nertc-nenn", version.ref = "nertcVersion" }
+yunxin-nertc-segment = { group = "com.netease.yunxin", name = "nertc-segment", version.ref = "nertcVersion" }
 
 [bundles]
 # Optional bundles for commonly used dependency groups

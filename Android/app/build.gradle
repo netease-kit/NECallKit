@@ -12,6 +12,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode Integer.parseInt(VERSION_CODE)
         versionName VERSION_NAME
+        multiDexEnabled true
 
         ndk {
             rootProject.ext.ndkAbis.each { abi ->
@@ -59,14 +60,22 @@ android {
 }
 
 dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
     implementation libs.androidx.appcompat
     implementation libs.androidx.constraintlayout
     implementation libs.glide
     implementation libs.androidx.recyclerview
+    implementation 'androidx.multidex:multidex:2.0.1'
     implementation libs.okhttp
-    implementation libs.okhttp.logging.interceptor
     implementation libs.retrofit.core
     implementation libs.retrofit.converter.gson
-//    implementation project(':call-ui')
-     implementation 'com.netease.yunxin.kit.call:call-ui:3.8.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.netease.yunxin:nertc-nenn:5.9.10'
+    implementation 'com.netease.yunxin:nertc-segment:5.9.10'
+    implementation 'com.netease.yunxin.kit.hawk:hawk:1.7.13'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.5.1'
+    implementation 'com.netease.yunxin.kit.call:call-ui:4.1.0'
 }

@@ -8,21 +8,16 @@ package com.netease.yunxin.nertc.ui.p2p
 
 import android.Manifest
 import android.content.DialogInterface
-import android.graphics.Color
 import android.os.Bundle
-import android.text.TextUtils
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.ConstraintSet
-import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.netease.lava.nertc.sdk.NERtcConstants
 import com.netease.lava.nertc.sdk.NERtcConstants.ErrorCode.ENGINE_ERROR_DEVICE_PREVIEW_ALREADY_STARTED
 import com.netease.lava.nertc.sdk.NERtcEx
-import com.netease.nimlib.sdk.NIMClient
 import com.netease.nimlib.sdk.ResponseCode
 import com.netease.yunxin.kit.call.NEResultObserver
 import com.netease.yunxin.kit.call.p2p.model.NECallEndInfo
@@ -37,18 +32,15 @@ import com.netease.yunxin.nertc.nertcvideocall.utils.NetworkUtils
 import com.netease.yunxin.nertc.ui.CallKitUI
 import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.CommonCallActivity
-import com.netease.yunxin.nertc.ui.base.currentUserIsCaller
-import com.netease.yunxin.nertc.ui.base.fetchNickname
-import com.netease.yunxin.nertc.ui.base.loadAvatarByAccId
 import com.netease.yunxin.nertc.ui.databinding.ActivityP2PcallBinding
 import com.netease.yunxin.nertc.ui.utils.CallUILog
 import com.netease.yunxin.nertc.ui.utils.CallUIUtils
 import com.netease.yunxin.nertc.ui.utils.PermissionTipDialog
-import com.netease.yunxin.nertc.ui.utils.dip2Px
 import com.netease.yunxin.nertc.ui.utils.formatSecondTime
 import com.netease.yunxin.nertc.ui.utils.isGranted
 import com.netease.yunxin.nertc.ui.utils.requestPermission
 import com.netease.yunxin.nertc.ui.utils.toastShort
+import com.netease.yunxin.nertc.ui.view.P2PVideoCallLayout
 
 open class P2PCallActivity : CommonCallActivity() {
     private val tag = "P2PCallActivity"
@@ -60,12 +52,11 @@ open class P2PCallActivity : CommonCallActivity() {
     private var localIsSmallVideo = true
 
     private lateinit var binding: ActivityP2PcallBinding
+    private lateinit var p2PVideoCallLayout: P2PVideoCallLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
         binding = ActivityP2PcallBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
+        super.onCreate(savedInstanceState)
     }
 
     private val onClickListener = View.OnClickListener { v ->
@@ -109,8 +100,9 @@ open class P2PCallActivity : CommonCallActivity() {
             binding.ivCallSpeaker,
             binding.ivMuteSpeaker -> doConfigSpeakerSwitch(v as ImageView)
 
-            binding.videoViewSmall -> doSwitchCanvas()
-            else -> CallUILog.d(tag, "can't response this clicked Event for $v")
+            else -> {
+                CallUILog.d(tag, "can't response this clicked Event for $v")
+            }
         }
     }
 
@@ -131,7 +123,11 @@ open class P2PCallActivity : CommonCallActivity() {
 
         configTimeTick(
             CallUIOperationsMgr.TimeTickConfig({
-                runOnUiThread { binding.tvCountdown.text = it.formatSecondTime() }
+                runOnUiThread {
+                    if (callParam.callType == NECallType.VIDEO) {
+                        binding.tvCountdown.text = it.formatSecondTime()
+                    }
+                }
             })
         )
     }
@@ -180,18 +176,17 @@ open class P2PCallActivity : CommonCallActivity() {
         if (isFinishing) {
             return
         }
-        uiRender.updateOnTheCallState(UserState(userId, muteVideo = !available))
     }
 
     override fun onVideoMuted(userId: String?, mute: Boolean) {
         if (isFinishing) {
             return
         }
-        uiRender.updateOnTheCallState(UserState(userId, muteVideo = mute))
     }
 
     override fun doOnCreate(savedInstanceState: Bundle?) {
         super.doOnCreate(savedInstanceState)
+        p2PVideoCallLayout = binding.singleVideoCallLayout
         CallUILog.d(tag, callParam.toString())
         initForLaunchUI()
         val dialog: PermissionTipDialog?
@@ -249,7 +244,9 @@ open class P2PCallActivity : CommonCallActivity() {
         }, Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
     }
 
-    override fun provideLayoutId(): Int = R.layout.activity_p2_pcall
+    override fun provideLayoutView(): View? {
+        return binding.root
+    }
 
     override fun releaseAndFinish(finishCall: Boolean) {
         super.releaseAndFinish(false)
@@ -309,15 +306,16 @@ open class P2PCallActivity : CommonCallActivity() {
             return
         }
         doCall()
-        if (CallKitUI.options?.initRtcMode != NECallInitRtcMode.GLOBAL) {
-            setupLocalView(binding.videoViewPreview)
-        }
-        if (callParam.callType == NECallType.VIDEO &&
-            CallKitUI.options?.joinRtcWhenCall == false &&
-            startPreviewCode != NERtcConstants.ErrorCode.OK
-        ) {
-            startPreviewCode = NERtcEx.getInstance().startVideoPreview().apply {
-                CallUILog.d(tag, "initForLaunchAction startPreviewCode is $this.")
+        if (callParam.callType == NECallType.VIDEO) {
+            if (CallKitUI.options?.initRtcMode != NECallInitRtcMode.GLOBAL) {
+                CallUIOperationsMgr.setupLocalView(p2PVideoCallLayout.binding.videoViewPreview)
+            }
+            if (CallKitUI.options?.joinRtcWhenCall == false &&
+                startPreviewCode != NERtcConstants.ErrorCode.OK
+            ) {
+                startPreviewCode = NERtcEx.getInstance().startVideoPreview().apply {
+                    CallUILog.d(tag, "initForLaunchAction startPreviewCode is $this.")
+                }
             }
         }
     }
@@ -360,12 +358,6 @@ open class P2PCallActivity : CommonCallActivity() {
     private fun doMuteVideo(view: ImageView) {
         doMuteVideo()
         view.setImageResource(if (isLocalMuteVideo) R.drawable.cam_off else R.drawable.cam_on)
-        uiRender.updateOnTheCallState(
-            UserState(
-                callParam.currentAccId!!,
-                muteVideo = isLocalMuteVideo
-            )
-        )
     }
 
     private fun doConfigSpeakerSwitch(
@@ -425,44 +417,6 @@ open class P2PCallActivity : CommonCallActivity() {
         )
     }
 
-    private fun doSwitchCanvas() {
-        if (uiConfig?.enableCanvasSwitch == false) {
-            return
-        }
-
-        val rtcUid = callEngine.callInfo.otherUserInfo().uid
-        if (rtcUid == 0L) {
-            CallUILog.e(tag, "doSwitchCanvas rtcUid is 0L with accId ${callParam.otherAccId}.")
-            return
-        }
-        if (isLocalMuteVideo) {
-            binding.videoViewBig.clearImage()
-            binding.videoViewSmall.clearImage()
-        }
-
-        if (localIsSmallVideo) {
-            NERtcEx.getInstance().setupRemoteVideoCanvas(binding.videoViewSmall, rtcUid)
-            NERtcEx.getInstance().setupLocalVideoCanvas(binding.videoViewBig)
-        } else {
-            NERtcEx.getInstance().setupRemoteVideoCanvas(binding.videoViewBig, rtcUid)
-            NERtcEx.getInstance().setupLocalVideoCanvas(binding.videoViewSmall)
-        }
-        localIsSmallVideo = !localIsSmallVideo
-
-        uiRender.updateOnTheCallState(
-            UserState(
-                callParam.currentAccId,
-                muteVideo = isLocalMuteVideo
-            )
-        )
-        uiRender.updateOnTheCallState(
-            UserState(
-                callParam.otherAccId,
-                muteVideo = isRemoteMuteVideo
-            )
-        )
-    }
-
     private open inner class UIRender {
         open fun renderForCaller() {
             binding.tvSwitchTipClose.setOnClickListener {
@@ -486,6 +440,8 @@ open class P2PCallActivity : CommonCallActivity() {
             }
             binding.callerSwitchGroup.visibility = View.GONE
             binding.calledSwitchGroup.visibility = View.GONE
+            binding.tvConnectingTip.visibility = View.GONE
+            binding.tvCountdown.visibility = View.VISIBLE
             if (this is AudioRender) {
                 binding.ivCallChannelTypeChange.visibility =
                     if (uiConfig?.showAudio2VideoSwitchOnTheCall == true) View.VISIBLE else View.GONE
@@ -507,26 +463,18 @@ open class P2PCallActivity : CommonCallActivity() {
                 )
             }
         }
-
-        open fun updateOnTheCallState(state: UserState) {}
     }
 
     private inner class AudioRender : UIRender() {
         override fun renderForCaller() {
             super.renderForCaller()
-            forUserInfoUI(NECallType.AUDIO, callParam.calledAccId, forVideoCaller = true)
             doConfigSpeakerSwitch(speakerEnable = false)
 
             if (isLocalMuteAudio) {
                 doMuteAudioSwitch()
             }
 
-            binding.ivBg.visibility = View.VISIBLE
             binding.tvCallSwitchTypeDesc.setText(R.string.tip_switch_to_video)
-
-            binding.videoViewBig.visibility = View.GONE
-            binding.videoViewPreview.visibility = View.GONE
-            binding.videoViewSmall.visibility = View.GONE
 
             binding.llOnTheCallOperation.visibility = View.GONE
             binding.calledOperationGroup.visibility = View.GONE
@@ -540,7 +488,6 @@ open class P2PCallActivity : CommonCallActivity() {
 
             binding.ivCallMuteAudio.setOnClickListener(onClickListener)
             binding.ivCallSpeaker.setOnClickListener(onClickListener)
-            binding.ivBg.visibility = View.VISIBLE
             if (startPreviewCode == 0 || startPreviewCode == ENGINE_ERROR_DEVICE_PREVIEW_ALREADY_STARTED) {
                 NERtcEx.getInstance().setupLocalVideoCanvas(null)
                 startPreviewCode = if (NERtcEx.getInstance().stopVideoPreview() == 0) -1 else 0
@@ -549,16 +496,9 @@ open class P2PCallActivity : CommonCallActivity() {
 
         override fun renderForCalled() {
             super.renderForCalled()
-            forUserInfoUI(NECallType.AUDIO, NIMClient.getCurrentAccount())
-
             binding.ivAccept.setImageResource(R.drawable.icon_call_audio_accept)
             binding.ivSwitchType.setImageResource(R.drawable.icon_call_tip_audio_to_video)
-            binding.tvOtherCallTip.setText(R.string.tip_invite_to_audio_call)
             binding.tvSwitchTypeDesc.setText(R.string.tip_switch_to_video)
-
-            binding.videoViewPreview.visibility = View.GONE
-            binding.videoViewBig.visibility = View.GONE
-            binding.videoViewSmall.visibility = View.GONE
 
             binding.llOnTheCallOperation.visibility = View.GONE
             binding.calledOperationGroup.visibility = View.VISIBLE
@@ -568,28 +508,15 @@ open class P2PCallActivity : CommonCallActivity() {
             binding.ivAccept.setOnClickListener(onClickListener)
             binding.ivReject.setOnClickListener(onClickListener)
             binding.ivSwitchType.setOnClickListener(onClickListener)
-            binding.ivBg.visibility = View.VISIBLE
         }
 
         override fun renderForOnTheCall(userAccId: String?) {
             super.renderForOnTheCall(userAccId)
 
-            callParam.run {
-                forUserInfoUI(NECallType.AUDIO, otherAccId)
-            }
-
-            binding.tvOtherCallTip.setText(R.string.tip_on_the_call)
-            binding.tvConnectingTip.visibility = View.GONE
-            binding.videoViewPreview.visibility = View.GONE
-            binding.videoViewSmall.visibility = View.GONE
-            binding.videoViewBig.visibility = View.GONE
-            binding.ivSmallVideoShade.visibility = View.GONE
-
             binding.calledOperationGroup.visibility = View.GONE
             binding.callerOperationGroup.visibility = View.GONE
             binding.callerAudioOperationGroup.visibility = View.GONE
             binding.llOnTheCallOperation.visibility = View.VISIBLE
-            binding.tvCountdown.visibility = View.VISIBLE
 
             binding.ivCallChannelTypeChange.setImageResource(R.drawable.audio_to_video)
             binding.ivCallChannelTypeChange.setOnClickListener(onClickListener)
@@ -600,8 +527,6 @@ open class P2PCallActivity : CommonCallActivity() {
 
             binding.ivSwitchCamera.visibility = View.GONE
 
-            binding.tvRemoteVideoCloseTip.visibility = View.GONE
-            binding.ivSmallVideoShade.visibility = View.GONE
             if (!firstLaunch || callParam.isCalled) {
                 resetSwitchState(NECallType.AUDIO)
             } else {
@@ -611,7 +536,6 @@ open class P2PCallActivity : CommonCallActivity() {
             if (!callParam.isCalled) {
                 doConfigSpeakerSwitch(speakerEnable = isSpeakerOn())
             }
-            binding.ivBg.visibility = View.VISIBLE
         }
     }
 
@@ -620,12 +544,7 @@ open class P2PCallActivity : CommonCallActivity() {
     private inner class VideoRender : UIRender() {
         override fun renderForCaller() {
             super.renderForCaller()
-            forUserInfoUI(NECallType.VIDEO, callParam.calledAccId, forVideoCaller = true)
             doConfigSpeakerSwitch(speakerEnable = true)
-
-            binding.videoViewBig.visibility = View.GONE
-            binding.videoViewPreview.visibility = View.VISIBLE
-            binding.videoViewSmall.visibility = View.GONE
 
             binding.llOnTheCallOperation.visibility = View.GONE
             binding.calledOperationGroup.visibility = View.GONE
@@ -636,7 +555,6 @@ open class P2PCallActivity : CommonCallActivity() {
             binding.ivCallSwitchType.setImageResource(R.drawable.icon_call_tip_video_to_audio)
             binding.tvCallSwitchTypeDesc.setText(R.string.tip_switch_to_audio)
 
-            setupLocalView(binding.videoViewPreview)
             if (startPreviewCode != NERtcConstants.ErrorCode.OK &&
                 startPreviewCode != ENGINE_ERROR_DEVICE_PREVIEW_ALREADY_STARTED
             ) {
@@ -644,23 +562,14 @@ open class P2PCallActivity : CommonCallActivity() {
                     CallUILog.d(tag, "renderForCaller startPreviewCode is $this.")
                 }
             }
-            binding.ivBg.visibility = View.GONE
         }
 
         override fun renderForCalled() {
             super.renderForCalled()
-
-            forUserInfoUI(NECallType.VIDEO, NIMClient.getCurrentAccount())
-
-            binding.videoViewPreview.visibility = View.GONE
-            binding.videoViewBig.visibility = View.GONE
-            binding.videoViewSmall.visibility = View.GONE
-
             binding.llOnTheCallOperation.visibility = View.GONE
             binding.calledOperationGroup.visibility = View.VISIBLE
             binding.callerOperationGroup.visibility = View.GONE
             binding.callerAudioOperationGroup.visibility = View.GONE
-            binding.tvOtherCallTip.setText(R.string.tip_invite_to_video_call)
             binding.tvSwitchTypeDesc.setText(R.string.tip_switch_to_audio)
 
             binding.ivAccept.setImageResource(R.drawable.call_accept)
@@ -669,28 +578,15 @@ open class P2PCallActivity : CommonCallActivity() {
             binding.ivAccept.setOnClickListener(onClickListener)
             binding.ivReject.setOnClickListener(onClickListener)
             binding.ivSwitchType.setOnClickListener(onClickListener)
-
-            binding.ivBg.visibility = View.VISIBLE
         }
 
         override fun renderForOnTheCall(userAccId: String?) {
             super.renderForOnTheCall(userAccId)
-
-            forUserInfoUI(type = NECallType.VIDEO, visible = false)
-
-            binding.tvConnectingTip.visibility = View.GONE
-            binding.videoViewPreview.visibility = View.GONE
-            binding.videoViewSmall.visibility = View.VISIBLE
-            binding.videoViewBig.visibility = View.VISIBLE
-            binding.ivSmallVideoShade.visibility = View.GONE
-
             binding.calledOperationGroup.visibility = View.GONE
             binding.callerOperationGroup.visibility = View.GONE
             binding.callerAudioOperationGroup.visibility = View.GONE
             binding.llOnTheCallOperation.visibility = View.VISIBLE
-            binding.tvCountdown.visibility = View.VISIBLE
 
-            binding.videoViewSmall.setOnClickListener(onClickListener)
             binding.ivCallChannelTypeChange.setOnClickListener(onClickListener)
             binding.ivCallChannelTypeChange.setImageResource(R.drawable.video_to_audio)
             binding.ivMuteAudio.setOnClickListener(onClickListener)
@@ -699,208 +595,21 @@ open class P2PCallActivity : CommonCallActivity() {
             binding.ivHangUp.setOnClickListener(onClickListener)
             binding.ivMuteSpeaker.setOnClickListener(onClickListener)
             resetSwitchState(NECallType.VIDEO)
-            binding.ivBg.visibility = View.GONE
 
             firstLaunch = false
             binding.ivSwitchCamera.run {
                 visibility = View.VISIBLE
                 setOnClickListener(onClickListener)
             }
-            if (callParam.currentUserIsCaller()) {
-                NERtcEx.getInstance().setupLocalVideoCanvas(null)
-                NERtcEx.getInstance().stopVideoPreview()
-            }
-            setupRemoteView(binding.videoViewBig)
-            binding.videoViewPreview.release()
-            setupLocalView(binding.videoViewSmall)
         }
-
-        override fun updateOnTheCallState(state: UserState) {
-            super.updateOnTheCallState(state)
-            if (localIsSmallVideo) {
-                if (TextUtils.equals(state.userAccId, callParam.currentAccId)) {
-                    state.muteVideo?.run {
-                        loadImg(uiConfig?.closeVideoLocalUrl, binding.ivSmallVideoShade)
-                        binding.ivSmallVideoShade.visibility = if (this) View.VISIBLE else View.GONE
-                    }
-                } else {
-                    state.muteVideo?.run {
-                        loadImg(uiConfig?.closeVideoRemoteUrl, binding.ivBigVideoShade)
-                        binding.ivBigVideoShade.visibility = if (this) View.VISIBLE else View.GONE
-                        binding.tvRemoteVideoCloseTip.text =
-                            if (TextUtils.isEmpty(uiConfig?.closeVideoRemoteTip?.trim())) {
-                                getString(
-                                    R.string.ui_tip_close_camera_by_other
-                                )
-                            } else {
-                                uiConfig?.closeVideoRemoteTip
-                            }
-                        binding.tvRemoteVideoCloseTip.visibility = if (this) View.VISIBLE else View.GONE
-                    }
-                }
-            } else {
-                if (TextUtils.equals(state.userAccId, callParam.currentAccId)) {
-                    state.muteVideo?.run {
-                        loadImg(uiConfig?.closeVideoLocalUrl, binding.ivBigVideoShade)
-                        binding.ivBigVideoShade.visibility = if (this) View.VISIBLE else View.GONE
-                        binding.tvRemoteVideoCloseTip.text = if (TextUtils.isEmpty(
-                                uiConfig?.closeVideoLocalTip?.trim()
-                            )
-                        ) {
-                            getString(
-                                R.string.ui_tip_close_camera_by_self
-                            )
-                        } else {
-                            uiConfig?.closeVideoLocalTip
-                        }
-                        binding.tvRemoteVideoCloseTip.visibility = if (this) View.VISIBLE else View.GONE
-                    }
-                } else {
-                    state.muteVideo?.run {
-                        loadImg(uiConfig?.closeVideoRemoteUrl, binding.ivSmallVideoShade)
-                        binding.ivSmallVideoShade.visibility = if (this) View.VISIBLE else View.GONE
-                    }
-                }
-            }
-        }
-    }
-
-    private fun forUserInfoUI(
-        type: Int,
-        accId: String? = null,
-        visible: Boolean = true,
-        forVideoCaller: Boolean = false
-    ) {
-        if (!visible) {
-            binding.userInfoGroup.visibility = View.GONE
-            return
-        }
-        binding.userInfoGroup.visibility = View.VISIBLE
-
-        accId?.run {
-            fetchNickname {
-                binding.tvUserName.text = it
-            }
-            loadAvatarByAccId(
-                this@P2PCallActivity,
-                binding.ivUserInnerAvatar,
-                binding.ivBg,
-                binding.tvUserInnerAvatar,
-                uiConfig?.enableTextDefaultAvatar ?: true
-            )
-        }
-        val centerSize = 97.dip2Px(this)
-        val topSize = 60.dip2Px(this)
-
-        val constraintSet = ConstraintSet()
-        constraintSet.clone(binding.clRoot)
-        constraintSet.clear(R.id.flUserAvatar)
-        constraintSet.clear(R.id.tvOtherCallTip)
-        constraintSet.clear(R.id.tvUserName)
-        constraintSet.constrainHeight(R.id.tvOtherCallTip, ConstraintSet.WRAP_CONTENT)
-        constraintSet.constrainWidth(R.id.tvOtherCallTip, ConstraintSet.WRAP_CONTENT)
-        constraintSet.constrainWidth(R.id.tvUserName, ConstraintSet.WRAP_CONTENT)
-        constraintSet.constrainWidth(R.id.tvUserName, ConstraintSet.WRAP_CONTENT)
-
-        if (type == NECallType.VIDEO && forVideoCaller) {
-            val marginSize16 = 16.dip2Px(this)
-            binding.flUserAvatar.run {
-                constraintSet.constrainWidth(id, topSize)
-                constraintSet.constrainHeight(id, topSize)
-                constraintSet.connect(
-                    id,
-                    ConstraintSet.END,
-                    ConstraintSet.PARENT_ID,
-                    ConstraintSet.END,
-                    marginSize16
-                )
-                constraintSet.connect(
-                    id,
-                    ConstraintSet.TOP,
-                    ConstraintSet.PARENT_ID,
-                    ConstraintSet.TOP,
-                    marginSize16
-                )
-            }
-            val marginSize10 = 10.dip2Px(this)
-            val marginSize5 = 5.dip2Px(this)
-            binding.tvUserName.run {
-                textSize = 18f
-                constraintSet.connect(
-                    id,
-                    ConstraintSet.END,
-                    binding.flUserAvatar.id,
-                    ConstraintSet.START,
-                    marginSize10
-                )
-                constraintSet.connect(
-                    id,
-                    ConstraintSet.TOP,
-                    binding.flUserAvatar.id,
-                    ConstraintSet.TOP,
-                    marginSize5
-                )
-            }
-            binding.tvOtherCallTip.run {
-                setTextColor(ContextCompat.getColor(context, R.color.white))
-                constraintSet.connect(
-                    id,
-                    ConstraintSet.TOP,
-                    binding.tvUserName.id,
-                    ConstraintSet.BOTTOM,
-                    marginSize5
-                )
-                constraintSet.connect(
-                    id,
-                    ConstraintSet.END,
-                    binding.flUserAvatar.id,
-                    ConstraintSet.START,
-                    marginSize10
-                )
-            }
-        } else {
-            binding.flUserAvatar.run {
-                constraintSet.constrainWidth(id, centerSize)
-                constraintSet.constrainHeight(id, centerSize)
-                constraintSet.connect(
-                    id,
-                    ConstraintSet.TOP,
-                    ConstraintSet.PARENT_ID,
-                    ConstraintSet.TOP,
-                    160.dip2Px(context)
-                )
-                constraintSet.centerHorizontally(id, ConstraintSet.PARENT_ID)
-            }
-            binding.tvUserName.run {
-                textSize = 20f
-                constraintSet.centerHorizontally(id, ConstraintSet.PARENT_ID)
-                constraintSet.connect(
-                    id,
-                    ConstraintSet.TOP,
-                    binding.flUserAvatar.id,
-                    ConstraintSet.BOTTOM,
-                    15.dip2Px(context)
-                )
-            }
-            binding.tvOtherCallTip.run {
-                setTextColor(ContextCompat.getColor(context, R.color.color_cccccc))
-                constraintSet.connect(
-                    id,
-                    ConstraintSet.TOP,
-                    binding.tvUserName.id,
-                    ConstraintSet.BOTTOM,
-                    8.dip2Px(context)
-                )
-                constraintSet.centerHorizontally(id, ConstraintSet.PARENT_ID)
-            }
-        }
-        constraintSet.applyTo(binding.clRoot)
     }
 
     private fun resetSwitchState(callType: Int) {
         if (callType == NECallType.VIDEO) {
             doConfigSpeaker(true)
             binding.ivMuteSpeaker.setImageResource(R.drawable.speaker_on)
+            // 使用 SingleVideoCallLayout 重置切换状态
+            p2PVideoCallLayout.resetSwitchState(callType)
         } else {
             doConfigSpeaker(false)
             binding.ivMuteSpeaker.setImageResource(R.drawable.speaker_off)
@@ -909,9 +618,9 @@ open class P2PCallActivity : CommonCallActivity() {
         localIsSmallVideo = true
 
         doMuteAudio(false)
-        binding.ivMuteVideo.setImageResource(R.drawable.cam_on)
-        binding.tvRemoteVideoCloseTip.visibility = View.GONE
-        binding.videoViewSmall.setBackgroundColor(Color.TRANSPARENT)
+        if (callType == NECallType.VIDEO) {
+            binding.ivMuteVideo.setImageResource(R.drawable.cam_on)
+        }
         // 音频
         if (isLocalMuteAudio) {
             doMuteAudioSwitch(binding.ivMuteAudio)
@@ -925,9 +634,4 @@ open class P2PCallActivity : CommonCallActivity() {
             .centerCrop()
             .into(imageView)
     }
-
-    class UserState(
-        val userAccId: String?,
-        val muteVideo: Boolean? = null
-    )
 }

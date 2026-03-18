@@ -137,7 +137,13 @@ abstract class CommonCallActivity : AppCompatActivity(), NECallEngineDelegate {
     }
 
     open fun doOnCreate(savedInstanceState: Bundle?) {
-        setContentView(provideLayoutId())
+        if (provideLayoutId() != 0) {
+            setContentView(provideLayoutId())
+        } else if (provideLayoutView() != null) {
+            setContentView(provideLayoutView())
+        } else {
+            throw RuntimeException("provideLayoutId or provideLayoutView must be not null.")
+        }
         // 由于页面启动耗时，可能出现页面启动中通话被挂断，此时需要销毁页面
         if (callParam.isCalled && callEngine.callInfo.callStatus == CallState.STATE_IDLE) {
             releaseAndFinish(false)
@@ -210,7 +216,9 @@ abstract class CommonCallActivity : AppCompatActivity(), NECallEngineDelegate {
         releaseAndFinish(true)
     }
 
-    protected abstract fun provideLayoutId(): Int
+    protected open fun provideLayoutId(): Int { return 0 }
+
+    protected open fun provideLayoutView(): View? { return null }
 
     protected open fun provideUIConfig(callParam: CallParam?): P2PUIConfig? {
         return P2PUIConfig()

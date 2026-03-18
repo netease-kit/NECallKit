@@ -48,15 +48,15 @@ class ActivityFloatingView : FrameLayout {
 
     private fun inflateAndInit(context: Context): ActivityFloatingWindowBinding {
         val b = ActivityFloatingWindowBinding.inflate(LayoutInflater.from(context), this, true)
-        b.tvRemoteVideoCloseTip.visibility = View.GONE
+        b.tvSmallVideoCloseTip.visibility = View.GONE
         b.videoViewSmall.visibility = View.VISIBLE
         return b
     }
 
     fun changeMuteVideo(isSelf: Boolean, mute: Boolean) {
-        binding.tvRemoteVideoCloseTip.visibility = if (mute) View.VISIBLE else View.GONE
+        binding.tvSmallVideoCloseTip.visibility = if (mute) View.VISIBLE else View.GONE
         binding.videoViewSmall.visibility = if (mute) View.GONE else View.VISIBLE
-        binding.tvRemoteVideoCloseTip.text = if (isSelf) { context.getString(
+        binding.tvSmallVideoCloseTip.text = if (isSelf) { context.getString(
             R.string.ui_tip_close_camera_by_self
         ) } else { context.getString(R.string.ui_tip_close_camera_by_other) }
     }
