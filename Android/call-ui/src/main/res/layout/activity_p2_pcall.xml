@@ -13,115 +13,23 @@
     android:background="@color/black"
     tools:ignore="ContentDescription,SpUsage">
 
-    <!--视频通话远端用户视频画面-->
-    <com.netease.lava.nertc.sdk.video.NERtcVideoView
-        android:id="@+id/videoViewBig"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/ivBigVideoShade"
+    <!-- SingleVideoCallLayout 容器，包含所有非按钮的 view -->
+    <com.netease.yunxin.nertc.ui.view.P2PVideoCallLayout
+        android:id="@+id/singleVideoCallLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
-
-    <!--视频通话本地用户预览大视频画面-->
-    <com.netease.lava.nertc.sdk.video.NERtcVideoView
-        android:id="@+id/videoViewPreview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <!--视频通话本地用户预览小视频画面-->
-    <com.netease.lava.nertc.sdk.video.NERtcVideoView
-        android:id="@+id/videoViewSmall"
-        android:layout_width="90dp"
-        android:layout_height="160dp"
-        android:layout_margin="16dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/ivSmallVideoShade"
-        android:layout_width="90dp"
-        android:layout_height="160dp"
-        android:layout_margin="16dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-
-    <ImageView
-        android:id="@+id/ivBg"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
-
-    <!-- 视频呼叫页面顶部用户信息 start -->
-    <FrameLayout
-        android:id="@+id/flUserAvatar"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="18dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:id="@+id/tvUserInnerAvatar"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:textSize="25dp"
-            android:textStyle="bold" />
-
-        <ImageView
-            android:id="@+id/ivUserInnerAvatar"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:src="@drawable/t_avchat_avatar_default" />
-    </FrameLayout>
+        android:layout_height="match_parent" />
 
     <TextView
-        android:id="@+id/tvUserName"
+        android:id="@+id/tvCountdown"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:layout_marginEnd="10dp"
-        android:textColor="@color/colorWhite"
-        android:textSize="18dp"
-        app:layout_constraintEnd_toStartOf="@id/flUserAvatar"
-        app:layout_constraintTop_toTopOf="@id/flUserAvatar" />
-
-    <TextView
-        android:id="@+id/tvOtherCallTip"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:layout_marginEnd="10dp"
-        android:text="@string/ui_tip_waiting_to_accept_for_audio"
-        android:textColor="@color/colorWhite"
+        android:layout_marginTop="3dp"
+        android:textColor="@color/color_cccccc"
         android:textSize="14dp"
-        app:layout_constraintEnd_toStartOf="@id/flUserAvatar"
-        app:layout_constraintTop_toBottomOf="@id/tvUserName" />
-
-    <androidx.constraintlayout.widget.Group
-        android:id="@+id/userInfoGroup"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:visibility="gone"
-        app:constraint_referenced_ids="flUserAvatar,tvUserName,tvOtherCallTip" />
-    <!-- 视频呼叫页面顶部用户信息 end -->
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
         android:id="@+id/ivSwitchCamera"
@@ -191,20 +99,6 @@
             android:src="@drawable/hangup" />
     </LinearLayout>
     <!-- 通话中操作布局 end -->
-
-    <TextView
-        android:id="@+id/tvRemoteVideoCloseTip"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/ui_tip_close_camera_by_other"
-        android:background="@drawable/close_video_tip_bg"
-        android:textSize="20sp"
-        android:padding="10dp"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- 被叫用户邀请操作控制 start-->
     <ImageView
@@ -420,18 +314,6 @@
         android:visibility="gone"
         app:constraint_referenced_ids="ivCallMuteAudio,ivCallSpeaker,tvCallMuteAudioTip,tvCallSpeakerTip" />
     <!-- 主叫用户呼叫操作控制 end-->
-
-    <TextView
-        android:id="@+id/tvCountdown"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:textColor="@color/color_cccccc"
-        android:textSize="14dp"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvSwitchTip"

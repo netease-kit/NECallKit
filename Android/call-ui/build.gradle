@@ -44,5 +44,6 @@ dependencies {
     implementation libs.glide
     implementation libs.glide.transformations
     api libs.yunxin.common.ui
-    api 'com.netease.yunxin.kit.call:call:3.8.0'
+    implementation 'com.netease.yunxin:nertc-aidenoise:5.9.10'
+    api 'com.netease.yunxin.kit.call:call:4.1.0'
 }

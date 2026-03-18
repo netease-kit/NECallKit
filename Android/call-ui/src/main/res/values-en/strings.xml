@@ -76,4 +76,21 @@
     <string name="user_join_group_call_with_user_count">There are %d people participating in the call.</string>
     <string name="ui_member_exceed_limit">currently supports call with up to 10 people</string>
 
+    <string name="ui_permission_dialog_title">Permission Request</string>
+    <string name="ui_permission_dialog_positive_setting_text">Go to Settings</string>
+    <string name="ui_float_permission_hint">Please enable both \"Background Pop-up\" and \"Display Overlay\" permissions</string>
+    <string name="ui_float_permission_hint_harmony">Please enable both \"Background Pop-up\" and \"Overlay\" permissions</string>
+
+    <string name="ui_permission_camera">Camera</string>
+    <string name="ui_permission_microphone">Microphone</string>
+    <string name="ui_permission_bluetooth">Bluetooth</string>
+    <string name="ui_permission_separator">,</string>
+    <string name="ui_permission_tips">Please turn on the %s permission first</string>
+    <string name="ui_permission_title">%s applies for access to the %s</string>
+    <string name="ui_permission_mic_reason">Needs access to your microphone, and it can be used for functions such as Audio/Video Call, Group Audio/Video Call etc.</string>
+    <string name="ui_permission_camera_reason">Needs access to your camera, and it can be used for functions such as Video Call, Group Video Call etc. For beauty filters to work, we will collect the facial information captured by your camera in real time to detect your facial features.</string>
+
+    <string name="ui_channel_description">Running</string>
+    <string name="ui_channel_name">Video Call Foreground Service</string>
+
 </resources>

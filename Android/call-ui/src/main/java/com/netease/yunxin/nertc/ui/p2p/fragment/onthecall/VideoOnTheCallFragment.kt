@@ -40,7 +40,6 @@ import com.netease.yunxin.nertc.ui.floating.FloatingWindowWrapper
 import com.netease.yunxin.nertc.ui.p2p.ActivityFloatingView
 import com.netease.yunxin.nertc.ui.p2p.CallUIOperationsMgr
 import com.netease.yunxin.nertc.ui.p2p.P2PUIConfig
-import com.netease.yunxin.nertc.ui.p2p.fragment.BaseP2pCallFragment
 import com.netease.yunxin.nertc.ui.p2p.fragment.P2PUIUpdateType.CHANGE_CALL_TYPE
 import com.netease.yunxin.nertc.ui.p2p.fragment.P2PUIUpdateType.FROM_FLOATING_WINDOW
 import com.netease.yunxin.nertc.ui.p2p.fragment.P2PUIUpdateType.INIT
@@ -54,7 +53,7 @@ import kotlinx.coroutines.launch
 /**
  * 视频通话页面
  */
-open class VideoOnTheCallFragment : BaseP2pCallFragment() {
+open class VideoOnTheCallFragment : BaseOnTheCallFragment() {
 
     protected val logTag = "VideoOnTheCallFragment"
 
@@ -252,6 +251,7 @@ open class VideoOnTheCallFragment : BaseP2pCallFragment() {
     }
 
     override fun onCreateAction() {
+        super.onCreateAction()
         NERtcCallbackProxyMgr.getInstance().addCallback(rtcCallback)
         if (bridge.currentCallState() == CallState.STATE_IDLE) {
             bridge.doCall()

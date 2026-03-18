@@ -25,7 +25,6 @@ import com.netease.yunxin.nertc.ui.base.loadAvatarByAccId
 import com.netease.yunxin.nertc.ui.databinding.FragmentP2pAudioOnTheCallBinding
 import com.netease.yunxin.nertc.ui.p2p.CallUIOperationsMgr
 import com.netease.yunxin.nertc.ui.p2p.P2PUIConfig
-import com.netease.yunxin.nertc.ui.p2p.fragment.BaseP2pCallFragment
 import com.netease.yunxin.nertc.ui.p2p.fragment.P2PUIUpdateType.CHANGE_CALL_TYPE
 import com.netease.yunxin.nertc.ui.p2p.fragment.P2PUIUpdateType.FROM_FLOATING_WINDOW
 import com.netease.yunxin.nertc.ui.p2p.fragment.P2PUIUpdateType.INIT
@@ -38,7 +37,7 @@ import kotlinx.coroutines.launch
 /**
  * 音频通话页面
  */
-open class AudioOnTheCallFragment : BaseP2pCallFragment() {
+open class AudioOnTheCallFragment : BaseOnTheCallFragment() {
 
     protected val logTag = "AudioOnTheCallFragment"
 
@@ -170,9 +169,14 @@ open class AudioOnTheCallFragment : BaseP2pCallFragment() {
     }
 
     override fun onCreateAction() {
+        super.onCreateAction()
         if (bridge.currentCallState() == CallState.STATE_IDLE) {
             bridge.doCall()
         }
+    }
+
+    override fun onDestroyAction() {
+        super.onDestroyAction()
     }
 
     override fun onCallEnd(info: NECallEndInfo) {

@@ -58,7 +58,6 @@ class FloatingView(context: Context) : FrameLayout(context), IFloatingView {
                 postCountDownTxt(timestamp.formatSecondTime())
             })
         )
-        CallUIFloatingWindowMgr.registerFullScreenActionForView(context, this)
     }
 
     override fun transToAudioUI() {
@@ -91,8 +90,9 @@ class FloatingView(context: Context) : FrameLayout(context), IFloatingView {
             binding.floatAudioGroup.visibility = View.GONE
             binding.ivAvatar.visibility = View.VISIBLE
             binding.videoBg.visibility = View.VISIBLE
-            if (CallUIOperationsMgr.currentCallState() == CallState.STATE_DIALOG) {
-                val isVideoing = !CallUIOperationsMgr.callInfoWithUIState.isRemoteMuteVideo
+            val callInfo = NECallEngine.sharedInstance().callInfo
+            if (callInfo.callStatus == CallState.STATE_DIALOG) {
+                val isVideoing = !callInfo.otherUserInfo().isMuteVideo
                 if (isVideoing) {
                     binding.videoViewSmall.visibility = View.VISIBLE
                     CallUIOperationsMgr.setupRemoteView(binding.videoViewSmall)
@@ -104,8 +104,12 @@ class FloatingView(context: Context) : FrameLayout(context), IFloatingView {
                 CallUIOperationsMgr.setupLocalView(binding.videoViewSmall)
                 CallUIOperationsMgr.startVideoPreview()
             }
-            CallUIOperationsMgr.callInfoWithUIState.callParam.otherAccId
-                ?.loadAvatarByAccId(context, binding.ivAvatar, enableTextDefaultAvatar = false)
+
+            callInfo?.otherUserInfo()?.accId?.loadAvatarByAccId(
+                context,
+                binding.ivAvatar,
+                enableTextDefaultAvatar = false
+            )
             binding.root.radius = 0f
         }
         if (context.isGranted(RECORD_AUDIO, CAMERA)) {
