@@ -10,6 +10,9 @@
 #import "NEUICallParam.h"
 #import "NEVideoView.h"
 
+@class NECallUIStateController;
+@class NEAISubtitleView;
+
 NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const kCallKitDismissNoti;
@@ -27,6 +30,12 @@ extern NSString *const kCallKitDismissNoti;
 
 // 当前用户视频显示位置
 @property(nonatomic, assign) BOOL showMyBigView;
+
+/// 当前活跃的状态控制器
+@property(nonatomic, weak, readonly) NECallUIStateController *stateUIController;
+
+/// ASR 字幕视图
+@property(nonatomic, strong, readonly) NEAISubtitleView *aiSubtitleView;
 
 - (void)changeDefaultImage:(BOOL)mute;
 

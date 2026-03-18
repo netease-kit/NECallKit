@@ -12,8 +12,6 @@
 #import <NECallKitPstn/NECallKitPstn.h>
 #import <NERtcCallKit/NERtcCallKit.h>
 #import "NEUser.h"
-#import "UICollectionViewLeftAlignedLayout.h"
-#import "DataManager.h"
 #import <Foundation/NSBundle.h>
 #import <NERtcCallUIKit/NERtcCallUIKit.h>
 typedef enum : NSUInteger {
@@ -31,14 +29,13 @@ static NSString *recordFileName = @"record";
 
 static NSString *deviceTokenKey = @"deviceToken";
 
+static NSString *pushKitDeviceTokenKey = @"pushkitDeviceToken";
+
 static NSInteger RecordCountLimit = 15;
 
 static NSInteger GroupCallUserLimit = 16;
 
 static NSString *kWaittingCalledUser = @"待呼叫用户";
-
-static NSString *pushKitDeviceTokenKey = @"pushkitDeviceToken";
-
 
 //#if DEBUG
 //static NSInteger RecordCountLimit = 16;
