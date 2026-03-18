@@ -3,11 +3,12 @@
 
 source 'https://github.com/CocoaPods/Specs.git'
 target 'NLiteAVDemo' do
-  use_frameworks!
+  use_frameworks! 
   # 云信基础SDK
   pod 'NERtcSDK', '5.9.10'
   pod 'NIMSDK_LITE', '10.9.53'
-  
+  pod 'NECommonUIKit', '9.8.2'
+
   pod 'NECallKitPstn', :path => 'CallKit/NECallKitPstn/NECallKitPstn.podspec'
 
   # 三方依赖
