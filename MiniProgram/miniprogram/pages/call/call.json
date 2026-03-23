@@ -1,5 +1,7 @@
 {
+  "navigationBarTitleText": "通话",
+  "navigationStyle": "custom",
   "usingComponents": {
-    "call-view": "/components/call-kit-wx-ui/call-view"
+    "call-view": "../../components/call-kit-wx-ui/call-view/index"
   }
 }

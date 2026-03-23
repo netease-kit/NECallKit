@@ -1,4 +1,4 @@
-export function secondToDate(result) {
+function secondToDate(result) {
   let h = Math.floor(result / 3600)
   let m = Math.floor((result / 60) % 60)
   let s = Math.floor(result % 60)
@@ -16,3 +16,5 @@ export function secondToDate(result) {
   }
   return h + ':' + m + ':' + s
 }
+
+module.exports = { secondToDate }
