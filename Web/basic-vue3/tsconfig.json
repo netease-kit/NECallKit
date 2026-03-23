@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    "target": "ES2019",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "lib": ["ES2019", "DOM", "DOM.Iterable"],
+    "strict": false,
+    "jsx": "preserve",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@xkit-yx/call-kit": ["../call-kit/src/index.ts"],
+      "@xkit-yx/call-kit-vue3-ui": ["call-kit-ui/src/index.ts"]
+    },
+    "types": ["vite/client", "node"]
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "src/**/*.d.ts",
+    "../call-kit/src/**/*.ts",
+    "call-kit-ui/src/**/*.ts",
+    "call-kit-ui/src/**/*.vue",
+    "call-kit-ui/src/**/*.d.ts",
+    "vite.config.ts"
+  ]
+}

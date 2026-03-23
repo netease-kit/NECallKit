@@ -1,4 +1,4 @@
 {
-  "navigationStyle": "custom",
-  "disableScroll": true
+  "navigationBarTitleText": "一对一音视频通话",
+  "navigationStyle": "custom"
 }

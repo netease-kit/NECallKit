@@ -1,19 +1,51 @@
-<view class="container-box">
-  <view class='title' style='padding-top:{{(headerHeight + statusBarHeight)/2 - 12}}px'>
-    <view>呼叫</view>
-  </view>
-  <view class="input-wrapper">
-    <input type="number" value="{{mobile}}" data-key="userId" bindinput="changeHandler" placeholder="输入对方用户im账号" />
-  </view>
-  <view class="sub-title">
-    <radio-group class="radio-group-no-box" bindchange="changeCallType">
-      <label wx:for="{{callTypeArr}}" wx:key="index" class="radio-item {{ callType == item.value ? 'selected': ''}}">
-        <radio value="{{item.value}}" checked="{{item.checked}}" />
-        {{item.title}}
-      </label>
-    </radio-group>
-  </view>
-  <view class='bottom-btn'>
-    <button class="btn" bindtap="startCall" hover-class="none">发起呼叫</button>
+<!--pages/index/index.wxml-->
+<view class="container">
+  <view class="content-wrapper">
+    <view class="header">
+      <view class="header-left" bindtap="logout">
+        <text class="logout-text">退出登录</text>
+      </view>
+      <view class="header-center">
+        <text class="header-title">一对一音视频通话</text>
+      </view>
+      <view class="header-right">
+        <text class="logout-text-hidden">退出登录</text>
+      </view>
+    </view>
+
+    <view class="user-id-row">
+      <text class="user-id-label">您的ID</text>
+      <text class="user-id-value">{{accountId}}</text>
+    </view>
+
+    <view class="search-row">
+      <view class="input-box">
+        <input
+          class="input-search"
+          value="{{imAccid}}"
+          maxlength="50"
+          type="text"
+          placeholder="请输入账号ID"
+          bindinput="onImAccidInput"
+        />
+      </view>
+      <view class="btn-call" bindtap="startCall">
+        <text class="btn-call-text">呼叫</text>
+      </view>
+    </view>
+
+    <view class="call-type-row">
+      <text class="call-type-label">呼叫类型</text>
+      <radio-group class="call-type-group" bindchange="changeCallType">
+        <label class="call-type-item">
+          <radio value="2" checked="{{callType === '2'}}" />
+          <text class="call-type-text">视频呼叫</text>
+        </label>
+        <label class="call-type-item">
+          <radio value="1" checked="{{callType === '1'}}" />
+          <text class="call-type-text">音频呼叫</text>
+        </label>
+      </radio-group>
+    </view>
   </view>
 </view>

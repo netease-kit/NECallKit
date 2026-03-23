@@ -1,0 +1,42 @@
+<!--pages/login/login.wxml-->
+<view class="container">
+  <view class="counter-warp">
+    <view class="header-content">
+      <text class="header-title">网易云信</text>
+    </view>
+    <view class="box">
+      <view class="list-item">
+        <label class="list-item-label">账号ID</label>
+        <input
+          class="input-box"
+          type="text"
+          value="{{accountId}}"
+          maxlength="50"
+          placeholder="请输入账号ID"
+          placeholder-style="color:#BBBBBB;"
+          bindinput="onAccountIdInput"
+        />
+      </view>
+      <view class="list-item" style="margin-top: 15px;">
+        <label class="list-item-label">Token</label>
+        <input
+          class="input-box"
+          type="text"
+          value="{{token}}"
+          maxlength="50"
+          placeholder="请输入Token"
+          placeholder-style="color:#BBBBBB;"
+          bindinput="onTokenInput"
+        />
+      </view>
+      <view class="login">
+        <button class="loginBtn" bindtap="login" loading="{{loading}}">
+          登录
+        </button>
+      </view>
+      <view style="margin-top: 30px; text-align: center;">
+        <text class="link-text" bindtap="openGuide">如何获取云信账号与Token</text>
+      </view>
+    </view>
+  </view>
+</view>
