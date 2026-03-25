@@ -49,7 +49,7 @@ import type {
 import Call from '@/components/Call.vue'
 import Login from '@/components/Login.vue'
 
-const appkey = ''
+const appkey = '' // 请填写你的appkey
 
 const nim = shallowRef<any>(null)
 const isLogin = ref(false)

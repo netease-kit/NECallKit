@@ -41,7 +41,7 @@
     <live-player
       class="necall-remote-view"
       wx:if="{{player.url}}"
-      style="{{callType === '1' ? 'display:none' : ''}}"
+      style="{{callType === '1' ? 'opacity:0' : ''}}"
       hidden="{{player.videoMute && callType === '2'}}"
       src="{{player.url}}"
       object-fit="{{player.objectFit}}"
