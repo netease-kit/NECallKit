@@ -49,7 +49,7 @@ import type {
 import Call from '@/components/Call.vue'
 import Login from '@/components/Login.vue'
 
-const appkey = ''
+const appkey = '3c576300158e8ad9f81963f318b87d3d'
 
 const nim = shallowRef<any>(null)
 const isLogin = ref(false)

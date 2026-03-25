@@ -1,21 +1,43 @@
-# 网易云信 CallKit Vue 3
+# 网易云信 呼叫组件 demo
+> 本文将介绍如何快速体验音视频通话功能，您将在10分钟内完成以下关键步骤，并最终获得一个具有1V1通话界面的视频通话功能。
 
-`basic-vue3/` 目录按 `Web/basic-react/` 的结构组织。
+# 功能开通
 
-- `call-kit-ui/`：Vue 3 UI 子包，提供 `CallViewProvider`、`GroupCallViewProvider` 和全局 `call()` / `groupCall()` / `groupJoin()`
-- 其余宿主演示文件待后续补充；当前交付重点是 `call-kit-ui/`
+**1. 申请 AppKey**
 
-## 接入约束
+用户在使用本插件之前需要获取AppKey，AppKey 申请的具体流程请参见 [创建应用并获取AppKey](https://doc.yunxin.163.com/console/docs/TIzMDE4NTA?platform=console)。
 
-- `CallViewProvider`、`GroupCallViewProvider` 需要在宿主应用根节点与业务视图平级各挂载一次。
-- 一对一音视频呼叫与 React demo 对齐，点击发起后直接走 SDK 呼叫链路，不做前置摄像头权限拦截。
-- 视频来电接听直接走 SDK `accept()`，界面只在收到 `onCallConnected` 后进入通话中页。
-- 群呼 `nim.on('msg')` 自定义消息由组件内部处理，宿主应用不需要再手动转发。
+**2. 获取账号**
 
-## 调试
+本插件使用中需要 account 和 token，具体请参见 [注册云信IM账号](https://doc.yunxin.163.com/messaging-uikit/docs/Dc0NjI1MTA?platform=android#4-%E6%B3%A8%E5%86%8C-im-%E8%B4%A6%E5%8F%B7)。
+
+
+**3. 开通服务**
+
+使用音视频呼叫（呼叫组件）之前，需要开通部分能力，开通的具体流程请参见 [开通服务](https://doc.yunxin.163.com/nertccallkit/docs/DIzMzA0Nzk?platform=iOS)。
+
+# 环境准备
+
+- 安装nodejs、npm
+
+# 如何使用
+
+## 1. 替换appKey
+
+在src/pages/index.vue文件中替换appKey:
+
+```javascript
+const appKey = "your appkey";
+```
+
+## 2. 安装依赖
 
 ```bash
-cd /Users/wangshaocong/workspace/NECallKit/Web/basic-vue3/call-kit-ui
-npm install
-npm run build
+npm install 
+```
+
+## 3. 运行
+
+```bash
+npm run dev
 ```

@@ -16,7 +16,6 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@xkit-yx/call-kit": ["../call-kit/src/index.ts"],
       "@xkit-yx/call-kit-vue3-ui": ["call-kit-ui/src/index.ts"]
     },
     "types": ["vite/client", "node"]

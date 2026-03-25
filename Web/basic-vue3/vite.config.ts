@@ -8,12 +8,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
-      '@xkit-yx/call-kit': resolve(__dirname, '../call-kit/src/index.ts'),
       '@xkit-yx/call-kit-vue3-ui': resolve(
         __dirname,
         'call-kit-ui/src/index.ts'
       ),
-      'nim-web-sdk-ng': resolve(__dirname, 'node_modules/nim-web-sdk-ng'),
     },
   },
   server: {
