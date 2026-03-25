@@ -5,7 +5,7 @@ import V2NIM from 'nim-web-sdk-ng'
 import Login from '../components/Login'
 import Call from '../components/Call'
 
-const appkey = '3c576300158e8ad9f81963f318b87d3d' // 请填写你的appkey
+const appkey = '' // 请填写你的appkey
 
 let nim: V2NIM | null = null
 
