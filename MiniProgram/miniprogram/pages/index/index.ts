@@ -1,4 +1,6 @@
 // pages/index/index.ts
+const { checkAndRequestPermissions } = require('../../components/call-kit-wx-ui/utils/index')
+
 Page({
   data: {
     callType: '2',
@@ -30,6 +32,9 @@ Page({
       wx.showToast({ title: '不能呼叫自己', icon: 'none' })
       return
     }
+
+    const hasPermission = await checkAndRequestPermissions(callType)
+    if (!hasPermission) return
 
     try {
       const app = getApp<IAppOption>()

@@ -1,4 +1,4 @@
-const { secondToDate } = require('../utils/index')
+const { secondToDate, checkAndRequestPermissions } = require('../utils/index')
 const app = getApp()
 
 // 铃声地址（主叫等待音 / 被叫来电音）
@@ -236,11 +236,15 @@ Component({
         handleCallEnd(pendingEndInfo)
       }
 
-      // 从后台切回前台时，重新订阅远端流（修复切后台后听不到声音）
+      // 从后台切回前台时，切换音频输出模式修复听不到声音的问题。
+      // 小程序退后台再返回后，live-player 的音频路由可能失效，手动切换
+      // sound-mode 可强制系统重新初始化音频路由（等价于用户手动拨动扬声器/听筒）。
       this._appShowHandler = () => {
         if (this.data.callStatus === 3 && this.data.player.url) {
-          this.setData({
-            player: { ...this.data.player, url: this.data.player.url },
+          this.setData({ 'player.soundMode': 'ear' }, () => {
+            setTimeout(() => {
+              this.setData({ 'player.soundMode': 'speaker' })
+            }, 200)
           })
         }
       }
@@ -284,6 +288,8 @@ Component({
     },
 
     async onAccept() {
+      const hasPermission = await checkAndRequestPermissions(this.data.callType)
+      if (!hasPermission) return
       const neCall = app.globalData.neCall
       try {
         await neCall.accept()
