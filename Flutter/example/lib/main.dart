@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:callkit_example/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 import 'config/app_config.dart';
@@ -48,9 +48,6 @@ class MyApp extends StatelessWidget {
       color: Colors.black,
       theme: ThemeData(
         brightness: Brightness.light,
-        appBarTheme: const AppBarTheme(
-          systemOverlayStyle: SystemUiOverlayStyle.light,
-        ),
       ),
       themeMode: ThemeMode.light,
       home: const WelcomePage(),

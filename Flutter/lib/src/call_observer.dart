@@ -33,8 +33,9 @@ class NECallObserver {
 
   /// An error occurred inside the SDK.
   ///
-  /// [code] Error code
-  /// [messgae]  Error message
+  /// Parameters:
+  /// - `code`: Error code
+  /// - `message`: Error message
   ///
   final void Function(int code, String message)? onError;
 
@@ -42,11 +43,12 @@ class NECallObserver {
 
   /// Callback for receiving a call request (received only by the callee)
   ///
-  /// [callId]        Unique identifier for this call
-  /// [callerId]      Caller
-  /// [calleeIdList]  List of callees
-  /// [callType]     Call type，eg: audio、video
-  /// [info]          Callback extension information
+  /// Parameters:
+  /// - `callId`: Unique identifier for this call
+  /// - `callerId`: Caller
+  /// - `calleeIdList`: List of callees
+  /// - `callType`: Call type，eg: audio、video
+  /// - `info`: Callback extension information
   ///
   final void Function(String callId, String callerId, List<String> calleeIdList,
       NECallType callType, CallObserverExtraInfo info)? onCallReceived;
@@ -55,7 +57,8 @@ class NECallObserver {
   ///
   /// **This interface has been deprecated. Please use onCallEnd instead.**
   ///
-  /// [callerId]  User who cancel the call request
+  /// Parameters:
+  /// - `callerId`: User who cancel the call request
   ///
   @Deprecated(
       'This interface has been deprecated. Please use onCallNotConnected instead.')
@@ -63,88 +66,101 @@ class NECallObserver {
 
   /// The call was not connected on the current device
   ///
-  /// [callId]        Unique identifier for this call
-  /// [callType]     Call type，eg: audio、video
-  /// [reason]        Call end reason.
-  /// [userId]        Which user ended the call
-  /// [info]          Callback extension information
+  /// Parameters:
+  /// - `callId`: Unique identifier for this call
+  /// - `callType`: Call type，eg: audio、video
+  /// - `reason`: Call end reason.
+  /// - `userId`: Which user ended the call
+  /// - `info`: Callback extension information
   final void Function(String callId, NECallType callType, CallEndReason reason,
       String userId, CallObserverExtraInfo info)? onCallNotConnected;
 
   /// Call start(received by both caller and callee)
   ///
-  /// [callId]        Unique identifier for this call
-  /// [callType]     Call type，eg: audio、video
-  /// [info]          Callback extension information
+  /// Parameters:
+  /// - `callId`: Unique identifier for this call
+  /// - `callType`: Call type，eg: audio、video
+  /// - `info`: Callback extension information
   final void Function(
           String callId, NECallType callType, CallObserverExtraInfo info)?
       onCallBegin;
 
   /// Call end(received by both caller and callee)
   ///
-  /// [callId]        Unique identifier for this call
-  /// [callType]     Call type，eg: audio、video
-  /// [reason]        Call end reason.
-  /// [userId]        Which user ended the call
-  /// [totalTime ]    Total time of the call
-  /// [info]          Callback extension information
+  /// Parameters:
+  /// - `callId`: Unique identifier for this call
+  /// - `callType`: Call type，eg: audio、video
+  /// - `reason`: Call end reason.
+  /// - `userId`: Which user ended the call
+  /// - `totalTime`: Total time of the call
+  /// - `info`: Callback extension information
   final void Function(String callId, NECallType callType, CallEndReason reason,
       String userId, double totalTime, CallObserverExtraInfo info)? onCallEnd;
 
   /// call type change
   ///
-  /// [oldCallMediaType] Old call type
-  /// [newCallMediaType] New call type
+  /// Parameters:
+  /// - `oldCallMediaType`: Old call type
+  /// - `newCallMediaType`: New call type
   final void Function(NECallType oldCallMediaType, NECallType newCallMediaType)?
       onCallMediaTypeChanged;
 
   /// A user who reject the call
   ///
-  /// [userId] User who reject the call
+  /// Parameters:
+  /// - `userId`: User who reject the call
   final void Function(String userId)? onUserReject;
 
   /// A user who did not answer the call
   ///
-  /// [userId] User who did not answer the call
+  /// Parameters:
+  /// - `userId`: User who did not answer the call
   final void Function(String userId)? onUserNoResponse;
 
   /// A user who is busy
   ///
-  /// [userId] User who is busy
+  /// Parameters:
+  /// - `onUserLineBusy`: User who is busy
   final void Function(String onUserLineBusy)? onUserLineBusy;
 
   /// A user who join the call
   ///
-  /// [userId] User who join the call
+  /// Parameters:
+  /// - `userId`: User who join the call
   final void Function(String userId)? onUserJoin;
 
   /// A user who leave the call
   ///
-  /// [userId] User who leave the call
+  /// Parameters:
+  /// - `userId`: User who leave the call
   final void Function(String userId)? onUserLeave;
 
   /// A remote user published/unpublished primary stream video
   ///
-  /// [userId]           User ID of the remote user
-  /// [isVideoAvailable] Whether the user published (or unpublished) primary stream video
+  /// Parameters:
+  /// - `userId`: User ID of the remote user
+  /// - `isVideoAvailable`: Whether the user published (or unpublished) primary stream video
   final void Function(String userId, bool isVideoAvailable)?
       onUserVideoAvailable;
 
   /// A remote user published/unpublished audio
   ///
-  /// [userId]           User ID of the remote user
-  /// [isAudioAvailable] Whether the user published (or unpublished) audio.
+  /// Parameters:
+  /// - `userId`: User ID of the remote user
+  /// - `isAudioAvailable`: Whether the user published (or unpublished) audio.
   final void Function(String userId, bool isAudioAvailable)?
       onUserAudioAvailable;
 
   /// All user volume change
   ///
-  /// [volumeMap] The total volume of all users. Value range: 0-100
+  /// Parameters:
+  /// - `volumeMap`: The total volume of all users. Value range: 0-100
   final void Function(Map<String, int> volumeMap)? onUserVoiceVolumeChanged;
 
   /// Real-time network quality statistics
   ///
-  /// [networkQualityList] All users Real-time network quality statistics
+  /// Parameters:
+  /// - `networkQualityList`: All users Real-time network quality statistics
   final void Function(List<NENetworkQualityInfo> networkQualityList)?
       onUserNetworkQualityChanged;
 

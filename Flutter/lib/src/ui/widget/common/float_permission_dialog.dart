@@ -4,13 +4,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
-import 'package:netease_callkit_ui/src/impl/call_manager.dart';
 import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
 
 class FloatPermissionDialog extends StatelessWidget {
   final bool isBackgroundStart;
-  const FloatPermissionDialog({Key? key, this.isBackgroundStart = false})
-      : super(key: key);
+  const FloatPermissionDialog({super.key, this.isBackgroundStart = false});
 
   static Future<void> show(BuildContext context,
       {bool isBackgroundStart = false}) {
@@ -70,9 +68,9 @@ class FloatPermissionDialog extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6.0),
                       ),
                     ),
-                    child: const Text(
-                      '取消',
-                      style: TextStyle(
+                    child: Text(
+                      NECallKitUI.localizations.cancel,
+                      style: const TextStyle(
                         fontSize: 16.0,
                         color: Color(0xFF666666),
                       ),
@@ -98,8 +96,8 @@ class FloatPermissionDialog extends StatelessWidget {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text('去设置',
-                        style: TextStyle(fontSize: 16.0, color: Colors.white)),
+                    child: Text(NECallKitUI.localizations.goToSettings,
+                        style: const TextStyle(fontSize: 16.0, color: Colors.white)),
                   ),
                 ),
               ],

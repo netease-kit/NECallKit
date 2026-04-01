@@ -17,8 +17,7 @@ class ExtendButton extends StatelessWidget {
       this.duration = const Duration(milliseconds: 200),
       this.userAnimation = false,
       this.fallbackNetworkUrl,
-      Key? key})
-      : super(key: key);
+      super.key});
   final String imgUrl;
   final double imgHeight;
   final Color? imgColor;
@@ -96,7 +95,7 @@ class ExtendButton extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               tips,
-              textScaleFactor: 1.0,
+              textScaler: const TextScaler.linear(1.0),
               style: TextStyle(fontSize: 12, color: textColor),
             ),
           ),

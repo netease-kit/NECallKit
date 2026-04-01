@@ -1,38 +1,37 @@
 name: netease_callkit_ui
 description: "netease callkit_ui is a ui kit about audio&video calls launched by CommsEase."
-version: 3.8.0
+version: 4.4.0
 repository: https://github.com/netease-kit/NECallKit
 homepage: https://yunxin.163.com/
-#publish_to: none
 
 environment:
   sdk: ">=2.17.0 <4.0.0"
-  flutter: ">=1.20.0"
+  flutter: ">=2.5.0"
 
 dependencies:
   flutter:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  yunxin_alog: ^2.0.0
+  yunxin_alog: ^2.0.6
   hawk_meta: ^0.0.1
-  file: ^6.1.4
-  intl: ^0.19.0
-  path_provider: ^2.0.12
-  plugin_platform_interface: ^2.0.2
-  shared_preferences: ^2.2.0
-  crypto: ^3.0.1
-  netease_common: ^1.0.9
-  netease_common_ui: ^10.3.0
-  nim_core_v2: ^10.9.3+2
-  fluttertoast: ^8.2.12
-  netease_callkit: ^3.8.0
+  file: ^7.0.1
+  intl: any
+  path_provider: ^2.1.5
+  plugin_platform_interface: ^2.1.8
+  shared_preferences: ^2.3.3
+  crypto: ^3.0.7
+  netease_common: ^2.0.0
+  nim_core_v2: ^10.9.4+1
+  fluttertoast: ^8.2.14
+  flutter_screenutil: ^5.9.3
+  netease_callkit: ^4.4.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^1.0.0
-  intl_utils: ^2.8.1
+  flutter_lints: ^4.0.0
+  intl_utils: ^2.8.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

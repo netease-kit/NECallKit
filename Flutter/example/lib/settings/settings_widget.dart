@@ -6,8 +6,9 @@ import 'dart:io';
 
 import 'package:callkit_example/settings/settings_config.dart';
 import 'package:callkit_example/settings/settings_detail_widget.dart';
+import 'package:callkit_example/utils/global_preferences.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:callkit_example/l10n/app_localizations.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 import 'package:netease_callkit/netease_callkit.dart';
 
@@ -110,7 +111,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
             ],
           ),
         ),
-        if (Platform.isAndroid)
+        if (Platform.isAndroid || Platform.isIOS)
           SizedBox(
             height: 40,
             child: Row(
@@ -129,6 +130,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                     onChanged: (value) {
                       setState(() {
                         SettingsConfig.showIncomingBanner = value;
+                        GlobalPreferences().setShowIncomingBanner(value);
                         NECallKitUI.instance.enableIncomingBanner(
                             SettingsConfig.showIncomingBanner);
                       });

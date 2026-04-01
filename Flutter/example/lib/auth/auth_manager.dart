@@ -14,6 +14,7 @@ import '../utils/global_preferences.dart';
 import '../auth/auth_state.dart';
 import 'login_info.dart';
 import 'package:netease_callkit/netease_callkit.dart';
+import 'package:callkit_example/pages/group_call_page.dart';
 
 class AuthManager {
   static const String _tag = 'AuthManager';
@@ -86,6 +87,8 @@ class AuthManager {
       kickedOffline('账号在其他设备登录');
     });
 
+    SettingsConfig.showIncomingBanner =
+        await GlobalPreferences().showIncomingBanner;
     NECallKitUI.instance.enableFloatWindow(SettingsConfig.enableFloatWindow);
     NECallKitUI.instance
         .enableFloatWindowOutOfApp(SettingsConfig.enableFloatWindowOutOfApp);
@@ -93,11 +96,26 @@ class AuthManager {
         .enableIncomingBanner(SettingsConfig.showIncomingBanner);
     NECallKitUI.instance
         .login(AppConfig().appKey, loginInfo.accountId, loginInfo.accountToken,
-            certificateConfig: certificateConfig, extraConfig: extraConfig)
+            certificateConfig: certificateConfig, extraConfig: extraConfig,
+            groupConfigParam: NEGroupConfigParam(
+              appKey: AppConfig().appKey,
+              rtcSafeMode: NEGroupRtcSafeMode.MODE_SAFE,
+              )
+            )
         .then((value) {
       if (value.code == 0) {
         AuthStateManager().updateState(state: AuthState.authed);
         _syncAuthInfo(loginInfo);
+
+        // 注册全局群呼邀请回调，被叫接听后也能使用邀请功能
+        NECallKitUI.instance.setGroupInviteHandler((callId) {
+          final navigator = NECallKitNavigatorObserver.getInstance().navigator;
+          if (navigator != null) {
+            navigator.push(MaterialPageRoute(
+              builder: (context) => GroupCallInvitePage(callId: callId),
+            ));
+          }
+        });
       }
       return completer
           .complete(NEResult(code: value.code, message: value.message ?? ''));

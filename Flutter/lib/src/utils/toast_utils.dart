@@ -84,7 +84,7 @@ class ToastUtils {
         ),
       );
       overlayState.insert(entry);
-      await Future.delayed(duration);
+      await Future<void>.delayed(duration);
       entry.remove();
     }
     SchedulerBinding.instance.addPostFrameCallback((_) {

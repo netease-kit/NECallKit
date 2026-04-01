@@ -160,6 +160,10 @@ public class WindowManager {
 
   public static void showIncomingBanner(Context context) {
     CallUILog.i(CallKitUIPlugin.TAG, "Android Native: showIncomingBanner");
+    if (!CallKitUIPlugin.isIncomingBannerEnabled()) {
+      CallUILog.i(CallKitUIPlugin.TAG, "Android Native: showIncomingBanner skipped, banner not enabled");
+      return;
+    }
     User caller = CallState.getInstance().mRemoteUserList.get(0);
     if (caller == null) {
       return;

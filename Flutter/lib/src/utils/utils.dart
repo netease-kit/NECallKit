@@ -16,11 +16,11 @@ class Utils {
     if (assetName.isEmpty) {
       return "";
     }
-    final String tempDirectory = await getTempDirectory();
-    String filePath = "$tempDirectory/$assetName";
+    final tempDirectory = await getTempDirectory();
+    final filePath = '$tempDirectory/$assetName';
     final file = fileSystem.file(filePath);
     if (!await file.exists()) {
-      ByteData byteData = await loadAsset(assetName);
+      final byteData = await loadAsset(assetName);
       await file.create(recursive: true);
       await file.writeAsBytes(byteData.buffer.asUint8List());
     }

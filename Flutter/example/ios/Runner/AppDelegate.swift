@@ -7,7 +7,7 @@ import Flutter
 import NIMSDK
 import AVFoundation
 
-@UIApplicationMain
+@main
 @objc class AppDelegate: FlutterAppDelegate {
     
   override func application(

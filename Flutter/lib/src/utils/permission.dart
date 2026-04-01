@@ -2,7 +2,6 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
 
@@ -86,6 +85,19 @@ class Permission {
           description: getPermissionRequestDescription(type),
           settingsTip: getPermissionRequestDescription(type));
     }
+    return result;
+  }
+
+  /// 请求相机权限（仅相机）
+  ///
+  /// 返回权限请求结果
+  static Future<PermissionResult> requestCamera() async {
+    final result = await NECallKitPlatform.instance.requestPermissions(
+      permissions: [PermissionType.camera],
+      title: NECallKitUI.localizations.applyForCameraPermission,
+      description: NECallKitUI.localizations.needToAccessCameraPermission,
+      settingsTip: NECallKitUI.localizations.needToAccessCameraPermission,
+    );
     return result;
   }
 

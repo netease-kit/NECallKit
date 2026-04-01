@@ -1,4 +1,38 @@
-include: package:flutter_lints/flutter.yaml
+include: package:dart_flutter_team_lints/analysis_options.yaml
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+  errors:
+    unused_import: error
+    unused_local_variable: error
+    dead_code: error
+    # deprecated_member_use_from_same_package: ignore
+    lines_longer_than_80_chars: ignore
+    avoid_dynamic_calls: ignore
+    deprecated_member_use: error
 
-# Additional information about this file can be found at
-# https://dart.dev/guides/language/analysis-options
+  exclude:
+    # Ignore generated files
+    - 'example/**'
+
+linter:
+  rules:
+    - always_declare_return_types
+    - avoid_unused_constructor_parameters
+    - cancel_subscriptions
+    - comment_references
+    - directives_ordering
+    - no_adjacent_strings_in_list
+    - omit_local_variable_types
+    - only_throw_errors
+    - prefer_const_constructors
+    - prefer_single_quotes
+    - sort_child_properties_last
+    - test_types_in_equals
+    - throw_in_finally
+#    - unawaited_futures
+    - unnecessary_lambdas
+    - unnecessary_library_directive
+    - unnecessary_null_aware_assignments
+    - unnecessary_statements

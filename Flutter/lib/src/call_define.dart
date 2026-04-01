@@ -205,9 +205,9 @@ class CallObserverExtraInfo {
 
   static CallObserverExtraInfo fromJson(Map data) {
     CallObserverExtraInfo info = CallObserverExtraInfo();
-    info.role = NECallRole.values[data['role'] ?? 0];
-    info.userData = data['userData'] ?? "";
-    info.chatGroupId = data['chatGroupId'] ?? "";
+    info.role = NECallRole.values[(data['role'] as int?) ?? 0];
+    info.userData = (data['userData'] as String?) ?? "";
+    info.chatGroupId = (data['chatGroupId'] as String?) ?? "";
     return info;
   }
 

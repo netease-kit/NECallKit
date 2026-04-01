@@ -4,12 +4,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
-import 'package:netease_callkit_ui/src/impl/boot.dart';
 import 'package:netease_callkit_ui/src/extensions/calling_bell_feature.dart';
+import 'package:netease_callkit_ui/src/impl/boot.dart';
 import 'package:netease_callkit_ui/src/ui/call_main_widget.dart';
 
 class NECallKitNavigatorObserver extends NavigatorObserver {
-  static const _tag = "NECallKitNavigatorObserver";
+  static const _tag = 'NECallKitNavigatorObserver';
   static final NECallKitNavigatorObserver _instance =
       NECallKitNavigatorObserver();
   static bool isClose = true;
@@ -24,7 +24,7 @@ class NECallKitNavigatorObserver extends NavigatorObserver {
     Boot.instance;
   }
 
-  void enterCallingPage() async {
+  void enterCallingPage() {
     CallKitUILog.i(
         _tag, 'NECallKitNavigatorObserver enterCallingPage：[isClose：$isClose]');
     if (!isClose) {
@@ -33,7 +33,7 @@ class NECallKitNavigatorObserver extends NavigatorObserver {
     currentPage = CallPage.callingPage;
     NECallKitNavigatorObserver.getInstance()
         .navigator
-        ?.push(MaterialPageRoute(builder: (widget) {
+        ?.push(MaterialPageRoute<void>(builder: (widget) {
       return NECallKitWidget(close: () {
         if (!isClose) {
           isClose = true;

@@ -4,7 +4,7 @@
 
 class SettingsConfig {
   static const defaultAvatar =
-      "https://yx-web-nosdn.netease.im/common/28150847a7871d8cb031efc5dc62e909/avatar_meinv.png";
+      "https://yx-web-nosdn.netease.im/common/8aaaf3fb0524d941d603f32c877d897d/default-avatar.png";
   static const version = '1.0.0';
 
   static String userId = '';
@@ -15,7 +15,7 @@ class SettingsConfig {
   static bool enableFloatWindow = true;
   static bool enableFloatWindowOutOfApp = false; // 应用外悬浮窗（画中画）- iOS 15+
   static bool showBlurBackground = false;
-  static bool showIncomingBanner = true;
+  static bool showIncomingBanner = false;
 
   static int intRoomId = 0;
   static String strRoomId = "";

@@ -14,7 +14,8 @@ class Boot {
   }
 
   NEEventCallback loginSuccessCallBack = (arg) {
-    CallManager.instance.handleLoginSuccess(arg['accountId'], arg['token']);
+    CallManager.instance.handleLoginSuccess(
+        arg['accountId'] as String? ?? '', arg['token'] as String? ?? '');
   };
 
   NEEventCallback logoutSuccessCallBack = (arg) {

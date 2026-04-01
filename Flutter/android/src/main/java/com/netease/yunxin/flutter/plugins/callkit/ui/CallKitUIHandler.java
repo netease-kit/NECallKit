@@ -331,6 +331,30 @@ public class CallKitUIHandler {
     }
   }
 
+  public void setIncomingBannerEnabled(MethodCall call, MethodChannel.Result result) {
+    boolean enable = MethodCallUtils.getMethodParams(call, "enable");
+    CallUILog.i(TAG, "setIncomingBannerEnabled enable=" + enable);
+    CallKitUIPlugin.setIncomingBannerEnabled(enable);
+    result.success(null);
+  }
+
+  public void initResources(MethodCall call, MethodChannel.Result result) {
+    Map resources = MethodCallUtils.getMethodParams(call, "resources");
+    CallUILog.i(TAG, "initResources resources=" + resources);
+    if (resources != null) {
+      CallState.getInstance().mResourceMap.putAll(resources);
+    }
+    result.success(0);
+  }
+
+  public void cancelIncomingBanner(MethodCall call, MethodChannel.Result result) {
+    CallUILog.i(TAG, "cancelIncomingBanner");
+    if (CallState.getInstance().mIncomingFloatView != null) {
+      CallState.getInstance().mIncomingFloatView.cancelIncomingView();
+    }
+    result.success(null);
+  }
+
   public void backCallingPageFromFloatWindow() {
     CallUILog.i(TAG, "backCallingPageFromFloatWindow");
     mChannel.invokeMethod(
@@ -376,6 +400,46 @@ public class CallKitUIHandler {
           @Override
           public void notImplemented() {
             CallUILog.e(CallKitUIPlugin.TAG, "launchCallingPageFromIncomingBanner notImplemented");
+          }
+        });
+  }
+
+  public void bannerAcceptTapped() {
+    CallUILog.i(TAG, "bannerAcceptTapped");
+    mChannel.invokeMethod(
+        "bannerAcceptTapped",
+        new HashMap<>(),
+        new MethodChannel.Result() {
+          @Override
+          public void success(@Nullable Object result) {}
+
+          @Override
+          public void error(
+              @NonNull String code, @Nullable String message, @Nullable Object details) {}
+
+          @Override
+          public void notImplemented() {
+            CallUILog.e(CallKitUIPlugin.TAG, "bannerAcceptTapped notImplemented");
+          }
+        });
+  }
+
+  public void bannerRejectTapped() {
+    CallUILog.i(TAG, "bannerRejectTapped");
+    mChannel.invokeMethod(
+        "bannerRejectTapped",
+        new HashMap<>(),
+        new MethodChannel.Result() {
+          @Override
+          public void success(@Nullable Object result) {}
+
+          @Override
+          public void error(
+              @NonNull String code, @Nullable String message, @Nullable Object details) {}
+
+          @Override
+          public void notImplemented() {
+            CallUILog.e(CallKitUIPlugin.TAG, "bannerRejectTapped notImplemented");
           }
         });
   }

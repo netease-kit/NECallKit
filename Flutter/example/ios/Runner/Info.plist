@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_dartVmService._tcp</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>此应用需要访问摄像头以进行视频通话功能</string>
 	<key>NSLocalNetworkUsageDescription</key>

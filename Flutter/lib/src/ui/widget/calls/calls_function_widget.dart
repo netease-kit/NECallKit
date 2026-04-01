@@ -7,10 +7,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
-import 'package:netease_callkit_ui/src/call_define.dart';
 import 'package:netease_callkit_ui/src/event/event_notify.dart';
-import 'package:netease_callkit_ui/src/impl/call_manager.dart';
-import 'package:netease_callkit_ui/src/impl/call_state.dart';
 import 'package:netease_callkit_ui/src/data/constants.dart';
 import 'package:netease_callkit_ui/src/ui/widget/common/extent_button.dart';
 import 'package:netease_callkit_ui/src/utils/permission.dart';
@@ -91,7 +88,7 @@ class CallsFunctionWidget {
     return functionWidget;
   }
 
-  static _buildAudioAndVideoCalleeWaitingFunctionView(Function close) {
+  static Widget _buildAudioAndVideoCalleeWaitingFunctionView(Function close) {
     return Column(
       children: [
         Row(
@@ -124,7 +121,7 @@ class CallsFunctionWidget {
     );
   }
 
-  static _buildVideoCallerAndCalleeAcceptedFunctionView(
+  static Widget _buildVideoCallerAndCalleeAcceptedFunctionView(
       BuildContext context, Function close) {
     double bigBtnHeight = 52;
     double smallBtnHeight = 35;
@@ -280,11 +277,8 @@ class CallsFunctionWidget {
                           },
                           child: Transform(
                             alignment: Alignment.center,
-                            transform: Matrix4.identity()
-                              ..scale(
-                                  1.0,
-                                  CallsWidget.isFunctionExpand ? 1.0 : -1.0,
-                                  1.0),
+                            transform: Matrix4.diagonal3Values(1.0,
+                                CallsWidget.isFunctionExpand ? 1.0 : -1.0, 1.0),
                             child: Image.asset(
                               'assets/images/arrow.png',
                               package: 'netease_callkit_ui',
@@ -296,7 +290,7 @@ class CallsFunctionWidget {
                 ))));
   }
 
-  static _functionWidgetVerticalDragUpdate(DragUpdateDetails details) {
+  static void _functionWidgetVerticalDragUpdate(DragUpdateDetails details) {
     if (details.delta.dy < 0 && !CallsWidget.isFunctionExpand) {
       CallsWidget.isFunctionExpand = true;
     } else if (details.delta.dy > 0 && CallsWidget.isFunctionExpand) {
@@ -423,7 +417,7 @@ class CallsFunctionWidget {
     );
   }
 
-  static _handleSwitchMic() async {
+  static void _handleSwitchMic() async {
     if (CallState.instance.isMicrophoneMute) {
       CallState.instance.isMicrophoneMute = false;
       await CallManager.instance.openMicrophone();
@@ -434,7 +428,7 @@ class CallsFunctionWidget {
     NEEventNotify().notify(setStateEvent);
   }
 
-  static _handleSwitchAudioDevice() async {
+  static void _handleSwitchAudioDevice() async {
     if (CallState.instance.isEnableSpeaker) {
       CallState.instance.isEnableSpeaker = false;
     } else {
@@ -558,17 +552,17 @@ class CallsFunctionWidget {
     );
   }
 
-  static _handleHangUp(Function close) async {
+  static void _handleHangUp(Function close) async {
     await CallManager.instance.hangup();
     close();
   }
 
-  static _handleReject(Function close) async {
+  static void _handleReject(Function close) async {
     await CallManager.instance.reject();
     close();
   }
 
-  static _handleAccept(Function close) async {
+  static void _handleAccept(Function close) async {
     // 防止重复点击
     if (_isAccepting) {
       CallKitUILog.i(

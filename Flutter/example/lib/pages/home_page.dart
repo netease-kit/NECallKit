@@ -6,17 +6,17 @@ import 'dart:async';
 
 import 'package:callkit_example/auth/login_page.dart';
 import 'package:callkit_example/pages/single_call_page.dart';
+import 'package:callkit_example/pages/group_call_page.dart';
 import 'package:callkit_example/service/call_record_service.dart';
 import 'package:callkit_example/service/call_record_service_impl.dart';
 import 'package:callkit_example/settings/settings_config.dart';
-import 'package:netease_callkit_ui/src/utils/callkit_ui_log.dart';
 import 'package:callkit_example/utils/record_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:callkit_example/l10n/app_localizations.dart';
 import 'package:nim_core_v2/nim_core.dart';
 import '../auth/auth_manager.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -36,6 +36,7 @@ class _HomePageRouteState extends State<HomePageRoute> {
   String _version = 'Unknown';
   final _callkitPlugin = NECallEngine.instance;
   late StreamSubscription _messageSubscription;
+  StreamSubscription? _authInfoSubscription;
   final CallRecordServiceImpl _callRecordService = CallRecordServiceImpl();
 
   @override
@@ -50,6 +51,14 @@ class _HomePageRouteState extends State<HomePageRoute> {
         }
       }
     });
+
+    // 订阅 AuthManager 用户信息变更事件
+    _authInfoSubscription = AuthManager().authInfoStream().listen((loginInfo) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+
     getVersion();
     _requestNotificationPermissions();
     // 页面显示时更新用户信息（昵称和头像）
@@ -65,6 +74,7 @@ class _HomePageRouteState extends State<HomePageRoute> {
   @override
   void dispose() {
     _messageSubscription.cancel();
+    _authInfoSubscription?.cancel();
     super.dispose();
   }
 
@@ -85,14 +95,25 @@ class _HomePageRouteState extends State<HomePageRoute> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          child: Stack(
-            children: [_getUserInfo(), _getAppInfo(), _getBtnWidget()],
-          ),
-        ));
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness: Brightness.dark, // 深色图标
+        systemStatusBarContrastEnforced: false,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark, // 浅色图标
+        systemNavigationBarContrastEnforced: false,
+      ),
+      child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            child: Stack(
+              children: [_getUserInfo(), _getAppInfo(), _getBtnWidget()],
+            ),
+          )),
+    );
   }
 
   _getUserInfo() {
@@ -121,12 +142,14 @@ class _HomePageRouteState extends State<HomePageRoute> {
                     ),
                     child: InkWell(
                       child: Image(
-                        image: NetworkImage(SettingsConfig.avatar.isNotEmpty
-                            ? SettingsConfig.avatar
-                            : SettingsConfig.defaultAvatar),
+                        image: NetworkImage(
+                          (AuthManager().avatar?.isNotEmpty == true)
+                              ? AuthManager().avatar!
+                              : SettingsConfig.defaultAvatar,
+                        ),
                         fit: BoxFit.cover,
                         errorBuilder: (ctx, err, stackTrace) =>
-                            Image.asset('images/people.webp'),
+                            Image.asset('images/icon_avatar.png'),
                       ),
                       onTap: () => _showDialog(),
                     )),
@@ -206,8 +229,8 @@ class _HomePageRouteState extends State<HomePageRoute> {
                   onPressed: () => _goSingleCallWidget(),
                   style: ButtonStyle(
                     backgroundColor:
-                        MaterialStateProperty.all(const Color(0xff056DF6)),
-                    shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                        WidgetStateProperty.all(const Color(0xff056DF6)),
+                    shape: WidgetStateProperty.all(RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15))),
                   ),
                   child: Row(
@@ -218,6 +241,34 @@ class _HomePageRouteState extends State<HomePageRoute> {
                       Text(
                         AppLocalizations.of(context)!.single_call,
                         style: const TextStyle(
+                            fontSize: 16,
+                            fontStyle: FontStyle.normal,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white),
+                      ),
+                    ],
+                  )),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 52,
+              width: MediaQuery.of(context).size.width * 5 / 6,
+              child: ElevatedButton(
+                  onPressed: () => _goGroupCallWidget(),
+                  style: ButtonStyle(
+                    backgroundColor:
+                        WidgetStateProperty.all(const Color(0xff28A745)),
+                    shape: WidgetStateProperty.all(RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15))),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.group_outlined),
+                      SizedBox(width: 10),
+                      Text(
+                        '群呼',
+                        style: TextStyle(
                             fontSize: 16,
                             fontStyle: FontStyle.normal,
                             fontWeight: FontWeight.w500,
@@ -264,6 +315,14 @@ class _HomePageRouteState extends State<HomePageRoute> {
     Navigator.push(context, MaterialPageRoute(
       builder: (context) {
         return const SingleCallWidget();
+      },
+    ));
+  }
+
+  _goGroupCallWidget() async {
+    Navigator.push(context, MaterialPageRoute(
+      builder: (context) {
+        return const GroupCallPage();
       },
     ));
   }
