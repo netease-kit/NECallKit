@@ -2,7 +2,6 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
@@ -16,9 +15,9 @@ class CallsIndividualUserWidget extends StatefulWidget {
   final Function close;
 
   const CallsIndividualUserWidget({
-    Key? key,
+    super.key,
     required this.close,
-  }) : super(key: key);
+  });
 
   @override
   State<StatefulWidget> createState() => _CallsIndividualUserWidgetState();
@@ -147,6 +146,12 @@ class _CallsIndividualUserWidgetState extends State<CallsIndividualUserWidget>
       NEEventNotify().unregister('refreshVideoViews', _refreshCallback);
     }
 
+    // 如果悬浮窗未打开或通话未接听，则释放本地视频资源
+    if (!CallState.instance.isOpenFloatWindow ||
+        CallState.instance.selfUser.callStatus != NECallStatus.accept) {
+      CallManager.instance.setupLocalView(-1);
+    }
+
     super.dispose();
   }
 
@@ -172,7 +177,7 @@ class _CallsIndividualUserWidgetState extends State<CallsIndividualUserWidget>
     );
   }
 
-  _buildBackground() {
+  Widget _buildBackground() {
     var avatar = '';
     if (CallState.instance.remoteUserList.isNotEmpty) {
       avatar = StringStream.makeNull(
@@ -200,7 +205,7 @@ class _CallsIndividualUserWidgetState extends State<CallsIndividualUserWidget>
     );
   }
 
-  _buildUserInfoWidget() {
+  Widget _buildUserInfoWidget() {
     var showName = '';
     var avatar = '';
     if (CallState.instance.remoteUserList.isNotEmpty) {
@@ -235,7 +240,7 @@ class _CallsIndividualUserWidgetState extends State<CallsIndividualUserWidget>
             const SizedBox(height: 20),
             Text(
               showName,
-              textScaleFactor: 1.0,
+              textScaler: const TextScaler.linear(1.0),
               style: TextStyle(
                 fontSize: 24,
                 color: _getTextColor(),
@@ -448,7 +453,7 @@ class _CallsIndividualUserWidgetState extends State<CallsIndividualUserWidget>
         ));
   }
 
-  _changeVideoView() {
+  void _changeVideoView() {
     if (CallState.instance.callType == NECallType.audio ||
         CallState.instance.selfUser.callStatus == NECallStatus.waiting) {
       return;
@@ -466,13 +471,13 @@ class _CallsIndividualUserWidgetState extends State<CallsIndividualUserWidget>
     return vis ? 1.0 : 0;
   }
 
-  _getBackgroundColor() {
+  Color _getBackgroundColor() {
     return CallState.instance.callType == NECallType.audio
         ? const Color(0xFFF2F2F2)
         : const Color(0xFF444444);
   }
 
-  _getTextColor() {
+  Color _getTextColor() {
     return Colors.white;
   }
 }

@@ -21,10 +21,13 @@ public class CallingBellPlayer {
   private Runnable mStopPlayRunnable;
   private String mRingFilePath = "";
   private int AUDIO_DIAL_ID = 48;
+  private AudioManager mAudioManager;
+  private boolean mHasAudioFocus = false;
 
   public CallingBellPlayer(Context mContext) {
     this.mContext = mContext;
     mMediaPlayer = new MediaPlayer();
+    mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
   }
 
   public void startRing(String filePath) {
@@ -57,6 +60,12 @@ public class CallingBellPlayer {
             mMediaPlayer.reset();
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_RING);
 
+            // 请求音频焦点，暂停其他正在播放的音乐
+            int focusResult = mAudioManager.requestAudioFocus(
+                null, AudioManager.STREAM_RING, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+            mHasAudioFocus = (focusResult == AudioManager.AUDIOFOCUS_REQUEST_GRANTED);
+            CallUILog.i(TAG, "requestAudioFocus result=" + focusResult);
+
             try {
               mMediaPlayer.setDataSource(mRingFilePath);
               mMediaPlayer.setLooping(true);
@@ -84,6 +93,12 @@ public class CallingBellPlayer {
             CallUILog.i(TAG, "MediaPlayer stop");
             if (mMediaPlayer.isPlaying()) {
               mMediaPlayer.stop();
+            }
+            // 释放音频焦点，让其他音乐恢复播放
+            if (mHasAudioFocus) {
+              mAudioManager.abandonAudioFocus(null);
+              mHasAudioFocus = false;
+              CallUILog.i(TAG, "abandonAudioFocus");
             }
           }
         };

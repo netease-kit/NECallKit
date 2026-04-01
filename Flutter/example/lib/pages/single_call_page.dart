@@ -8,7 +8,7 @@ import 'package:callkit_example/settings/settings_widget.dart';
 import 'package:callkit_example/utils/record_utils.dart';
 import 'package:callkit_example/utils/toast_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:callkit_example/l10n/app_localizations.dart';
 import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 import 'package:nim_core_v2/nim_core.dart';
@@ -427,6 +427,7 @@ class _SingleCallWidgetState extends State<SingleCallWidget> {
     setState(() {
       _callRecords.insert(0, record);
     });
+    await _callRecordService.addRecordToCurrentAccount(record);
   }
 
   // 清除通话记录

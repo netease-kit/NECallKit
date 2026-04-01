@@ -4,7 +4,7 @@
 
 import 'package:callkit_example/settings/settings_config.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:callkit_example/l10n/app_localizations.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 
 enum SettingWidgetType {

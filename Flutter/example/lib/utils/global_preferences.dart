@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class GlobalPreferences {
   static const String _keyLoginInfo = 'login_info';
+  static const String _keyShowIncomingBanner = 'show_incoming_banner';
 
   static GlobalPreferences? _instance;
   SharedPreferences? _prefs;
@@ -28,5 +29,15 @@ class GlobalPreferences {
   Future<void> setLoginInfo(String loginInfo) async {
     await _ensureInitialized();
     await _prefs?.setString(_keyLoginInfo, loginInfo);
+  }
+
+  Future<bool> get showIncomingBanner async {
+    await _ensureInitialized();
+    return _prefs?.getBool(_keyShowIncomingBanner) ?? false;
+  }
+
+  Future<void> setShowIncomingBanner(bool value) async {
+    await _ensureInitialized();
+    await _prefs?.setBool(_keyShowIncomingBanner, value);
   }
 }

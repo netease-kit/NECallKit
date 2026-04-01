@@ -5,11 +5,13 @@
 import 'package:flutter/material.dart';
 
 class LoadingAnimation extends StatefulWidget {
+  const LoadingAnimation({super.key});
+
   @override
-  _LoadingAnimationState createState() => _LoadingAnimationState();
+  LoadingAnimationState createState() => LoadingAnimationState();
 }
 
-class _LoadingAnimationState extends State<LoadingAnimation>
+class LoadingAnimationState extends State<LoadingAnimation>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -58,7 +60,7 @@ class _LoadingAnimationState extends State<LoadingAnimation>
           child: Container(
             width: 20,
             height: 20,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white,
             ),

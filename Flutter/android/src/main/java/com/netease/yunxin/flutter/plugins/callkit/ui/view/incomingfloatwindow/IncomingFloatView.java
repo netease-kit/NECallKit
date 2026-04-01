@@ -17,16 +17,13 @@ import com.bumptech.glide.Glide;
 import com.netease.yunxin.flutter.plugins.callkit.ui.CallKitUIPlugin;
 import com.netease.yunxin.flutter.plugins.callkit.ui.R;
 import com.netease.yunxin.flutter.plugins.callkit.ui.event.EventManager;
-import com.netease.yunxin.flutter.plugins.callkit.ui.permission.PermissionRequester;
 import com.netease.yunxin.flutter.plugins.callkit.ui.state.CallState;
 import com.netease.yunxin.flutter.plugins.callkit.ui.state.User;
 import com.netease.yunxin.flutter.plugins.callkit.ui.utils.CallUILog;
 import com.netease.yunxin.flutter.plugins.callkit.ui.utils.Constants;
 import com.netease.yunxin.flutter.plugins.callkit.ui.utils.FloatWindowsPermission;
 import com.netease.yunxin.flutter.plugins.callkit.ui.view.WindowManager;
-import com.netease.yunxin.kit.call.p2p.NECallEngine;
 import com.netease.yunxin.kit.call.p2p.model.NECallType;
-import com.netease.yunxin.kit.call.p2p.param.NEHangupParam;
 import com.netease.yunxin.kit.common.utils.ScreenUtils;
 
 public class IncomingFloatView {
@@ -70,6 +67,9 @@ public class IncomingFloatView {
     imageReject = layoutView.findViewById(R.id.btn_float_decline);
     imageAccept = layoutView.findViewById(R.id.btn_float_accept);
 
+    imageReject.setContentDescription("拒绝");
+    imageAccept.setContentDescription(mediaType == NECallType.VIDEO ? "接听视频通话" : "接听");
+
     Uri avatarUri = Uri.parse(user.avatar);
     if (avatarUri == null) {
       if (imageFloatAvatar != null && R.drawable.callkit_ic_avatar != 0) {
@@ -99,7 +99,10 @@ public class IncomingFloatView {
           @Override
           public void onClick(View v) {
             cancelIncomingView();
-            NECallEngine.sharedInstance().hangup(new NEHangupParam(), null);
+            CallState.getInstance().pendingBannerAction = CallState.BANNER_ACTION_REJECT;
+            EventManager.getInstance()
+                .notifyEvent(
+                    Constants.KEY_CALLKIT_PLUGIN, Constants.SUB_KEY_BANNER_REJECT, null);
           }
         });
 
@@ -122,21 +125,15 @@ public class IncomingFloatView {
           @Override
           public void onClick(View v) {
             cancelIncomingView();
-            if (mediaType == NECallType.VIDEO
-                && PermissionRequester.isGranted(FloatWindowsPermission.CAMERA_PERMISSION)
-                && PermissionRequester.isGranted(FloatWindowsPermission.RECORD_AUDIO_PERMISSION)) {
-              NECallEngine.sharedInstance().accept(null);
-            } else if (mediaType == NECallType.AUDIO
-                && PermissionRequester.isGranted(FloatWindowsPermission.RECORD_AUDIO_PERMISSION)) {
-              NECallEngine.sharedInstance().accept(null);
-            }
-
             if (FloatWindowsPermission.hasPermission(FloatWindowsPermission.BG_START_PERMISSION)) {
               WindowManager.launchMainActivity(context);
             }
+            // Set pending BEFORE notifyEvent so that if the plugin is currently unregistered
+            // (e.g. Activity was destroyed via back button), the re-attached engine can replay it.
+            CallState.getInstance().pendingBannerAction = CallState.BANNER_ACTION_ACCEPT;
             EventManager.getInstance()
                 .notifyEvent(
-                    Constants.KEY_CALLKIT_PLUGIN, Constants.SUB_KEY_HANDLE_CALL_RECEIVED, null);
+                    Constants.KEY_CALLKIT_PLUGIN, Constants.SUB_KEY_BANNER_ACCEPT, null);
           }
         });
 
@@ -174,5 +171,10 @@ public class IncomingFloatView {
       mWindowManager.removeView(layoutView);
     }
     layoutView = null;
+  }
+
+  /** Returns true if the banner overlay is currently attached to the window. */
+  public boolean isShowing() {
+    return layoutView != null && layoutView.isAttachedToWindow();
   }
 }

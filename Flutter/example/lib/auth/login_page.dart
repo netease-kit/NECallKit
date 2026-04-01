@@ -4,12 +4,13 @@
 
 import 'package:callkit_example/auth/login_info.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:callkit_example/l10n/app_localizations.dart';
 import 'auth_manager.dart';
 import '../../utils/loading.dart';
 import '../../utils/toast_utils.dart';
 import '../../constants/router_name.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
 
 class LoginRoute extends StatefulWidget {
   const LoginRoute({Key? key}) : super(key: key);
@@ -38,54 +39,42 @@ class LoginState extends State<LoginRoute> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final child = Scaffold(
       backgroundColor: const Color.fromRGBO(239, 241, 244, 1),
-      resizeToAvoidBottomInset: true,
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          FocusScope.of(context).unfocus();
-        },
-        child: SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
+      resizeToAvoidBottomInset: false,
+      body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              const SizedBox(height: 80),
               const Align(
                 alignment: Alignment.center,
-                child: SizedBox(
-                  height: 200,
-                  child: Icon(
-                    Icons.phone_android,
-                    size: 100,
-                    color: Colors.blue,
-                  ),
+                child: Icon(
+                  Icons.phone_android,
+                  size: 80,
+                  color: Colors.blue,
                 ),
               ),
+              const SizedBox(height: 12),
               // Link to open registration doc in external browser
-              Container(
-                margin: const EdgeInsets.only(left: 30, top: 12, right: 30),
-                child: GestureDetector(
-                  onTap: () async {
-                    try {
-                      final uri = Uri.parse(
-                          'https://doc.yunxin.163.com/messaging2/guide/jU0Mzg0MTU?platform=client#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E6%B3%A8%E5%86%8C-im-%E8%B4%A6%E5%8F%B7');
-                      await launchUrl(uri,
-                          mode: LaunchMode.externalApplication);
-                    } catch (e) {
-                      print('Failed to launch URL: $e');
-                    }
-                  },
-                  child: Text(
-                    AppLocalizations.of(context)!.how_to_get_account_token,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.blue,
-                      decoration: TextDecoration.underline,
-                    ),
+              GestureDetector(
+                onTap: () async {
+                  try {
+                    final uri = Uri.parse(
+                        'https://doc.yunxin.163.com/messaging2/guide/jU0Mzg0MTU?platform=client#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E6%B3%A8%E5%86%8C-im-%E8%B4%A6%E5%8F%B7');
+                    await launchUrl(uri,
+                        mode: LaunchMode.externalApplication);
+                  } catch (e) {
+                    print('Failed to launch URL: $e');
+                  }
+                },
+                child: Text(
+                  AppLocalizations.of(context)!.how_to_get_account_token,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
                   ),
                 ),
               ),
@@ -96,48 +85,39 @@ class LoginState extends State<LoginRoute> {
                   child: Text(AppLocalizations.of(context)!.sample_login_desc),
                 ),
               ),
-              Container(
-                margin: const EdgeInsets.only(left: 30, top: 50, right: 30),
-                child: Material(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  child: TextField(
-                    controller: _accountIdController,
-                    decoration: InputDecoration(
-                      hintText: AppLocalizations.of(context)!.enter_account,
-                      border: const OutlineInputBorder(),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                    ),
-                  ),
+              const SizedBox(height: 30),
+              TextField(
+                controller: _accountIdController,
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.enter_account,
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
                 ),
               ),
-              Container(
-                margin: const EdgeInsets.only(left: 30, top: 50, right: 30),
-                child: Material(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  child: TextField(
-                    controller: _tokenController,
-                    decoration: InputDecoration(
-                      hintText: AppLocalizations.of(context)!.enter_token,
-                      border: const OutlineInputBorder(),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                    ),
-                  ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: _tokenController,
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.enter_token,
+                  border: const OutlineInputBorder(),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
                 ),
               ),
-
-              Container(
+              const SizedBox(height: 40),
+              SizedBox(
                 height: 50,
-                margin: const EdgeInsets.only(left: 30, top: 250, right: 30),
                 child: ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor:
                         MaterialStateProperty.resolveWith<Color>((states) {
                       if (states.contains(MaterialState.disabled)) {
-                        return Colors.blue.withOpacity(0.5);
+                        return Colors.blue.withAlpha((255.0 * 0.5).round());
                       }
                       return Colors.blue;
                     }),
@@ -175,8 +155,19 @@ class LoginState extends State<LoginRoute> {
               ),
             ],
           ),
-        ),
       ),
+    );
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness: Brightness.dark, // 深色图标
+        systemStatusBarContrastEnforced: false,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.dark, // 浅色图标
+        systemNavigationBarContrastEnforced: false,
+      ),
+      child: child,
     );
   }
 

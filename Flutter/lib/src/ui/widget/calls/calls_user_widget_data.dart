@@ -9,7 +9,7 @@ class CallsIndividualUserWidgetData {
   static double smallViewRight = 20;
   static bool isOnlyShowBigVideoView = false;
 
-  static initIndividualUserWidgetData() {
+  static void initIndividualUserWidgetData() {
     hadShowAcceptText = false;
     isShowAcceptText = false;
     smallViewTop = 128;
@@ -40,7 +40,7 @@ class CallsMultiUserWidgetData {
     [true, true, true]
   ];
 
-  static initBlockBigger() {
+  static void initBlockBigger() {
     blockBigger = {
       1: false,
       2: false,
@@ -54,7 +54,7 @@ class CallsMultiUserWidgetData {
     };
   }
 
-  static updateBlockBigger(int blockCount) {
+  static void updateBlockBigger(int blockCount) {
     // Settings for the exit of the big picture
     blockBigger.forEach((key, value) {
       if (value == true && key > blockCount) {
@@ -73,7 +73,7 @@ class CallsMultiUserWidgetData {
     });
   }
 
-  static initBlockCounter() {
+  static void initBlockCounter() {
     blockCount = 0;
   }
 
@@ -89,7 +89,7 @@ class CallsMultiUserWidgetData {
 
 // Mark the large position. False is placed, small pieces cannot be placed directly on it, and large pieces can be placed directly on it.
 // Be initialized by BlockBigger and BlockCount Canplacesquare
-  static initCanPlaceSquare(Map<int, bool> blockBigger, int blockCount) {
+  static void initCanPlaceSquare(Map<int, bool> blockBigger, int blockCount) {
     canPlaceSquare = [
       [true, true, true],
       [true, true, true],

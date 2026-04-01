@@ -4,17 +4,18 @@
 
 import 'dart:async';
 import 'dart:io';
+
 import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
-import 'package:netease_callkit_ui/src/event/event_notify.dart';
 import 'package:netease_callkit_ui/src/data/constants.dart';
 import 'package:netease_callkit_ui/src/data/user.dart';
+import 'package:netease_callkit_ui/src/event/event_notify.dart';
 import 'package:netease_callkit_ui/src/extensions/calling_bell_feature.dart';
 import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
 import 'package:netease_callkit_ui/src/utils/nim_utils.dart';
 
 class CallState {
-  static const String _tag = "CallState";
+  static const String _tag = 'CallState';
   static final CallState instance = CallState._internal();
 
   factory CallState() {
@@ -58,10 +59,11 @@ class CallState {
     onReceiveInvited: (NEInviteInfo info) async {
       CallKitUILog.i(_tag,
           'NECallObserver onReceiveInvited(callerAccId:${info.callerAccId}, callType:${info.callType})');
-      CallingBellFeature.startRing();
-      // 处理来电逻辑
+      // 先处理来电逻辑（设置 callRole 为 called），再播放铃声
+      // 否则 startRing 读取的 callRole 还是默认值，会播放错误的铃声
       await CallState.instance.handleCallReceivedData(
           info.callerAccId, [], info.channelId ?? '', info.callType);
+      CallingBellFeature.startRing();
       await NECallKitPlatform.instance.updateCallStateToNative();
       // await CallManager.instance.enableWakeLock(true);
       if (Platform.isIOS) {
@@ -81,6 +83,8 @@ class CallState {
             await NECallKitPlatform.instance.hasFloatPermission() &&
             !(await CallManager.instance.isSamsungDevice())) {
           CallState.instance.isInNativeIncomingBanner = true;
+          // 确保 Java 侧 sIncomingBannerEnabled = true，否则 WindowManager.showIncomingBanner() 会提前返回
+          await NECallKitPlatform.instance.setIncomingBannerEnabled(true);
           CallManager.instance.showIncomingBanner();
         } else {
           if (await NECallKitPlatform.instance.isAppInForeground()) {
@@ -130,6 +134,11 @@ class CallState {
           CallState.instance.enableFloatWindowOutOfApp &&
           CallState.instance.enableFloatWindow) {
         await NECallKitPlatform.instance.disposePIP();
+      }
+
+      // iOS 来电横幅自动 dismiss（T023）
+      if (Platform.isIOS && CallState.instance.isInNativeIncomingBanner) {
+        await NECallKitPlatform.instance.cancelIncomingBanner();
       }
 
       CallState.instance.cleanState();
@@ -228,12 +237,6 @@ class CallState {
       NECallKitPlatform.instance.updateCallStateToNative();
       // RTC 初始化完成
     },
-    onRecordSend: (NERecordConfig config) {
-      CallKitUILog.i(
-          _tag, 'NECallObserver onRecordSend(accId:${config.accId})');
-      NECallKitPlatform.instance.updateCallStateToNative();
-      // 处理话单发送
-    },
     onNERtcEngineVirtualBackgroundSourceEnabled: (bool enabled, int reason) {
       CallKitUILog.i(_tag,
           'NECallObserver onNERtcEngineVirtualBackgroundSourceEnabled(enabled:$enabled, reason:$reason)');
@@ -244,7 +247,7 @@ class CallState {
 
   void init() {}
 
-  Future<void> registerEngineObserver() async {
+  void registerEngineObserver() {
     CallKitUILog.i(_tag, 'registerEngineObserver');
     NECallEngine.instance.addCallDelegate(observer);
   }
@@ -311,7 +314,7 @@ class CallState {
       }
     }
 
-    User callerInfo = await NimUtils.getUserInfo(callerId);
+    var callerInfo = await NimUtils.getUserInfo(callerId);
     CallState.instance.caller.id = callerInfo.id;
     CallState.instance.caller.nickname = callerInfo.nickname;
     CallState.instance.caller.avatar = callerInfo.avatar;
@@ -331,6 +334,7 @@ class CallState {
   }
 
   void startTimer() {
+    CallState.instance.stopTimer();
     CallState.instance.timeCount = 0;
     CallState.instance._timer =
         Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -345,6 +349,7 @@ class CallState {
 
   void stopTimer() {
     CallState.instance._timer?.cancel();
+    CallState.instance._timer = null;
   }
 
   void cleanState() {
@@ -372,6 +377,7 @@ class CallState {
 
     // 重置悬浮窗状态
     CallState.instance.isOpenFloatWindow = false;
+    CallState.instance.isInNativeIncomingBanner = false;
     if (Platform.isIOS) {
       CallState.instance.isIOSOpenFloatWindowOutOfApp = false;
     }

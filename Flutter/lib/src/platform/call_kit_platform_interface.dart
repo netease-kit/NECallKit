@@ -29,8 +29,8 @@ abstract class NECallKitPlatform extends PlatformInterface {
     await instance.stopForegroundService();
   }
 
-  Future<void> startRing(String filePath) async {
-    await instance.startRing(filePath);
+  Future<void> startRing(String filePath, {bool isCalled = false}) async {
+    await instance.startRing(filePath, isCalled: isCalled);
   }
 
   Future<void> stopRing() async {
@@ -132,5 +132,13 @@ abstract class NECallKitPlatform extends PlatformInterface {
 
   Future<void> stopPIP() async {
     return await instance.stopPIP();
+  }
+
+  Future<void> setIncomingBannerEnabled(bool enable) async {
+    await instance.setIncomingBannerEnabled(enable);
+  }
+
+  Future<void> cancelIncomingBanner() async {
+    await instance.cancelIncomingBanner();
   }
 }

@@ -9,7 +9,7 @@ class AppConfig {
 
   AppConfig._internal();
   // 请填写应用对应的 AppKey，可在云信控制台的”AppKey管理“页面获取
-  static const String _appKey = 'your appKey';
+  static const String _appKey = 'your-app-key';
 
   late String versionName = '1.0.0';
 
@@ -35,6 +35,6 @@ class AppConfig {
   }
 
   String get voipCerName {
-    return "your voip cer name";
+    return "your-push-certificate-name";
   }
 }

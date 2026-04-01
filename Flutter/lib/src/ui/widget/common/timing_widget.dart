@@ -8,7 +8,7 @@ import 'package:netease_callkit_ui/src/impl/call_state.dart';
 import 'package:netease_callkit_ui/src/data/constants.dart';
 
 class TimingWidget extends StatefulWidget {
-  const TimingWidget({Key? key}) : super(key: key);
+  const TimingWidget({super.key});
 
   @override
   State<TimingWidget> createState() => _TimingWidgetState();
@@ -30,7 +30,7 @@ class _TimingWidgetState extends State<TimingWidget> {
   Widget build(BuildContext context) {
     return Text(
       _formatCallTime(),
-      textScaleFactor: 1.0,
+      textScaler: const TextScaler.linear(1.0),
       style: const TextStyle(color: Colors.white, fontSize: 14),
     );
   }

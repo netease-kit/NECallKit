@@ -9,10 +9,11 @@ import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
-import 'package:netease_callkit_ui/src/event/event_notify.dart';
 import 'package:netease_callkit_ui/src/data/constants.dart';
 import 'package:netease_callkit_ui/src/data/user.dart';
+import 'package:netease_callkit_ui/src/event/event_notify.dart';
 import 'package:netease_callkit_ui/src/extensions/calling_bell_feature.dart';
+import 'package:netease_callkit_ui/src/group_call/group_call_manager.dart';
 import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
 import 'package:netease_callkit_ui/src/ui/call_navigator_observer.dart';
 import 'package:netease_callkit_ui/src/utils/nim_utils.dart';
@@ -34,17 +35,59 @@ class CallManager {
   // 保存额外配置
   NEExtraConfig? _extraConfig;
 
+  // 保存群呼配置参数
+  NEGroupConfigParam? _groupConfigParam;
+
+  // 来电横幅模式开关
+  bool _enableIncomingBanner = false;
+
+  // 横幅是否正在显示（用于并发来电检查）
+  bool _bannerIsActive = false;
+
   // 获取 appKey
   String? get appKey => _appKey;
 
   // 获取额外配置
   NEExtraConfig? get extraConfig => _extraConfig;
 
+  // 获取群呼配置参数
+  NEGroupConfigParam? get groupConfigParam => _groupConfigParam;
+
   CallManager() {
     NEEventNotify().register(setStateEventOnCallReceived, (arg) async {
       if ((Platform.isAndroid &&
               await NECallKitPlatform.instance.isAppInForeground()) ||
           Platform.isIOS) {
+        if (_enableIncomingBanner &&
+            CallState.instance.selfUser.callRole == NECallRole.called) {
+          // 并发来电检查：若横幅已显示，说明已有一路来电，新来电回复忙线并丢弃
+          if (_bannerIsActive) {
+            CallKitUILog.i(_tag, 'secondCallIgnored replyBusy');
+            await NECallEngine.instance.hangup();
+            return;
+          }
+          CallKitUILog.i(_tag, 'showIncomingBanner enableIncomingBanner=true');
+          _bannerIsActive = true;
+          // 先同步来电方信息到 native，确保 iOS NECallState 有最新数据再展示横幅
+          await NECallKitPlatform.instance.updateCallStateToNative();
+          await NECallKitPlatform.instance.setIncomingBannerEnabled(true);
+          // Android: 直接调用 showIncomingBanner() 触发 WindowManager 展示横幅；
+          // iOS 层由 NEFlutterIncomingBannerHandler 响应并展示 NEIncomingCallBannerWindow。
+          if (Platform.isAndroid) {
+            await NECallKitPlatform.instance.showIncomingBanner();
+          }
+
+          // 注册 onCallEnd 监听：通话结束时自动取消横幅并重置活跃状态
+          void onCallEndHandler(dynamic arg) {
+            CallKitUILog.i(_tag, 'dismissIncomingBanner reason=callEnded');
+            NECallKitPlatform.instance.cancelIncomingBanner();
+            _bannerIsActive = false;
+            NEEventNotify().unregister(setStateEventOnCallEnd, onCallEndHandler);
+          }
+          NEEventNotify().register(setStateEventOnCallEnd, onCallEndHandler);
+
+          return;
+        }
         NECallKitNavigatorObserver.getInstance().enterCallingPage();
         var permissionResult =
             await Permission.request(CallState.instance.callType);
@@ -60,9 +103,13 @@ class CallManager {
   }
 
   Future<void> setupEngine(String appKey, String accountId,
-      {NEExtraConfig? extraConfig}) async {
+      {NEExtraConfig? extraConfig, NEGroupConfigParam? groupConfigParam}) async {
     CallKitUILog.i(_tag,
-        'CallManager setupEngine(appKey:$appKey, accountId: $accountId, extraConfig: $extraConfig)');
+        'CallManager setupEngine(appKey:$appKey, accountId: $accountId, extraConfig: $extraConfig, groupConfigParam: $groupConfigParam)');
+
+    // 保存群呼配置参数
+    _groupConfigParam = groupConfigParam;
+
     CallState.instance.unRegisterEngineObserver();
     CallState.instance.registerEngineObserver();
     CallState.instance.selfUser.id = accountId;
@@ -70,7 +117,7 @@ class CallManager {
     NELCKConfig? lckConfig = extraConfig?.lckConfig ??
         NELCKConfig(enableLiveCommunicationKit: false);
 
-    NESetupConfig config = NESetupConfig(
+    var config = NESetupConfig(
       appKey: appKey,
       enableJoinRtcWhenCall: false,
       initRtcMode: NECallInitRtcMode.global,
@@ -81,34 +128,40 @@ class CallManager {
     if (result.code == 0) {
       CallKitUILog.i(_tag,
           'CallManager initEngine success with lckConfig: enable=${lckConfig.enableLiveCommunicationKit}, ringtone=${lckConfig.ringtoneName}');
+      // 预加载铃声文件，避免首次播放时铃声被截断
+      CallingBellFeature.preloadRingFiles();
     } else {
       CallManager.instance.showToast(NECallKitUI.localizations.initEngineFail);
     }
   }
 
-  void releaseEngine() {
-    CallKitUILog.i(_tag, 'CallManager releaseEngine');
+  void destroyEngine() {
+    CallKitUILog.i(_tag, 'CallManager destroyEngine');
     CallState.instance.unRegisterEngineObserver();
+    NECallEngine.instance.destroy();
   }
 
   Future<NEResult> call(String accountId, NECallType callMediaType,
       [NECallParams? params]) async {
     CallKitUILog.i(_tag,
-        'CallManager call(userId:$accountId, callMediaType: $callMediaType, params:${params.toString()}), version:${Constants.pluginVersion}');
+        'call accountId:$accountId, callMediaType: $callMediaType, params:${params.toString()}), version:${Constants.pluginVersion}');
     if (accountId.isEmpty) {
-      debugPrint("Call failed, userId is empty");
+      debugPrint('Call failed, userId is empty');
       return NEResult(
-          code: -1, message: NECallKitUI.localizations.callFailedUserIdEmpty);
+          code: NECallError.unKnow,
+          message: NECallKitUI.localizations.callFailedUserIdEmpty);
     }
 
     // 使用 NECallParams 中的 pushConfig
-    NECallPushConfig? pushConfig = params?.pushConfig;
+    var pushConfig = params?.pushConfig;
     final permissionResult = await Permission.request(callMediaType);
     if (PermissionResult.granted == permissionResult) {
       final callResult = await NECallEngine.instance
           .call(accountId, callMediaType, pushConfig: pushConfig);
+      CallKitUILog.i(_tag,
+          'call result code: ${callResult.code} data: ${callResult.data?.toJson().toString()}');
       if (callResult.code == 0) {
-        User user = User();
+        var user = User();
         user.id = accountId;
         user.callRole = NECallRole.called;
         user.callStatus = NECallStatus.waiting;
@@ -127,21 +180,23 @@ class CallManager {
         CallManager.instance.showToast(NECallKitUI.localizations.userInCall);
       } else {
         CallKitUILog.i(_tag,
-            "callResult.code: ${callResult.code}, callResult.msg: ${callResult.msg}");
+            'callResult.code: ${callResult.code}, callResult.msg: ${callResult.msg}');
       }
       CallKitUILog.i(_tag,
-          "callResult.code: ${callResult.code}, callResult.msg: ${callResult.msg}");
+          'callResult.code: ${callResult.code}, callResult.msg: ${callResult.msg}');
       return NEResult(code: callResult.code, message: callResult.msg);
     } else {
-      CallKitUILog.i(_tag, "Permission result fail");
+      CallKitUILog.i(_tag, 'Permission result fail');
       return NEResult(
           code: -1, message: NECallKitUI.localizations.permissionResultFail);
     }
   }
 
   Future<NEResult> accept() async {
+    CallKitUILog.i(_tag, 'accept');
     final result = await NECallEngine.instance.accept();
-    CallKitUILog.i(_tag, "accept result = $result");
+    CallKitUILog.i(_tag,
+        'accept result code: ${result.code} data: ${result.data?.toJson().toString()}');
     if (result.code == 0) {
       CallState.instance.selfUser.callStatus = NECallStatus.accept;
     } else {
@@ -152,8 +207,9 @@ class CallManager {
   }
 
   Future<NEResult> reject() async {
-    final result = await NECallEngine.instance.hangup("");
-    CallKitUILog.i(_tag, "reject result = $result");
+    await CallingBellFeature.stopRing();
+    final result = await NECallEngine.instance.hangup();
+    CallKitUILog.i(_tag, 'reject result = $result');
     CallState.instance.selfUser.callStatus = NECallStatus.none;
     NECallKitPlatform.instance.updateCallStateToNative();
     return NEResult(code: result.code, message: result.msg);
@@ -161,14 +217,15 @@ class CallManager {
 
   Future<void> switchCallMediaType(
       NECallType mediaType, NECallSwitchState state) async {
-    CallKitUILog.i(_tag, "switchCallMediaType mediaType = $mediaType");
+    CallKitUILog.i(_tag, 'switchCallMediaType mediaType = $mediaType');
     NECallEngine.instance.switchCallType(mediaType, state);
     NECallKitPlatform.instance.updateCallStateToNative();
   }
 
   Future<NEResult> hangup() async {
-    final result = await NECallEngine.instance.hangup("");
-    CallKitUILog.i(_tag, "hangup result = $result");
+    await CallingBellFeature.stopRing();
+    final result = await NECallEngine.instance.hangup();
+    CallKitUILog.i(_tag, 'hangup result = $result');
     CallState.instance.selfUser.callStatus = NECallStatus.none;
     NECallKitPlatform.instance.updateCallStateToNative();
     CallState.instance.cleanState();
@@ -176,11 +233,11 @@ class CallManager {
   }
 
   Future<NEResult> openCamera(NECamera camera, int viewId) async {
-    CallKitUILog.i(_tag, "openCamera camera = $camera");
-    NEResult result = NEResult(code: 0, message: 'success');
+    CallKitUILog.i(_tag, 'openCamera camera = $camera');
+    var result = NEResult(code: 0, message: 'success');
     if (Platform.isAndroid) {
       CallKitUILog.i(_tag, 'CallManager openCamera');
-      PermissionResult permissionResult = PermissionResult.granted;
+      var permissionResult = PermissionResult.granted;
       if (await Permission.has(permissions: [PermissionType.camera])) {
         permissionResult = await Permission.request(NECallType.video);
       }
@@ -252,6 +309,11 @@ class CallManager {
   Future<void> setupRemoteView(String userId, int viewId) async {
     CallKitUILog.i(
         _tag, 'CallManager setupRemoteView(userId:$userId, viewId:$viewId)');
+    if (CallState.instance.isIOSOpenFloatWindowOutOfApp) {
+      CallKitUILog.i(_tag,
+          'CallManager setupRemoteView skipped in iOS out-of-app PIP mode');
+      return;
+    }
     await NECallEngine.instance.setupRemoteView(viewId);
     NECallKitPlatform.instance.updateCallStateToNative();
   }
@@ -262,20 +324,24 @@ class CallManager {
 
   Future<NEResult> setSelfInfo(String nickname, String avatar) async {
     // final result = await NECallEngine.instance.setSelfInfo(nickname, avatar);
-    return NEResult(code: 0, message: "");
+    return NEResult(code: 0, message: '');
   }
 
   Future<NEResult> login(String appKey, String accountId, String token,
       {NECertificateConfig? certificateConfig,
-      NEExtraConfig? extraConfig}) async {
+      NEExtraConfig? extraConfig,
+      NEGroupConfigParam? groupConfigParam}) async {
     CallKitUILog.i(_tag,
-        'CallManager login(appKey:$appKey, accountId:$accountId, certificateConfig:$certificateConfig, extraConfig:$extraConfig) version:${Constants.pluginVersion}');
+        'CallManager login(appKey:$appKey, accountId:$accountId, certificateConfig:$certificateConfig, extraConfig:$extraConfig, groupConfigParam:$groupConfigParam) version:${Constants.pluginVersion}');
 
-    // 保存 appKey 和 extraConfig
+    // 保存 appKey、extraConfig 和 groupConfigParam
     _appKey = appKey;
     _extraConfig = extraConfig ?? NEExtraConfig(); // 默认生成一个配置
+    if (groupConfigParam != null) {
+      _groupConfigParam = groupConfigParam;
+    }
     CallKitUILog.i(_tag,
-        'CallManager login: appKey saved = $_appKey, extraConfig = $_extraConfig');
+        'CallManager login: appKey saved = $_appKey, extraConfig = $_extraConfig, groupConfigParam = $_groupConfigParam');
 
     late NIMSDKOptions options;
     if (Platform.isAndroid) {
@@ -297,7 +363,7 @@ class CallManager {
     if (initRet.code == 0) {
       NEEventNotify().notify(imSDKInitSuccessEvent, {});
     }
-    NEResult result = NEResult(code: 0, message: 'success');
+    var result = NEResult(code: 0, message: 'success');
     var imRet = await NimCore.instance.loginService.login(
       accountId,
       token,
@@ -318,7 +384,7 @@ class CallManager {
   }
 
   Future<void> setCallingBell(String assetName) async {
-    String filePath = await CallingBellFeature.getAssetsFilePath(assetName);
+    var filePath = await CallingBellFeature.getAssetsFilePath(assetName);
     PreferenceUtils.getInstance()
         .saveString(CallingBellFeature.keyRingPath, filePath);
   }
@@ -357,9 +423,17 @@ class CallManager {
   void handleLoginSuccess(String accountId, String token) {
     CallKitUILog.i(_tag, 'CallManager handleLoginSuccess()');
     CallKitUILog.i(_tag,
-        'CallManager handleLoginSuccess: appKey = $_appKey, accountId = $accountId');
-    CallManager.instance
-        .setupEngine(_appKey!, accountId, extraConfig: _extraConfig);
+        'CallManager handleLoginSuccess: appKey = $_appKey, accountId = $accountId, groupConfigParam = $_groupConfigParam');
+    CallManager.instance.setupEngine(_appKey!, accountId,
+        extraConfig: _extraConfig, groupConfigParam: _groupConfigParam);
+
+    // 如果提供了群呼配置参数，则初始化群呼管理器
+    if (_groupConfigParam != null) {
+      GroupCallManager.instance.setup(
+        localUserId: accountId,
+        config: _groupConfigParam,
+      );
+    }
   }
 
   void handleLogoutSuccess() {
@@ -369,6 +443,7 @@ class CallManager {
     CallState.instance.cleanState();
     CallState.instance.unRegisterEngineObserver();
     NECallKitPlatform.instance.updateCallStateToNative();
+    CallManager.instance.destroyEngine();
   }
 
   void handleAppEnterForeground() async {
@@ -388,11 +463,11 @@ class CallManager {
         CallState.instance.callType == NECallType.video &&
         CallState.instance.selfUser.callStatus != NECallStatus.none) {
       await NECallKitPlatform.instance.disposePIP();
+      CallState.instance.isIOSOpenFloatWindowOutOfApp = false;
       if (!CallState.instance.isOpenFloatWindow) {
         backCallingPageFormFloatWindow();
       } else {
         NECallKitPlatform.instance.startFloatWindow();
-        CallState.instance.isIOSOpenFloatWindowOutOfApp = false;
       }
       // 重新设置画中画
       NECallKitPlatform.instance.setupPIP();
@@ -403,7 +478,14 @@ class CallManager {
         CallState.instance.isOpenFloatWindow == false &&
         CallState.instance.isInNativeIncomingBanner == false &&
         !(await CallManager.instance.isScreenLocked())) {
-      launchCallingPage();
+      // T042：前台重显——若横幅模式开启且来电仍存活但横幅未显示，则重新展示横幅
+      if (_enableIncomingBanner && !_bannerIsActive) {
+        CallKitUILog.i(_tag, 'appResumed checkBannerState reShowBanner');
+        _bannerIsActive = true;
+        await NECallKitPlatform.instance.setIncomingBannerEnabled(true);
+      } else {
+        launchCallingPage();
+      }
     }
   }
 
@@ -495,6 +577,51 @@ class CallManager {
 
   void enableIncomingBanner(bool enable) {
     CallState.instance.enableIncomingBanner = enable;
+    _enableIncomingBanner = enable;
+    // 同步通知 Java 侧，确保 WindowManager.showIncomingBanner() 不会提前返回
+    NECallKitPlatform.instance.setIncomingBannerEnabled(enable);
+    // Android 横幅需要悬浮窗权限，开启时自动跳转设置页申请
+    if (enable && Platform.isAndroid) {
+      NECallKitPlatform.instance.hasFloatPermission().then((hasPermission) {
+        if (!hasPermission) {
+          CallKitUILog.i(_tag, 'enableIncomingBanner: no float permission, requesting...');
+          NECallKitPlatform.instance.requestFloatPermission();
+        }
+      });
+    }
+  }
+
+  /// 横幅接听按钮被点击（由 iOS 原生通过方法通道回调）
+  Future<void> handleBannerAccept() async {
+    CallKitUILog.i(_tag, 'CallManager handleBannerAccept');
+    _bannerIsActive = false;
+    // 先申请权限，再接听，权限拒绝则拒绝来电
+    final permissionResult =
+        await Permission.request(CallState.instance.callType);
+    if (permissionResult != PermissionResult.granted) {
+      CallingBellFeature.stopRing();
+      await reject();
+      return;
+    }
+    final result = await accept();
+    if (result.code == 0) {
+      // 初始化摄像头和音频设备状态，确保 isCameraOpen 在页面打开前已设置正确
+      // 否则 onPlatformViewCreated 里的 openCamera 条件判断会失败，导致本地画面不显示
+      initAudioPlayDeviceAndCamera();
+      NECallKitNavigatorObserver.getInstance().enterCallingPage();
+    } else {
+      // 接听失败（如断网），立即停止铃声并挂断，避免铃声一直响
+      await CallingBellFeature.stopRing();
+      await reject();
+    }
+  }
+
+  /// 横幅拒绝按钮被点击（由 iOS 原生通过方法通道回调）
+  Future<void> handleBannerReject() async {
+    CallKitUILog.i(_tag, 'CallManager handleBannerReject');
+    _bannerIsActive = false;
+    await CallingBellFeature.stopRing();
+    await reject();
   }
 
   Future<void> enableWakeLock(bool enable) async {
@@ -507,6 +634,22 @@ class CallManager {
     NECallKitPlatform.instance.showIncomingBanner();
   }
 
+  /// 清除横幅活跃状态（供 native 横幅交互后调用，防止 secondCallIgnored 误判）
+  void clearBannerActiveState() {
+    CallKitUILog.i(_tag, 'CallManager clearBannerActiveState');
+    _bannerIsActive = false;
+  }
+
+  /// 从横幅直接进入通话页（不走 setStateEventOnCallReceived，避免 banner 逻辑重入死循环）
+  void enterCallingPageFromBanner() {
+    CallKitUILog.i(_tag, 'CallManager enterCallingPageFromBanner');
+    _checkLocalSelfUserInfo();
+    CallManager.instance.initAudioPlayDeviceAndCamera();
+    NECallKitNavigatorObserver.getInstance().enterCallingPage();
+    NECallKitPlatform.instance.updateCallStateToNative();
+    CallState.instance.isOpenFloatWindow = false;
+  }
+
   void pullBackgroundApp() {
     CallKitUILog.i(_tag, 'CallManager pullBackgroundApp');
     NECallKitPlatform.instance.pullBackgroundApp();
@@ -517,12 +660,68 @@ class CallManager {
     NECallKitPlatform.instance.openLockScreenApp();
   }
 
-  void startForegroundService() {
+  /// 启动前台 Service
+  ///
+  /// [callType] 通话类型。传入时按该类型校验权限并启动对应 Service；
+  /// 为空时（群呼场景），根据当前已授予的权限决定启动什么类型的 Service。
+  Future<void> startForegroundService({NECallType? callType}) async {
     if (!CallState.instance.isStartForegroundService) {
-      CallKitUILog.i(_tag, 'CallManager startForegroundService');
-      NECallKitPlatform.instance
-          .startForegroundService(CallState.instance.callType);
+      CallKitUILog.i(_tag, 'CallManager startForegroundService: callType=$callType');
+
+      NECallType serviceType;
+
+      if (callType != null) {
+        // 单呼场景：按通话类型校验权限
+        var hasRequiredPermissions = false;
+
+        if (callType == NECallType.audio) {
+          hasRequiredPermissions = await Permission.has(
+            permissions: [PermissionType.microphone],
+          );
+          CallKitUILog.i(_tag,
+              'startForegroundService: audio call, hasMicrophonePermission = $hasRequiredPermissions');
+        } else if (callType == NECallType.video) {
+          hasRequiredPermissions = await Permission.has(
+            permissions: [PermissionType.microphone, PermissionType.camera],
+          );
+          CallKitUILog.i(_tag,
+              'startForegroundService: video call, hasMicrophoneAndCameraPermissions = $hasRequiredPermissions');
+        } else {
+          hasRequiredPermissions = true;
+        }
+
+        if (!hasRequiredPermissions) {
+          CallKitUILog.i(_tag,
+              'startForegroundService: permission denied, cannot start foreground service');
+          return;
+        }
+        serviceType = callType;
+      } else {
+        // 群呼场景：根据已授予的权限决定 Service 类型
+        final hasMicrophone = await Permission.has(
+          permissions: [PermissionType.microphone],
+        );
+        final hasCamera = await Permission.has(
+          permissions: [PermissionType.camera],
+        );
+        CallKitUILog.i(_tag,
+            'startForegroundService: detecting permissions, hasMic=$hasMicrophone, hasCam=$hasCamera');
+
+        if (hasMicrophone && hasCamera) {
+          serviceType = NECallType.video;
+        } else if (hasMicrophone) {
+          serviceType = NECallType.audio;
+        } else {
+          CallKitUILog.i(_tag,
+              'startForegroundService: no microphone permission, skip');
+          return;
+        }
+      }
+
+      NECallKitPlatform.instance.startForegroundService(serviceType);
       CallState.instance.isStartForegroundService = true;
+      CallKitUILog.i(_tag,
+          'startForegroundService: started with serviceType=$serviceType');
     }
   }
 
@@ -542,7 +741,7 @@ class CallManager {
     return await NECallKitPlatform.instance.isSamsungDevice();
   }
 
-  _checkLocalSelfUserInfo() async {
+  void _checkLocalSelfUserInfo() async {
     if (CallState.instance.selfUser.nickname == '' &&
         (CallState.instance.selfUser.avatar == Constants.defaultAvatar ||
             CallState.instance.selfUser.avatar.isEmpty)) {
@@ -555,9 +754,9 @@ class CallManager {
     }
   }
 
-  _getUserInfo() async {
+  void _getUserInfo() async {
     final copyList = List<User>.from(CallState.instance.remoteUserList);
-    for (User user in copyList) {
+    for (var user in copyList) {
       final userInfo = await NimUtils.getUserInfo(user.id);
       user.nickname = StringStream.makeNull(userInfo.nickname, '');
       user.avatar =

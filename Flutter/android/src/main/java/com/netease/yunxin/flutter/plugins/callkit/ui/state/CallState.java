@@ -12,11 +12,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CallState {
+  /** Pending banner action set before notifyEvent so re-attached engine can replay it. */
+  public static final int BANNER_ACTION_NONE = 0;
+  public static final int BANNER_ACTION_ACCEPT = 1;
+  public static final int BANNER_ACTION_REJECT = 2;
+  public volatile int pendingBannerAction = BANNER_ACTION_NONE;
+
   public User mSelfUser = new User();
   public ArrayList<User> mRemoteUserList = new ArrayList<User>();
   public int mMediaType = NECallType.AUDIO;
   public int mStartTime = 0;
-  public Map mResourceMap = new HashMap();
+  public Map mResourceMap = new HashMap() {{
+    put("k_0000002", "邀请你进行语音通话");
+    put("k_0000002_1", "邀请你进行视频通话");
+  }};
   public Boolean mIsMicrophoneMute = false;
   public Boolean mIsCameraOpen = false;
   public IncomingFloatView mIncomingFloatView;

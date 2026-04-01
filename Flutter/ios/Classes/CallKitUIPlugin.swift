@@ -91,6 +91,12 @@ import UIKit
       handleStartPIP(result: result)
     case "stopPIP":
       handleStopPIP(result: result)
+    case "setIncomingBannerEnabled":
+      handleSetIncomingBannerEnabled(call, result: result)
+    case "showIncomingBanner":
+      handleShowIncomingBanner(result: result)
+    case "cancelIncomingBanner":
+      handleCancelIncomingBanner(result: result)
     default:
       NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: method not implemented - \(call.method)")
       result(FlutterMethodNotImplemented)
@@ -218,8 +224,23 @@ import UIKit
 
     stopRing()
 
-    if NECallState.instance.selfUser.value.callRole == NECallRole.called {
+    let isCalled = (args["isCalled"] as? Bool) ?? (NECallState.instance.selfUser.value.callRole == NECallRole.called)
+    if isCalled {
       CallingVibrator.startVibration()
+    }
+
+    // 诊断：检查文件是否存在及大小
+    let fileExists = FileManager.default.fileExists(atPath: filePath)
+    var fileSize = 0
+    if let attrs = try? FileManager.default.attributesOfItem(atPath: filePath),
+       let size = attrs[.size] as? Int {
+      fileSize = size
+    }
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: startRing path=\(filePath) exists=\(fileExists) size=\(fileSize)")
+    guard fileExists, fileSize > 0 else {
+      NEFLTCallUIKitLog.errorLog(tag, desc: "CallKitUIPlugin: ring file missing or empty, path=\(filePath)")
+      result(FlutterError(code: "FILE_NOT_FOUND", message: "Ring file missing or empty", details: filePath))
+      return
     }
 
     do {
@@ -248,19 +269,16 @@ import UIKit
   }
 
   private func stopRing() {
-    if NECallState.instance.selfUser.value.callRole == NECallRole.called {
-      CallingVibrator.stopVirbration()
-    }
+    CallingVibrator.stopVirbration()
+
+    guard audioPlayer != nil else { return }
 
     audioPlayer?.stop()
     audioPlayer = nil
 
-    // 恢复音频会话
-    do {
-      try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-    } catch {
-      NEFLTCallUIKitLog.errorLog(tag, desc: "CallKitUIPlugin: Failed to deactivate audio session - \(error.localizedDescription)")
-    }
+    // 不再反激活音频会话（setActive(false)），因为 RTC 引擎在通话中依赖音频会话保持激活状态。
+    // 反激活会导致 RTC 引擎丢失音频输入/输出，造成通话中听不到声音。
+    // RTC 引擎会在通话结束时自行管理音频会话的生命周期。
   }
 
   // MARK: - PIP Methods
@@ -315,6 +333,59 @@ import UIKit
       NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: Stop video rendering")
     }
     result(true)
+  }
+
+  // MARK: - Incoming Banner Methods
+
+  private func handleSetIncomingBannerEnabled(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard let args = call.arguments as? [String: Any],
+          let enable = args["enable"] as? Bool else {
+      result(FlutterError(code: "INVALID_ARGUMENTS", message: "enable parameter is required", details: nil))
+      return
+    }
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: setIncomingBannerEnabled enable=\(enable)")
+    NEFlutterIncomingBannerHandler.setEnabled(enable)
+    result(nil)
+  }
+
+  private func handleShowIncomingBanner(result: @escaping FlutterResult) {
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: showIncomingBanner called")
+    let remoteUser = NECallState.instance.remoteUser.value
+    let callType = Int(NECallState.instance.mediaType.value.rawValue)
+    NEFLTCallUIKitLog.infoLog(tag, desc: "showIncomingBanner callerId=\(remoteUser.id) callType=\(callType)")
+
+    NEIncomingCallBannerWindow.shared.show(
+      callerId: remoteUser.id,
+      displayName: remoteUser.nickname,
+      avatarUrl: remoteUser.avatar.isEmpty ? nil : remoteUser.avatar,
+      callType: callType,
+      onAccept: { [weak self] in
+        NEFLTCallUIKitLog.infoLog("CallKitUIPlugin", desc: "bannerAcceptTapped → notify Dart")
+        self?.invokeFlutterMethod("bannerAcceptTapped", arguments: nil)
+      },
+      onReject: { [weak self] in
+        NEFLTCallUIKitLog.infoLog("CallKitUIPlugin", desc: "bannerRejectTapped → notify Dart")
+        self?.invokeFlutterMethod("bannerRejectTapped", arguments: nil)
+      },
+      onBodyTap: { [weak self] in
+        NEFLTCallUIKitLog.infoLog("CallKitUIPlugin", desc: "bannerBodyTapped → launchCallingPageFromIncomingBanner")
+        self?.invokeFlutterMethod("launchCallingPageFromIncomingBanner", arguments: nil)
+      }
+    )
+    result(nil)
+  }
+
+  private func handleCancelIncomingBanner(result: @escaping FlutterResult) {
+    NEFLTCallUIKitLog.infoLog(tag, desc: "CallKitUIPlugin: cancelIncomingBanner called")
+    NEFlutterIncomingBannerHandler.dismissIncomingBanner()
+    NEIncomingCallBannerWindow.shared.dismiss()
+    result(nil)
+  }
+
+  private func invokeFlutterMethod(_ method: String, arguments: Any?) {
+    guard let registrar = registrar else { return }
+    let channel = FlutterMethodChannel(name: "call_kit_ui", binaryMessenger: registrar.messenger())
+    channel.invokeMethod(method, arguments: arguments)
   }
 
   // MARK: - Call State Methods

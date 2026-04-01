@@ -5,17 +5,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
-import 'package:netease_callkit_ui/src/call_define.dart';
 import 'package:netease_callkit_ui/src/event/event_notify.dart';
-import 'package:netease_callkit_ui/src/impl/call_manager.dart';
-import 'package:netease_callkit_ui/src/impl/call_state.dart';
 import 'package:netease_callkit_ui/src/data/constants.dart';
 import 'package:netease_callkit_ui/src/ui/widget/calls/calls_widget.dart';
 
 class NECallKitWidget extends StatefulWidget {
   final Function close;
 
-  const NECallKitWidget({Key? key, required this.close}) : super(key: key);
+  const NECallKitWidget({super.key, required this.close});
 
   @override
   State<NECallKitWidget> createState() => _NECallKitWidgetState();
@@ -32,7 +29,7 @@ class _NECallKitWidgetState extends State<NECallKitWidget>
     CallKitUILog.i(_tag, 'NECallKitWidget initState');
     WidgetsBinding.instance.addObserver(this);
     if (WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
-      CallManager.instance.startForegroundService();
+      CallManager.instance.startForegroundService(callType: CallState.instance.callType);
     }
     if (CallState.instance.selfUser.callStatus == NECallStatus.none) {
       Future.microtask(() {
@@ -49,9 +46,13 @@ class _NECallKitWidgetState extends State<NECallKitWidget>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed &&
-        CallState.instance.selfUser.callStatus != NECallStatus.none) {
-      CallManager.instance.startForegroundService();
+    if (state == AppLifecycleState.resumed) {
+      if (CallState.instance.selfUser.callStatus == NECallStatus.none) {
+        // 后台/锁屏期间通话已结束，恢复前台时关闭页面
+        widget.close();
+      } else {
+        CallManager.instance.startForegroundService(callType: CallState.instance.callType);
+      }
     }
     super.didChangeAppLifecycleState(state);
   }
@@ -63,10 +64,8 @@ class _NECallKitWidgetState extends State<NECallKitWidget>
       DeviceOrientation.portraitDown,
     ]);
 
-    return WillPopScope(
-      onWillPop: () async {
-        return false;
-      },
+    return PopScope(
+      canPop: false,
       child: Scaffold(
         resizeToAvoidBottomInset: false,
         body: CallsWidget(close: widget.close),

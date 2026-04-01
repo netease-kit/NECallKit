@@ -61,7 +61,13 @@ public class VideoCallForegroundService extends Service {
     // Get service notice
     Notification notification = createForegroundNotification();
     //Place the service in the startup state, notification_id refers to the ID of the created notice
-    startForeground(NOTIFICATION_ID, notification);
+    try {
+      startForeground(NOTIFICATION_ID, notification);
+    } catch (SecurityException e) {
+      // Android 14+: foregroundServiceType=camera|microphone requires runtime permissions granted.
+      // If not yet granted, stop self gracefully instead of crashing.
+      stopSelf();
+    }
   }
 
   private Notification createForegroundNotification() {

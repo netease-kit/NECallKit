@@ -4,12 +4,12 @@
 
 class StringStream {
   static String makeNull(String? str, String defaultValue) {
-    String nonNullableString = str?.isEmpty == false ? str! : defaultValue;
+    final nonNullableString = str?.isEmpty == false ? str! : defaultValue;
     return nonNullableString;
   }
 
   static String makeNonNull(String str, String defaultValue) {
-    String nonNullableString = str.isEmpty ? defaultValue : str;
+    final nonNullableString = str.isEmpty ? defaultValue : str;
     return nonNullableString;
   }
 }

@@ -34,8 +34,8 @@ class NEEventNotify {
   void notify(String eventName, [Map<String, dynamic>? arg]) {
     var list = _messageQueue[eventName];
     if (list != null && list.isNotEmpty) {
-      for (var i = 0; i < list.length; i++) {
-        list[i](arg);
+      for (var callback in List<NEEventCallback>.from(list)) {
+        callback(arg);
       }
     }
   }

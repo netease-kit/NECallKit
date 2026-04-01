@@ -14,19 +14,19 @@ class PreferenceUtils {
     return _instance!;
   }
 
-  saveInteger(String key, int value) =>
+  void saveInteger(String key, int value) =>
       SharedPreferences.getInstance().then((sp) => sp.setInt(key, value));
 
-  saveString(String key, String value) =>
+  void saveString(String key, String value) =>
       SharedPreferences.getInstance().then((sp) => sp.setString(key, value));
 
-  saveBool(String key, bool value) =>
+  void saveBool(String key, bool value) =>
       SharedPreferences.getInstance().then((sp) => sp.setBool(key, value));
 
-  saveDouble(String key, double value) =>
+  void saveDouble(String key, double value) =>
       SharedPreferences.getInstance().then((sp) => sp.setDouble(key, value));
 
-  saveStringList(String key, List<String> value) =>
+  void saveStringList(String key, List<String> value) =>
       SharedPreferences.getInstance()
           .then((sp) => sp.setStringList(key, value));
 
