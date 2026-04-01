@@ -1,35 +1,55 @@
 {
   "description": "项目配置文件",
-  "packOptions": {
-    "ignore": [],
-    "include": []
-  },
   "miniprogramRoot": "miniprogram/",
   "compileType": "miniprogram",
-  "projectname": "ts-demo",
   "setting": {
-    "useCompilerPlugins": ["typescript"],
+    "useCompilerPlugins": [
+      "typescript"
+    ],
     "babelSetting": {
       "ignore": [],
       "disablePlugins": [],
       "outputPath": ""
     },
-    "packNpmManually": true,
+    "coverView": false,
+    "postcss": false,
+    "minified": false,
+    "enhance": true,
+    "showShadowRootInWxmlPanel": false,
     "packNpmRelationList": [
       {
-        "packageJsonPath": "package.json",
-        "miniprogramNpmDistDir": "./miniprogram"
+        "packageJsonPath": "./package.json",
+        "miniprogramNpmDistDir": "./miniprogram/"
       }
-    ]
+    ],
+    "ignoreUploadUnusedFiles": true,
+    "compileHotReLoad": false,
+    "skylineRenderEnable": true,
+    "es6": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": true,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "disableUseStrict": false
   },
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},
   "condition": {},
   "srcMiniprogramRoot": "miniprogram/",
-  "appid": "",
-  "libVersion": "2.28.1",
   "editorSetting": {
     "tabIndent": "insertSpaces",
     "tabSize": 2
-  }
+  },
+  "libVersion": "3.15.0",
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "appid": ""
 }

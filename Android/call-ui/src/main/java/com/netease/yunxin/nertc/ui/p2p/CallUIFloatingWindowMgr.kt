@@ -132,6 +132,9 @@ object CallUIFloatingWindowMgr {
             throw IllegalArgumentException("floatingView$floatingView must be a view instance.")
         }
         floatContentView = floatingView ?: FloatingView(context)
+        if (floatContentView is View) {
+            registerFullScreenActionForView(context, floatContentView as View)
+        }
         val builder = FloatingWindowWrapper.Builder()
             .windowYPos(400)
         windowLayoutParams?.run {

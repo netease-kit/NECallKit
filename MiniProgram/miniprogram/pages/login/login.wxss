@@ -1,0 +1,96 @@
+/* pages/login/login.wxss */
+.container {
+  width: 100vw;
+  height: 100vh;
+  background-color: #1a1a23;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+}
+
+.counter-warp {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header-content {
+  display: flex;
+  width: 100vw;
+  padding: 50px 10px 30px 10px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-title {
+  font-size: 32rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.box {
+  width: 80%;
+  position: relative;
+  background: #292935;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  padding: 30px 20px;
+}
+
+.input-box {
+  flex: 1;
+  display: flex;
+  font-size: 14px;
+  color: #ffffff;
+  letter-spacing: 0;
+  background-color: #3a3a4a;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.login {
+  display: flex;
+  box-sizing: border-box;
+  margin-top: 30px;
+  width: 100%;
+}
+
+.loginBtn {
+  width: 100%;
+  line-height: 44px;
+  background-color: #467ff6;
+  border-radius: 50px;
+  font-size: 16px;
+  color: #ffffff;
+  margin: 0;
+  border: none;
+}
+
+.list-item {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  color: #ffffff;
+}
+
+.list-item .list-item-label {
+  font-weight: 500;
+  padding: 10px 0;
+  color: #ffffff;
+}
+
+.link-text {
+  color: #467ff6;
+  font-size: 14px;
+}

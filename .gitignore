@@ -92,3 +92,6 @@ local.properties
 /flutter_module/.ios/
 **/pubspec.lock
 .ccls-cache/
+
+# Signing certificates
+signing/

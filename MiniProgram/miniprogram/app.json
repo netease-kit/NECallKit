@@ -1,14 +1,15 @@
 {
   "pages": [
+    "pages/login/login",
     "pages/index/index",
     "pages/call/call"
   ],
   "window": {
-    "backgroundTextStyle": "light",
-    "navigationBarBackgroundColor": "#fff",
-    "navigationBarTitleText": "Weixin",
-    "navigationBarTextStyle": "black"
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "NECallKit",
+    "navigationBarBackgroundColor": "#1f1f26"
   },
   "style": "v2",
-  "sitemapLocation": "sitemap.json"
+  "componentFramework": "glass-easel",
+  "lazyCodeLoading": "requiredComponents"
 }

@@ -4,9 +4,35 @@
     "products": [
       {
         "name": "default",
-        "signingConfig": "default",
-        "targetSdkVersion": "6.0.0(20)",
-        "compatibleSdkVersion": "6.0.0(20)",
+        "signingConfig": "debug",
+        "targetSdkVersion": "5.0.5(17)",
+        "compatibleSdkVersion": "5.0.1(13)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      },
+      {
+        "name": "release",
+        "signingConfig": "release",
+        "targetSdkVersion": "5.0.5(17)",
+        "compatibleSdkVersion": "5.0.1(13)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      },
+      {
+        "name": "debug",
+        "signingConfig": "debug",
+        "targetSdkVersion": "5.0.5(17)",
+        "compatibleSdkVersion": "5.0.1(13)",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
           "strictMode": {

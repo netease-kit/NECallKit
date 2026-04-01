@@ -1,3 +1,4 @@
+<!--pages/call/call.wxml-->
 <view class="container-box">
-  <call-view  />
+  <call-view />
 </view>

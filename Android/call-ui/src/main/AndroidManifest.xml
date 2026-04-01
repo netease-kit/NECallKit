@@ -54,8 +54,23 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
 
+        <activity android:name=".permission.PermissionActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:launchMode="singleTask"
+            android:theme="@style/TranslucentStyle"
+            android:windowSoftInputMode="stateHidden|stateAlwaysHidden" />
+
         <service android:name=".service.VideoCallForegroundService" android:foregroundServiceType="microphone|camera"/>
         <service android:name=".service.AudioCallForegroundService" android:foregroundServiceType="microphone"/>
+
+        <service
+            android:name=".service.foregroundservice.AudioForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+        <service
+            android:name=".service.foregroundservice.VideoForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="camera|microphone" />
 
     </application>
 

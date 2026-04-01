@@ -1,93 +1,157 @@
-.container-box {
-  background-image: url(https://yx-web-nosdn.netease.im/quickhtml%2Fassets%2Fyunxin%2Fdefault%2Fgroupcall%2Fbg.png);
-  background-color: #333;
-  background-repeat:no-repeat;
-  background-size: cover;
-  background-color: #1a1a23;
+/* pages/index/index.wxss */
+page {
   height: 100vh;
-  padding: 0 40rpx;
-  box-sizing: border-box;
-  color: #fff;
+  overflow: hidden;
+  background-color: #1f1f26;
 }
 
-.switch-item {
-  margin: 10px 0;
-}
-
-.title {
-  color: #FFFFFF;
-  padding-top: 65rpx;
-  line-height: 60rpx;
-  text-align: center;
-}
-
-.user-info {
-  display: flex;
-  margin-top: 20rpx;
-}
-
-.sub-title {
-  margin-bottom: 36rpx;
-}
-
-.sub-title .radio-group-no-box .radio-item {
-  font-size: 32rpx;
-  padding: 4px 8px;
-}
-
-.input-wrapper {
-  border-radius: 8rpx;
-  background-color: #292935;
-  margin: 40rpx 0;
-  padding: 18rpx 16rpx;
-  font-size: 32rpx;
-}
-
-.radio-group-no-box {
-  display: inline-block;
-  color: #006eff;
-  background-color: #ffffff;
-  border: 1px solid #006eff;
-  border-radius: 4px;
-  /* margin-left: 180rpx; */
-}
-
-.radio-group-no-box .radio-item {
-  padding: 3px 8px;
-  text-align: center;
-  border-right: 1px solid #006eff;
-  display: inline-block;
-}
-
-.radio-group-no-box .radio-item:last-child {
-  border-right: none;
-}
-
-.radio-group-no-box .radio-item.selected {
-  color: #ffffff;
-  background-color: #006eff;
-}
-
-.radio-group-no-box radio {
-  display: none;
-}
-
-.bottom-btn {
-  position: fixed;
+.container {
   width: 100vw;
-  bottom: 5vh;
-}
-
-.bottom-btn .btn {
-  width: 90%;
-  line-height: 60rpx;
-  background-color: #467ff6;
-  border-radius: 50px;
-  font-size: 32rpx;
-  color: #ffffff;
+  height: 100vh;
+  overflow: hidden;
   margin: 0;
+  padding-top: 40px;
+  background-color: #1f1f26;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
+.content-wrapper {
+  flex: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px;
+  background-color: #1f1f26;
+}
 
+.header {
+  display: flex;
+  flex-direction: row;
+  padding: 10px 0;
+  align-items: center;
+  justify-content: space-between;
+  color: white;
+}
 
+.header-left {
+  flex: none;
+  padding: 10rpx;
+}
 
+.header-center {
+  flex: auto;
+  text-align: center;
+}
+
+.header-title {
+  font-size: 32rpx;
+  color: white;
+  font-weight: 500;
+}
+
+.header-right {
+  flex: none;
+  padding: 10rpx;
+}
+
+.logout-text {
+  font-size: 28rpx;
+  color: #ff4757;
+}
+
+.logout-text-hidden {
+  visibility: hidden;
+  font-size: 28rpx;
+}
+
+.user-id-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.user-id-label {
+  font-size: 28rpx;
+}
+
+.user-id-value {
+  margin-left: 10px;
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 20px 0;
+}
+
+.input-box {
+  flex: 1;
+  box-sizing: border-box;
+  margin-right: 20px;
+  height: 80rpx;
+  background: #f4f5f9;
+  border-radius: 10px;
+  padding: 18rpx 32rpx;
+  display: flex;
+  align-items: center;
+}
+
+.input-search {
+  flex: 1;
+  box-sizing: border-box;
+  font-size: 32rpx;
+  color: #333;
+}
+
+.btn-call {
+  text-align: center;
+  width: 120rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: #337eff;
+  border-radius: 10px;
+}
+
+.btn-call-text {
+  color: white;
+  font-size: 28rpx;
+}
+
+.call-type-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  color: white;
+  padding: 10px 0;
+}
+
+.call-type-label {
+  font-size: 28rpx;
+  color: white;
+}
+
+.call-type-group {
+  margin-left: 30rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.call-type-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-right: 30rpx;
+}
+
+.call-type-text {
+  font-size: 28rpx;
+  color: white;
+  margin-left: 10rpx;
+}

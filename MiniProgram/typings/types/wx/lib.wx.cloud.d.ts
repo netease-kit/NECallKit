@@ -1,5 +1,5 @@
 /*! *****************************************************************************
-Copyright (c) 2022 Tencent, Inc. All rights reserved.
+Copyright (c) 2021 Tencent, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -121,16 +121,6 @@ interface WxCloud {
 
     CloudID: ICloud.ICloudIDConstructor
     CDN: ICloud.ICDNConstructor
-
-    callContainer(param: OQ<ICloud.CallContainerParam>): void
-    callContainer(
-        param: RQ<ICloud.CallContainerParam>
-    ): Promise<ICloud.CallContainerResult>
-
-    connectContainer(param: OQ<ICloud.ConnectContainerParam>): void
-    connectContainer(
-        param: RQ<ICloud.ConnectContainerParam>
-    ): Promise<ICloud.ConnectContainerResult>
 }
 
 declare namespace ICloud {
@@ -150,51 +140,6 @@ declare namespace ICloud {
         data?: CallFunctionData
         slow?: boolean
     }
-    // === end ===
-
-    // === API: container ===
-    type CallContainerData = AnyObject
-
-    interface CallContainerResult extends IAPISuccessParam {
-        data: any
-        statusCode: number
-        header: Record<string, any>
-        callID: string
-    }
-
-    interface CallContainerParam extends ICloudAPIParam<CallContainerResult> {
-        path: string
-        service?: string
-        method?: string
-        header?: Record<string, any>
-        data?: any // string, object, ArrayBuffer
-        dataType?: string
-        responseType?: string
-        timeout?: number
-        verbose?: boolean
-        followRedirect?: boolean
-    }
-
-    interface ConnectContainerResult extends IAPISuccessParam {
-        socketTask: WechatMiniprogram.SocketTask
-    }
-
-    interface ConnectSocketOptions extends IAPIParam<void> {
-        header?: Record<string, string>
-        protocols?: string[]
-        tcpNoDelay?: boolean
-        perMessageDeflate?: boolean
-        timeout?: number
-    }
-
-    type ConnectContainerParam = Omit<
-        ConnectSocketOptions,
-        'success' | 'fail' | 'complete'
-    > &
-        ICloudAPIParam<ConnectContainerResult> & {
-            service: string
-            path?: string
-        }
     // === end ===
 
     // === API: uploadFile ===

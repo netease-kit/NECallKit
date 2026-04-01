@@ -2,9 +2,11 @@
 
 interface IAppOption {
   globalData: {
-    userInfo?: WechatMiniprogram.UserInfo;
-    nim?: any;
-    neCall?: import('@xkit-yx/call-kit/dist/types/neCall.wx').default;
-  };
-  userInfoReadyCallback?: WechatMiniprogram.GetUserInfoSuccessCallback;
+    appkey: string
+    nim: any
+    neCall: any
+    accountId: string
+    isLoggedIn: boolean
+  }
+  initNIM(accountId: string, token: string): Promise<void>
 }
