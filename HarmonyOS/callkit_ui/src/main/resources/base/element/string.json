@@ -99,6 +99,26 @@
     {
       "name": "call_accept_failed",
       "value": "Accept failed"
+    },
+    {
+      "name": "group_call_exceed_max",
+      "value": "Maximum %d participants allowed"
+    },
+    {
+      "name": "user_already_in_call",
+      "value": "User already in call"
+    },
+    {
+      "name": "group_call_below_min",
+      "value": "At least %d participants required"
+    },
+    {
+      "name": "group_call_invalid_param",
+      "value": "Invalid call parameters"
+    },
+    {
+      "name": "group_call_failed",
+      "value": "Call failed"
     }
   ]
 }

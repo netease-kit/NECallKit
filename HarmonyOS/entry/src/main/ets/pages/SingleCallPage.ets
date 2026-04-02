@@ -342,7 +342,9 @@ export struct SingleCallPage {
       .borderRadius(8)
       .margin({ left: 16, right: 16, top: 16, bottom: 16 })
       .onClick(() => {
-        this.call()
+        this.call().catch((err: Error) => {
+          console.error('[SingleCall] call() 未捕获异常:', err)
+        })
       })
     }
     .width('100%')
@@ -395,8 +397,12 @@ export struct SingleCallPage {
       // 出错时不阻塞正常呼叫流程
     }
 
-    this.enableFuLiveBeauty(true)
-    
+    try {
+      this.enableFuLiveBeauty(true)
+    } catch (beautyErr) {
+      console.error('[SingleCall] enableFuLiveBeauty 异常（已忽略，继续呼叫）:', beautyErr)
+    }
+
     // 发起呼叫
     let param = new NECallParam(accountId, this.callType)
     
@@ -487,6 +493,9 @@ export struct SingleCallPage {
   }
 
   private enableFuLiveBeauty(enable: boolean) {
+    if (!enable && this.fuRender == null) {
+      return; // 未初始化时禁用无需任何操作
+    }
 
     if (this.fuRender == null) {
       this.fuRender = new VideoFuRender()
@@ -517,6 +526,9 @@ export struct SingleCallPage {
   }
 
   private enableBytedEffectBeauty(enable: boolean) {
+    if (!enable && this.bytedRender == null) {
+      return; // 未初始化时禁用无需任何操作
+    }
     if (this.bytedRender == null) {
       this.bytedRender = new BytedRender()
       const licensePath = "/LicenseBag.bundle/xxxxxx.licbag"

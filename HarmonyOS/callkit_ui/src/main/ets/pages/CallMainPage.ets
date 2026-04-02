@@ -11,7 +11,7 @@ import router from '@ohos.router';
 import { CallMainWidget } from '../widget/CallMainWidget';
 import common from '@ohos.app.ability.common';
 import { CallUILog } from '../utils/CallUILog';
-import { NECallEndInfo, NECallEndReason } from '@yunxin/callkit';
+import { NECallEndInfo, NECallEndReason, NEGroupCall } from '@yunxin/callkit';
 import { promptAction } from '@kit.ArkUI';
 import { ToastUtils } from '../utils/ToastUtils';
 
@@ -33,13 +33,27 @@ interface ResourceWithId {
 export struct CallMainPage {
   static TAG = "CallMainPage";
   private endCallback = (arg?: Record<string, Object>) => {
-    // 显示通话结束的 toast 提示
+    CallUILog.info(CallMainPage.TAG, `[诊断] endCallback called, isActiveHangup=${CallState.instance.isActiveHangup}`);
+    // 主动挂断由 CallManager.hangup() 处理页面关闭，跳过回调中的重复关闭
+    if (CallState.instance.isActiveHangup) {
+      CallUILog.info(CallMainPage.TAG, `endCallback: 主动挂断，跳过重复关闭`);
+      return;
+    }
 
+    // 显示通话结束的 toast 提示
     if (arg) {
       let showToast = arg['showToast'] as boolean;
       if (showToast && arg['info']) {
         const info = arg['info'] as NECallEndInfo;
-        if (info.reason == NECallEndReason.TERMINAL_CALLEE_REJECT
+        const isGroupCall = CallState.instance.isGroupCall();
+
+        // 群呼场景下，本端拒绝不显示 toast
+        const isRejectReason = info.reason == NECallEndReason.TERMINAL_CALLEE_REJECT
+          || info.reason == NECallEndReason.TERMINAL_CALLER_REJECTED;
+
+        if (isGroupCall && isRejectReason) {
+          CallUILog.info(CallMainPage.TAG, `群呼拒绝，不显示 toast`);
+        } else if (info.reason == NECallEndReason.TERMINAL_CALLEE_REJECT
           || info.reason == NECallEndReason.TERMINAL_CALLER_REJECTED
           || info.reason == NECallEndReason.TERMINAL_OTHER_ACCEPTED
           || info.reason == NECallEndReason.TERMINAL_OTHER_REJECTED
@@ -51,7 +65,7 @@ export struct CallMainPage {
         }
       }
     }
-    
+
     this.close()
   }
 
@@ -61,13 +75,30 @@ export struct CallMainPage {
   
   private originalFullScreen: boolean = false;
   private isClosing: boolean = false; // 标志：确保 close() 只被调用一次
+  private hasCheckedCallState: boolean = false; // 标志：onPageShow 首次检查用
 
   aboutToAppear(): void {
     // 设置全屏和透明状态栏
     this.setFullScreenWithTransparentStatusBar();
-    
+
     // 注册通话结束事件监听
     NEEventNotify.getInstance().register(setStateEventOnCallEnd, this.endCallback);
+  }
+
+  onPageShow(): void {
+    const groupCallInfo = NEGroupCall.getInstance().currentGroupCallInfo();
+    CallUILog.info(CallMainPage.TAG, `[诊断] onPageShow: hasChecked=${this.hasCheckedCallState}, currentGroupCallInfo=${groupCallInfo ? groupCallInfo.callId : 'null'}`);
+    // 页面完全显示后（路由栈已稳定），仅首次执行检查
+    // 场景：群呼所有被叫在 launchCallingPage 与 aboutToAppear 之间全部 BUSY 拒绝，
+    // setStateEventOnCallEnd 可能已在注册前触发，此时 currentGroupCallInfo 已为 null
+    if (!this.hasCheckedCallState) {
+      this.hasCheckedCallState = true;
+      // 仅群呼场景才需要此检查：1v1 通话时 currentGroupCallInfo() 必然为 null
+      if (CallState.instance.isGroupCall() && NEGroupCall.getInstance().currentGroupCallInfo() === null) {
+        CallUILog.warn(CallMainPage.TAG, 'onPageShow: group call already ended, closing');
+        this.close();
+      }
+    }
   }
 
   aboutToDisappear(): void {
@@ -259,16 +290,35 @@ export struct CallMainPage {
       CallUILog.warn(CallMainPage.TAG, `close() 已被调用，忽略重复调用`);
       return;
     }
-    
+
     // 设置标志，防止重复调用
     this.isClosing = true;
-    
+
     // 清除保存的路由信息
     CallManager.instance.clearPreviousRoute();
-    
-    // 直接使用 router.back() 返回到上一个页面
-    // HarmonyOS 路由机制会自动处理路由栈
-    CallUILog.info(CallMainPage.TAG, `关闭通话页面，返回上一页`);
-    router.back();
+
+    // 检查路由栈长度，决定返回方式
+    // router.getLength() 返回路由栈中的页面数量（字符串类型）
+    // 如果只有当前页面（length <= 1），back() 会导致应用退出
+    const routerLengthStr = router.getLength();
+    const routerLength = parseInt(routerLengthStr, 10) || 0;
+    CallUILog.info(CallMainPage.TAG, `关闭通话页面，路由栈长度=${routerLength}`);
+
+    if (routerLength > 1) {
+      // 有上一页，直接返回
+      router.back();
+    } else {
+      // 没有上一页（可能是从通知直接打开）
+      // 尝试返回到路由栈中的第一页（通常是应用首页）
+      CallUILog.info(CallMainPage.TAG, `没有上一页，尝试返回到路由栈底部`);
+      try {
+        // 使用 router.clear() 清空路由栈并返回到入口页面
+        router.clear();
+      } catch (error) {
+        CallUILog.error(CallMainPage.TAG, `router.clear() 失败: ${String(error)}`);
+        // 如果 clear 失败，尝试 back()
+        router.back();
+      }
+    }
   }
 }

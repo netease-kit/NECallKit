@@ -4,6 +4,8 @@
     "pages/LoginPage",
     "pages/HomePage",
     "pages/SingleCallPage",
-    "pages/SettingsPage"
+    "pages/SettingsPage",
+    "pages/GroupCallSettingsPage",
+    "pages/IncomingCallBannerPage"
   ]
 }

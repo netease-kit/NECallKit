@@ -1,4 +1,5 @@
 export { CallMainPage } from './src/main/ets/pages/CallMainPage';
+export { GroupCallLaunchPage } from './src/main/ets/pages/GroupCallLaunchPage';
 export { NECallEngine } from '@yunxin/callkit';
 export { NECallUI, INECallUI } from './src/main/ets/api/NECallUI';
 export { NECallUIImpl } from './src/main/ets/impl/NECallUIImpl';

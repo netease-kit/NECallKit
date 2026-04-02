@@ -13,22 +13,28 @@ import {
   NEExtraConfig,
   NERtcConstants,
   NESetupConfig,
-  NEErrorCode
+  NEErrorCode,
+  NEGroupCall,
+  GroupJoinParam,
+  GroupCallMember
 } from '@yunxin/callkit';
 
 import { media } from '@kit.MediaKit';
 import { NEEventNotify } from '../event/EventNotify';
-import { Constants, setStateEvent, setStateEventOnCallReceived } from '../data/Constants';
+import { Constants, setStateEvent, setStateEventOnCallReceived, setStateEventOnCallEnd } from '../data/Constants';
 import { NECallRole, NECallScene, NECallStatus, NECamera } from '../CallDefine';
 import { CallState } from './CallState';
 import { CallingBellFeature } from './CallingBellFeature';
 import router from '@ohos.router';
+import audio from '@ohos.multimedia.audio'
 import { User } from '../data/User';
 import { NimUtils } from '../utils/NimUtils';
 import common from '@ohos.app.ability.common';
 import { PermissionUtils } from '../utils/PermissionUtils';
 import { CallUILog } from '../utils/CallUILog';
 import { ToastUtils } from '../utils/ToastUtils';
+import { NECallUIConfig } from './NECallUIConfig';
+import { IncomingCallBannerWidget, CallerInfo } from '../widget/IncomingCallBannerWidget';
 
 /**
  * 通用结果类型
@@ -75,6 +81,12 @@ export class CallManager {
   // Ability Context，用于权限请求等（通过 setupEngine 传入）
   private _context: common.Context | null = null;
 
+  // UI 配置（来电横幅等）
+  private _uiConfig: NECallUIConfig | null = null;
+
+  // 来电横幅 SubWindow 管理实例
+  private _bannerWidget: IncomingCallBannerWidget | null = null;
+
   // 引擎代理（用于接收回调）
   private _engineDelegate: NECallEngineDelegate | null = null;
 
@@ -89,8 +101,90 @@ export class CallManager {
     // 注册呼叫接收事件
     NEEventNotify.getInstance().register(setStateEventOnCallReceived, (arg) => {
       CallUILog.info(CallManager._tag, `onCallReceived event`);
+      // 来电横幅仅支持 1v1 通话，群呼直接跳转通话页面
+      if (this._uiConfig?.enableIncomingBanner === true && !CallState.instance.isGroupCall()) {
+        // 并发来电检查：若横幅已显示，说明已有一路来电，新来电回复忙线并丢弃
+        if (this._bannerWidget?.isShowing()) {
+          CallUILog.info(CallManager._tag, `secondCallIgnored replyBusy`);
+          NECallEngine.getInstance().hangup('').then(() => {});
+          return;
+        }
+        CallUILog.info(CallManager._tag, `showIncomingBanner enableIncomingBanner=true`);
+        // 构建来电方信息（从 CallState 获取已解析的主叫信息）
+        const callerUser = CallState.instance.caller;
+        const callTypeValue = CallState.instance.callType;
+        // NECallType: AUDIO=1, VIDEO=2；横幅 callType 约定 0=audio, 1=video, 2=group
+        let bannerCallType = 0;
+        if (callTypeValue === NECallType.VIDEO) {
+          bannerCallType = 1;
+        }
+        const callerInfo: CallerInfo = {
+          accountId: callerUser.id ?? '',
+          displayName: callerUser.nickname && callerUser.nickname.length > 0
+            ? callerUser.nickname
+            : (callerUser.id ?? ''),
+          avatarUrl: callerUser.avatar && callerUser.avatar.length > 0
+            ? callerUser.avatar
+            : undefined,
+          callType: bannerCallType
+        };
+
+        // 懒初始化横幅组件
+        if (!this._bannerWidget) {
+          this._bannerWidget = new IncomingCallBannerWidget(this._context!);
+        }
+
+        this._bannerWidget.show(
+          callerInfo,
+          // 接听回调
+          () => {
+            CallUILog.info(CallManager._tag, 'bannerAcceptTapped');
+            NECallEngine.getInstance().accept().then(async (result) => {
+              if (result.code === 0) {
+                // 先销毁 SubWindow（让主窗口恢复控制权），再执行路由跳转
+                await this._bannerWidget?.dismiss();
+                this._bannerWidget = null;
+                router.pushNamedRoute({ name: 'callMainPage' }).catch((err: Error) => {
+                  CallUILog.error(CallManager._tag, `bannerAccept: 跳转通话页面失败:: ${String(err)}`);
+                });
+              } else {
+                CallUILog.error(CallManager._tag, `bannerAccept: accept failed code=${result.code}`);
+                await this._bannerWidget?.dismiss();
+                this._bannerWidget = null;
+              }
+            });
+          },
+          // 拒绝回调
+          () => {
+            CallUILog.info(CallManager._tag, 'bannerRejectTapped');
+            NECallEngine.getInstance().hangup('').then(() => {
+              this._bannerWidget?.dismiss();
+            });
+          },
+          // 点击主体回调（跳全屏来电页）
+          () => {
+            CallUILog.info(CallManager._tag, 'bannerBodyTapped');
+            (async () => {
+              // 先销毁 SubWindow，再跳转，避免 SubWindow 遮挡路由
+              await this._bannerWidget?.dismiss();
+              this._bannerWidget = null;
+              this.launchCallingPage();
+            })();
+          }
+        );
+        return;
+      }
       // 跳转到通话页面
       this.launchCallingPage();
+    });
+
+    // 订阅通话结束事件，横幅显示期间来电取消/超时时自动关闭
+    NEEventNotify.getInstance().register(setStateEventOnCallEnd, () => {
+      if (this._bannerWidget?.isShowing()) {
+        CallUILog.info(CallManager._tag, 'dismissIncomingBanner reason=callEnded');
+        this._bannerWidget.dismiss();
+        this._bannerWidget = null;
+      }
     });
   }
 
@@ -173,6 +267,22 @@ export class CallManager {
   }
 
   /**
+   * 设置 UI 配置
+   * @param uiConfig UI 配置（可选）
+   */
+  setUIConfig(uiConfig: NECallUIConfig): void {
+    this._uiConfig = uiConfig;
+    CallUILog.info(CallManager._tag, `setUIConfig(enableIncomingBanner:${uiConfig.enableIncomingBanner})`);
+  }
+
+  /**
+   * 获取 UI 配置
+   */
+  get uiConfig(): NECallUIConfig | null {
+    return this._uiConfig;
+  }
+
+  /**
    * 设置引擎
    * @param appKey 应用 Key
    * @param accountId 账号ID
@@ -202,9 +312,31 @@ export class CallManager {
       CallUILog.info(CallManager._tag, `setupEngine success`);
       // 设置 NIM 实例到 NimUtils，用于获取用户信息
       NimUtils.setNimInstance(config.nim);
+
+      // 异步获取本地用户的头像和昵称信息
+      this._fetchSelfUserInfo(config.accountId);
     } else {
       CallUILog.error(CallManager._tag, `setupEngine failed: code=${result.code}, message=${result.message}`);
       // TODO: 显示错误提示
+    }
+  }
+
+  /**
+   * 获取本地用户的头像和昵称信息
+   * @param accountId 用户账号ID
+   */
+  private async _fetchSelfUserInfo(accountId: string): Promise<void> {
+    try {
+      const userInfo = await NimUtils.getUserInfo(accountId);
+      if (userInfo) {
+        CallState.instance.selfUser.nickname = userInfo.nickname || accountId;
+        CallState.instance.selfUser.avatar = userInfo.avatar || '';
+        CallUILog.info(CallManager._tag,
+          `fetchSelfUserInfo success: nickname=${CallState.instance.selfUser.nickname}, avatar=${CallState.instance.selfUser.avatar ? '有' : '无'}`);
+      }
+    } catch (error) {
+      CallUILog.warn(CallManager._tag,
+        `fetchSelfUserInfo failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -237,7 +369,9 @@ export class CallManager {
       const code = await PermissionUtils.requestMediaPermissions(this._context!, params.callType);
       if (code != NEErrorCode.SUCCESS) {
         CallUILog.error(CallManager._tag, 'call: media permission denied');
-        return new NEResult(code, 'Media permission denied');
+        // 显示权限拒绝引导提示
+        this._handlePermissionDenied(code);
+        return new NEResult(code, PermissionUtils.getPermissionDeniedMessage(code));
       }
     } catch (error) {
       CallUILog.error(CallManager._tag, `call: requestMediaPermissions exception: ${String(error)}`);
@@ -273,20 +407,235 @@ export class CallManager {
   }
 
   /**
+   * 发起群呼
+   * @param params 群呼参数（包含 calledAccIds）
+   * @returns 结果
+   * @since 2.0.0
+   */
+  async startGroupCall(params: NECallParam): Promise<NEResult> {
+    CallUILog.info(CallManager._tag, `startGroupCall: calleeCount=${params.calledAccIds?.length ?? 0}, type=${params.callType}`);
+
+    // 验证群呼参数
+    if (!params.calledAccIds || params.calledAccIds.length === 0) {
+      CallUILog.error(CallManager._tag, 'startGroupCall failed: calledAccIds is empty');
+      return new NEResult(-1, 'Group call requires calledAccIds');
+    }
+
+    // 请求媒体权限
+    try {
+      const code = await PermissionUtils.requestMediaPermissions(this._context!, params.callType);
+      if (code != NEErrorCode.SUCCESS) {
+        CallUILog.error(CallManager._tag, 'startGroupCall: media permission denied');
+        // 显示权限拒绝引导提示
+        this._handlePermissionDenied(code);
+        return new NEResult(code, PermissionUtils.getPermissionDeniedMessage(code));
+      }
+    } catch (error) {
+      CallUILog.error(CallManager._tag, `startGroupCall: requestMediaPermissions exception: ${String(error)}`);
+      return new NEResult(NEErrorCode.COMMON_ERROR, 'Media permission request failed');
+    }
+
+    // 调用引擎发起群呼
+    CallUILog.info(CallManager._tag, `[群呼调试] 开始调用 NECallEngine.call(), params=${JSON.stringify({
+      callType: params.callType,
+      calledAccIds: params.calledAccIds,
+      rtcChannelName: params.rtcChannelName,
+      isGroupCall: params.isGroupCall()
+    })}`);
+    const callResult = await NECallEngine.getInstance().call(params);
+    CallUILog.info(CallManager._tag, `[群呼调试] NECallEngine.call() 返回: code=${callResult.code}, message=${callResult.message}`);
+
+    if (callResult.code === 0) {
+      // 检查群呼是否已提前结束（例如所有被叫均因占线自动拒绝）
+      // await call() 期间 IM 通知可能已处理并触发 onGroupCallEnd/reset，此时不应再打开通话页
+      const groupCallInfo = NEGroupCall.getInstance().currentGroupCallInfo();
+      if (!groupCallInfo) {
+        CallUILog.warn(CallManager._tag, 'startGroupCall: group call already ended before page launch, skip opening calling page');
+        return new NEResult(-1, 'Group call ended immediately');
+      }
+
+      // 设置群呼状态
+      CallState.instance.callType = params.callType;
+      CallState.instance.scene = NECallScene.GROUP_CALL;
+      CallState.instance.selfUser.callRole = NECallRole.CALLER;
+
+      // 主叫保持等待状态，计时器在首个被叫接听后启动
+      CallState.instance.selfUser.callStatus = NECallStatus.WAITING;
+
+      // 同步群呼信息到 UI 层（包含 callId）
+      CallState.instance.syncGroupCallInfo();
+
+      // 主叫方已加入 RTC，配置音视频设备（不启动计时器，等待首个被叫接听）
+      if (CallState.instance.isMicrophoneMute) {
+        await this.closeMicrophone();
+      } else {
+        await this.openMicrophone();
+      }
+      await this.setSpeakerphoneOn(CallState.instance.isEnableSpeaker);
+      CallState.instance.isLocalViewBig = false;
+      CallState.instance.isInNativeIncomingBanner = false;
+
+      // 初始化远端用户列表
+      CallState.instance.remoteUserList = [];
+      for (const accId of params.calledAccIds) {
+        const user = new User();
+        user.id = accId;
+        user.callRole = NECallRole.CALLED;
+        user.callStatus = NECallStatus.WAITING;
+        CallState.instance.remoteUserList.push(user);
+      }
+
+      // 更新用户信息（获取昵称、头像等）
+      this._updateUserInfo();
+
+      // 二次检查：设备配置的 await 期间群呼也可能已结束
+      if (!NEGroupCall.getInstance().currentGroupCallInfo()) {
+        CallUILog.warn(CallManager._tag, 'startGroupCall: group call ended during device setup, skip opening calling page');
+        return new NEResult(-1, 'Group call ended during device setup');
+      }
+
+      // 开始响铃
+      CallingBellFeature.instance.startRing();
+
+      // 启动通话页面
+      this.launchCallingPage();
+
+      CallUILog.info(CallManager._tag, 'startGroupCall success');
+    } else if (callResult.code === -2) {
+      CallUILog.info(CallManager._tag, 'User is in call');
+    } else {
+      CallUILog.error(CallManager._tag, `startGroupCall failed: code=${callResult.code}, message=${callResult.message}`);
+    }
+
+    return new NEResult(callResult.code, callResult.message ?? '');
+  }
+
+  /**
+   * 加入群呼（通过 callId）
+   * @param callId 群呼 ID
+   * @returns 结果
+   * @since 4.4.0
+   */
+  async joinGroupCall(callId: string): Promise<NEResult> {
+    CallUILog.info(CallManager._tag, `joinGroupCall: callId=${callId}`);
+
+    if (!callId || callId.length === 0) {
+      return new NEResult(-1, 'callId is empty');
+    }
+
+    // 请求媒体权限（群呼默认音频）
+    try {
+      const code = await PermissionUtils.requestMediaPermissions(this._context!, NECallType.AUDIO);
+      if (code != NEErrorCode.SUCCESS) {
+        CallUILog.error(CallManager._tag, 'joinGroupCall: media permission denied');
+        this._handlePermissionDenied(code);
+        return new NEResult(code, PermissionUtils.getPermissionDeniedMessage(code));
+      }
+    } catch (error) {
+      CallUILog.error(CallManager._tag, `joinGroupCall: requestMediaPermissions exception: ${String(error)}`);
+      return new NEResult(NEErrorCode.COMMON_ERROR, 'Media permission request failed');
+    }
+
+    const param: GroupJoinParam = { callId };
+    const result = await NEGroupCall.getInstance().groupJoin(param);
+    CallUILog.info(CallManager._tag, `joinGroupCall result: code=${result.code}`);
+
+    if (result.code === 0) {
+      // 设置通话状态
+      CallState.instance.scene = NECallScene.GROUP_CALL;
+      CallState.instance.callType = NECallType.AUDIO;
+      CallState.instance.selfUser.callRole = NECallRole.CALLED;
+      CallState.instance.isLocalViewBig = false;
+      CallState.instance.isInNativeIncomingBanner = false;
+
+      // 从 groupCallInfo 同步远端成员列表
+      CallState.instance.remoteUserList = [];
+      const members: GroupCallMember[] = result.members ?? [];
+      for (const member of members) {
+        if (member.accId && member.accId !== CallState.instance.selfUser.id) {
+          const user = new User();
+          user.id = member.accId;
+          user.callRole = NECallRole.CALLED;
+          user.callStatus = NECallStatus.ACCEPT;
+          CallState.instance.remoteUserList.push(user);
+        }
+      }
+
+      // 处理通话接通（同步群呼信息、启动计时器、发送事件）
+      await CallState.instance.handleGroupCallConnected(callId);
+
+      // 更新用户信息（昵称、头像）
+      this._updateUserInfo();
+
+      // 启动通话页面
+      this.launchCallingPage();
+    }
+
+    return new NEResult(result.code, result.message ?? '');
+  }
+
+  /**
+   * 启动群呼发起页面
+   * @since 2.0.0
+   */
+  launchGroupCallPage(): void {
+    CallUILog.info(CallManager._tag, 'launchGroupCallPage');
+    try {
+      router.pushNamedRoute({
+        name: 'groupCallLaunchPage'
+      }).catch((err: Error) => {
+        CallUILog.error(CallManager._tag, `跳转群呼发起页面失败: ${String(err)}`);
+      });
+    } catch (error) {
+      CallUILog.error(CallManager._tag, `跳转群呼发起页面异常: ${String(error)}`);
+    }
+  }
+
+  /**
    * 接受呼叫
    * @returns 结果
    */
   async accept(): Promise<NEResult> {
-    CallUILog.info(CallManager._tag, `accept`);
-    const result = await NECallEngine.getInstance().accept();
-    CallUILog.info(CallManager._tag, `accept result = ${result}`);
+    CallUILog.info(CallManager._tag, `accept: isGroupCall=${CallState.instance.isGroupCall()}`);
 
-    if (result.code == 0) {
-      CallState.instance.selfUser.callStatus = NECallStatus.ACCEPT;
+    let resultCode: number = 0;
+    let resultMessage: string = '';
+
+    if (CallState.instance.isGroupCall()) {
+      // 群呼场景：接听后立即切换 UI 为通话页
+      CallState.instance.isGroupCallInvited = false;
+      const callId = CallState.instance.callId;
+      CallUILog.info(CallManager._tag, `accept: calling groupAccept, callId=${callId}`);
+      const groupResult = await NEGroupCall.getInstance().groupAccept({ callId: callId });
+      resultCode = groupResult.code;
+      resultMessage = groupResult.message ?? '';
+      CallUILog.info(CallManager._tag, `accept groupResult: code=${resultCode}, message=${resultMessage}`);
+    } else {
+      // 1v1 场景：调用 NECallEngine.accept()
+      const engineResult = await NECallEngine.getInstance().accept();
+      resultCode = engineResult.code;
+      resultMessage = engineResult.message ?? '';
+      CallUILog.info(CallManager._tag, `accept engineResult: code=${resultCode}, message=${resultMessage}`);
+    }
+
+    if (resultCode == 0) {
+      if (CallState.instance.isGroupCall()) {
+        // 群呼场景：groupAccept() 后服务端会推送自己的 state=2，
+        // 但 onGroupMemberListChanged 中有 callStatus !== ACCEPT 的防重入检查。
+        // 为避免该检查误拦截，直接在此处调用 handleGroupCallConnected，
+        // 而不依赖 IM 通知回调，确保麦克风开启、计时器启动、UI 事件正常触发。
+        // 铃声停止和扬声器恢复统一在 handleGroupCallConnected 中收敛，避免时序竞争。
+        await CallState.instance.handleGroupCallConnected(CallState.instance.callId);
+      } else {
+        // 1v1 保持原有时序：接听成功后立即停止铃声
+        CallingBellFeature.instance.stopRing();
+        CallUILog.info(CallManager._tag, 'accept: success, stopped ring');
+        CallState.instance.selfUser.callStatus = NECallStatus.ACCEPT;
+      }
     } else {
       CallState.instance.selfUser.callStatus = NECallStatus.NONE;
-      if (result.message && result.message.length > 0) {
-        ToastUtils.showToastWithString(this._context! as common.UIAbilityContext, result.message);
+      if (resultMessage.length > 0) {
+        ToastUtils.showToastWithString(this._context! as common.UIAbilityContext, resultMessage);
       } else {
         ToastUtils.showToast(this._context! as common.UIAbilityContext, $r('app.string.call_accept_failed'));
       }
@@ -297,7 +646,7 @@ export class CallManager {
       router.back();
     }
 
-    return new NEResult(result.code, result.message ?? '');
+    return new NEResult(resultCode, resultMessage);
   }
 
   /**
@@ -331,14 +680,71 @@ export class CallManager {
    * @returns 结果
    */
   async hangup(): Promise<NEResult> {
-    CallUILog.info(CallManager._tag, `hangup`);
-    const result = await NECallEngine.getInstance().hangup('');
-    CallUILog.info(CallManager._tag, `hangup result = ${result}`);
+    CallUILog.info(CallManager._tag, `hangup: isGroupCall=${CallState.instance.isGroupCall()}`);
+
+    let resultCode: number = 0;
+    let resultMessage: string = '';
+
+    // 设置主动挂断标志，防止引擎回调（onCallEnd/onGroupCallEnd）重复关闭页面
+    CallState.instance.isActiveHangup = true;
+
+    if (CallState.instance.isGroupCall()) {
+      // 群呼场景：使用 NEGroupCall.groupHangup()
+      // 群呼被叫通过 NEGroupCallImpl 独立管理，引擎层 context 未设置 callScene=GROUP_CALL，
+      // 若使用 NECallEngine.hangup() 会因 IDLE 状态直接返回，reject 请求不会发到服务端
+      const callId = CallState.instance.callId;
+      CallUILog.info(CallManager._tag, `hangup: 群呼模式，callId=${callId}`);
+      const groupResult = await NEGroupCall.getInstance().groupHangup({ callId: callId, reason: 'hangup' });
+      resultCode = groupResult.code;
+      resultMessage = groupResult.message ?? '';
+    } else {
+      // 1v1 场景：使用 NECallEngine.hangup()
+      const engineResult = await NECallEngine.getInstance().hangup('');
+      resultCode = engineResult.code;
+      resultMessage = engineResult.message ?? '';
+    }
+    CallUILog.info(CallManager._tag, `hangup result: code=${resultCode}, message=${resultMessage}`);
+
+    // 停止铃声
+    CallingBellFeature.instance.stopRing();
+    CallUILog.info(CallManager._tag, `hangup: stopped ring`);
 
     CallState.instance.selfUser.callStatus = NECallStatus.NONE;
     CallState.instance.cleanState();
 
-    return new NEResult(result.code, result.message ?? '');
+    // 清除保存的路由信息并关闭页面
+    this.clearPreviousRoute();
+    try {
+      router.back();
+      CallUILog.info(CallManager._tag, `hangup: router.back() called`);
+    } catch (e) {
+      CallUILog.error(CallManager._tag, `hangup: router.back() failed: ${e}`);
+    }
+
+    return new NEResult(resultCode, resultMessage);
+  }
+
+  /**
+   * 忽略来电（仅关闭本地 UI，不发送服务端通知）
+   * 与 reject/hangup 不同，ignore 不会通知服务端
+   * @since 2.1.0
+   */
+  ignore(): void {
+    CallUILog.info(CallManager._tag, `ignore: 忽略来电，仅重置本地状态`);
+
+    // 停止铃声
+    CallingBellFeature.instance.stopRing();
+
+    // 重置本地状态，不调用任何服务端 API
+    CallState.instance.selfUser.callStatus = NECallStatus.NONE;
+    CallState.instance.cleanState();
+
+    // 关闭通话页面
+    try {
+      router.back();
+    } catch (e) {
+      CallUILog.error(CallManager._tag, `ignore: router.back failed: ${e}`);
+    }
   }
 
   /**
@@ -359,7 +765,13 @@ export class CallManager {
     //   return new NEResult(-1, 'Camera permission denied');
     // }
 
+    // 先确保本地视频采集已启用（NERtc 要求在 muteLocalVideo 前先 enableLocalVideo）
+    const enableRet = NECallEngine.getInstance().enableLocalVideo(true);
+    CallUILog.info(CallManager._tag, `openCamera: enableLocalVideo(true) ret=${enableRet}`);
+
+    // 再取消静音（开始发送视频流）
     const ret = NECallEngine.getInstance().muteLocalVideo(false);
+    CallUILog.info(CallManager._tag, `openCamera: muteLocalVideo(false) ret=${ret}`);
     const result = new NEResult(ret, '');
 
     if (result.code == 0) {
@@ -429,12 +841,24 @@ export class CallManager {
    * 设置扬声器开关
    * @param enable 是否开启
    */
-  async setSpeakerphoneOn(enable: boolean): Promise<void> {
+  async setSpeakerphoneOn(enable: boolean, notify: boolean = true, updateState: boolean = true): Promise<void> {
     CallUILog.info(CallManager._tag, `setSpeakerphoneOn enable = ${enable}`);
-    NECallEngine.getInstance().setSpeakerphoneOn(enable);
-    // 更新状态
-    CallState.instance.isEnableSpeaker = enable;
-    NEEventNotify.getInstance().notify(setStateEvent, {});
+    const result = NECallEngine.getInstance().setSpeakerphoneOn(enable);
+    try {
+      await audio.getAudioManager().getRoutingManager()
+        .setCommunicationDevice(audio.CommunicationDeviceType.SPEAKER, enable);
+      CallUILog.info(CallManager._tag, `setCommunicationDevice success, enable = ${enable}`);
+    } catch (e) {
+      CallUILog.warn(CallManager._tag, `setCommunicationDevice failed, enable = ${enable}, error = ${String(e)}`);
+    }
+    CallUILog.info(CallManager._tag, `setSpeakerphoneOn result = ${result}, enable = ${enable}, notify = ${notify}, updateState = ${updateState}`);
+    // 静默路由重置时只切系统/RTC 路由，不覆盖 UI 目标状态
+    if (updateState) {
+      CallState.instance.isEnableSpeaker = enable;
+    }
+    if (notify) {
+      NEEventNotify.getInstance().notify(setStateEvent, {});
+    }
   }
 
   /**
@@ -459,14 +883,21 @@ export class CallManager {
 
   /**
    * 设置远程视图
-   * @param userId 用户ID
+   * @param userId 用户ID (群呼模式需要传入 accId)
    * @param viewId 视图ID
    */
   async setupRemoteView(userId: string, viewId: string): Promise<void> {
     CallUILog.info(CallManager._tag, `setupRemoteView(userId:${userId}, viewId:${viewId})`);
     let canvas: NERtcConstants.NERtcVideoCanvas = { canvasId: viewId }
     canvas.scalingMode = NERtcConstants.NERtcVideoScalingMode.kNERtcVideoScaleCropFill
-    NECallEngine.getInstance().setupRemoteView(canvas);
+
+    // 群呼模式使用 setupRemoteViewByUserId，1v1 模式使用 setupRemoteView
+    if (CallState.instance.isGroupCall() && userId) {
+      CallUILog.info(CallManager._tag, `setupRemoteView: 群呼模式，使用 setupRemoteViewByUserId`);
+      NECallEngine.getInstance().setupRemoteViewByUserId(canvas, userId);
+    } else {
+      NECallEngine.getInstance().setupRemoteView(canvas);
+    }
   }
 
   /**
@@ -572,15 +1003,34 @@ export class CallManager {
 
   /**
    * 初始化音频播放设备和摄像头
+   * 群呼默认只开音频，不开视频（用户可手动开启摄像头）
    */
   initAudioPlayDeviceAndCamera(): void {
-    if (NECallType.AUDIO == CallState.instance.callType) {
+    const isGroupCall = CallState.instance.isGroupCall();
+    const callType = CallState.instance.callType;
+
+    // 群呼默认只开音频，摄像头关闭
+    if (isGroupCall) {
+      CallState.instance.isEnableSpeaker = true;
+      CallState.instance.isCameraOpen = false;  // 默认不开视频
+    } else if (NECallType.AUDIO == callType) {
       CallState.instance.isEnableSpeaker = false;
       CallState.instance.isCameraOpen = false;
     } else {
       CallState.instance.isEnableSpeaker = true;
       CallState.instance.isCameraOpen = true;
     }
+
+    // 同步 RTC 层的视频状态（重要：避免 UI 状态与 RTC 状态不一致）
+    if (!CallState.instance.isCameraOpen) {
+      // 禁用本地视频采集（节省资源，不启动摄像头）
+      NECallEngine.getInstance().enableLocalVideo(false);
+      // 静音本地视频（不发送视频流）
+      NECallEngine.getInstance().muteLocalVideo(true);
+      CallState.instance.selfUser.videoAvailable = false;
+    }
+
+    CallUILog.info(CallManager._tag, `initAudioPlayDeviceAndCamera: isGroupCall=${isGroupCall}, callType=${callType}, isCameraOpen=${CallState.instance.isCameraOpen}, isEnableSpeaker=${CallState.instance.isEnableSpeaker}`);
     CallManager.instance.setSpeakerphoneOn(CallState.instance.isEnableSpeaker);
   }
 
@@ -613,7 +1063,10 @@ export class CallManager {
    * @param enable 是否启用
    */
   enableIncomingBanner(enable: boolean): void {
-    // TODO: 实现来电横幅功能
+    if (!this._uiConfig) {
+      this._uiConfig = {};
+    }
+    this._uiConfig.enableIncomingBanner = enable;
     CallUILog.info(CallManager._tag, `enableIncomingBanner enable = ${enable}`);
   }
 
@@ -632,6 +1085,30 @@ export class CallManager {
   showIncomingBanner(): void {
     CallUILog.info(CallManager._tag, `showIncomingBanner`);
     // TODO: 实现显示来电横幅
+  }
+
+  /**
+   * T042：前台重显——应用回到前台时调用，检查来电状态并重新展示横幅
+   * 集成方在 UIAbility.onForeground() 中调用此方法
+   */
+  handleAppEnterForeground(): void {
+    CallUILog.info(CallManager._tag,
+      `handleAppEnterForeground callStatus=${CallState.instance.selfUser.callStatus}`);
+
+    // 若横幅模式未开启，跳过横幅重显逻辑
+    if (this._uiConfig?.enableIncomingBanner !== true) {
+      return;
+    }
+
+    // 若来电仍在进行且横幅未显示，则重新展示横幅
+    if (CallState.instance.selfUser.callStatus === NECallStatus.WAITING &&
+        CallState.instance.selfUser.callRole !== undefined) {
+      if (!this._bannerWidget?.isShowing()) {
+        CallUILog.info(CallManager._tag, `appResumed checkBannerState reShowBanner`);
+        // 重新触发来电横幅展示：通过事件系统驱动，复用已有的展示逻辑
+        NEEventNotify.getInstance().notify(setStateEventOnCallReceived, {});
+      }
+    }
   }
 
   /**
@@ -744,5 +1221,19 @@ export class CallManager {
     }
   }
 
-}
+  /**
+   * 处理权限被拒绝的情况
+   * @param errorCode 权限错误码
+   * @since 2.0.0
+   */
+  private _handlePermissionDenied(errorCode: number): void {
+    CallUILog.info(CallManager._tag, `_handlePermissionDenied: errorCode=${errorCode}`);
+    if (this._context) {
+      // 显示权限拒绝引导对话框
+      PermissionUtils.showPermissionDeniedGuidance(this._context as common.UIAbilityContext, errorCode);
+    } else {
+      CallUILog.warn(CallManager._tag, '_handlePermissionDenied: context is null, cannot show guidance');
+    }
+  }
 
+}

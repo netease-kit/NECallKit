@@ -78,8 +78,26 @@ export class UserModel {
     return this.appKey
   }
 
-  public async loadLastLoginAccount() {
-    return this.loginCachePreferences.get("lastAccid", "")
+  public async loadLastLoginAccount(): Promise<string> {
+    const value = await this.loginCachePreferences.get("lastAccid", "");
+    return value as string;
+  }
+
+  public async loadLastLoginToken(): Promise<string> {
+    const value = await this.loginCachePreferences.get("lastToken", "");
+    return value as string;
+  }
+
+  async saveLoginCredentials(accid: string, token: string): Promise<void> {
+    this.loginCachePreferences.put("lastAccid", accid);
+    this.loginCachePreferences.put("lastToken", token);
+    await this.loginCachePreferences.flush();
+  }
+
+  async clearLoginCredentials(): Promise<void> {
+    this.loginCachePreferences.delete("lastAccid");
+    this.loginCachePreferences.delete("lastToken");
+    await this.loginCachePreferences.flush();
   }
 
   async saveLastLoginAccount(accid: string) {

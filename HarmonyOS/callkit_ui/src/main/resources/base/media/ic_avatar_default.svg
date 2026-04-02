@@ -1,0 +1,12 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="60" cy="60" r="60" fill="#C2D5F5"/>
+  <clipPath id="c">
+    <circle cx="60" cy="60" r="60"/>
+  </clipPath>
+  <g clip-path="url(#c)">
+    <!-- 头部 -->
+    <circle cx="60" cy="44" r="20" fill="white"/>
+    <!-- 肩部（大圆裁剪后呈弧形） -->
+    <circle cx="60" cy="106" r="42" fill="white"/>
+  </g>
+</svg>

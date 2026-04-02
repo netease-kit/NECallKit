@@ -1,0 +1,7 @@
+<svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle opacity="0.5" cx="36" cy="36" r="36" fill="black"/>
+<!-- Exit fullscreen icon: arrows pointing inward from corners -->
+<path d="M24 32V24H32M48 32V24H40M24 40V48H32M48 40V48H40" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- Inner rectangle representing minimized view -->
+<rect x="28" y="28" width="16" height="16" rx="2" stroke="white" stroke-width="2" fill="none"/>
+</svg>
