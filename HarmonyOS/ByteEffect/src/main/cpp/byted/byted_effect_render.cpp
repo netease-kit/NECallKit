@@ -30,13 +30,20 @@ BytedEffectRender::~BytedEffectRender() {
 napi_value BytedEffectRender::Construct(napi_env env, napi_callback_info info) {
   AV_INFO("BytedEffectRender Construct ...");
   napi_value thisVar;
-  assert(napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr) == napi_ok);
+  if (napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr) != napi_ok) {
+    AV_ERROR("BytedEffectRender Construct: napi_get_cb_info failed");
+    return nullptr;
+  }
   BytedEffectRender *render = new BytedEffectRender();
   render->env_ = env;
-  assert(napi_wrap(env, thisVar, (void*)render, [](napi_env env, void* data, void* hint) {
+  if (napi_wrap(env, thisVar, (void*)render, [](napi_env env, void* data, void* hint) {
     auto effect_render = (BytedEffectRender *)data;
     delete effect_render;
-  }, nullptr, &render->process_ref_) == napi_ok);
+  }, nullptr, &render->process_ref_) != napi_ok) {
+    AV_ERROR("BytedEffectRender Construct: napi_wrap failed");
+    delete render;
+    return nullptr;
+  }
   return thisVar;
 }
 
@@ -50,8 +57,14 @@ napi_value BytedEffectRender::Init(napi_env env, napi_value exports) {
     {"updateComposerNode", nullptr, UpdateComposerNode, nullptr, nullptr, nullptr, napi_default, nullptr},
   };
   napi_value clazz;
-  assert(napi_define_class(env, "BytedRender", NAPI_AUTO_LENGTH, BytedEffectRender::Construct, nullptr, sizeof(properties)/sizeof(properties[0]), properties, &clazz) == napi_ok);
-  assert(napi_set_named_property(env, exports, "BytedRender",clazz) == napi_ok);
+  if (napi_define_class(env, "BytedRender", NAPI_AUTO_LENGTH, BytedEffectRender::Construct, nullptr, sizeof(properties)/sizeof(properties[0]), properties, &clazz) != napi_ok) {
+    AV_ERROR("Failed to define BytedRender class");
+    return exports;
+  }
+  if (napi_set_named_property(env, exports, "BytedRender", clazz) != napi_ok) {
+    AV_ERROR("Failed to export BytedRender");
+    return exports;
+  }
   return exports;
 }
 
@@ -59,63 +72,65 @@ napi_value BytedEffectRender::SetBundlePath(napi_env env, napi_callback_info inf
     napi_value thisVar;
     size_t argc = 2;
     napi_value args[2];
-    assert(napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr) == napi_ok);
-  
+    napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr);
+
     size_t len;
-    assert(napi_get_value_string_utf8(env, args[0], nullptr, 0, &len) == napi_ok);
+    napi_get_value_string_utf8(env, args[0], nullptr, 0, &len);
     std::vector<char> buf(len + 1);
-    assert(napi_get_value_string_utf8(env, args[0], buf.data(), len + 1, &len) == napi_ok);
-  
+    napi_get_value_string_utf8(env, args[0], buf.data(), len + 1, &len);
+
     std::string file_path = std::string(buf.data());
     AV_INFO("file_path: %{public}s", file_path.c_str());
-  
-    assert(napi_get_value_string_utf8(env, args[1], nullptr, 0, &len) == napi_ok);
+
+    napi_get_value_string_utf8(env, args[1], nullptr, 0, &len);
     std::vector<char> buf1(len + 1);
-    assert(napi_get_value_string_utf8(env, args[1], buf1.data(), len + 1, &len) == napi_ok);
+    napi_get_value_string_utf8(env, args[1], buf1.data(), len + 1, &len);
     std::string license_path = std::string(buf1.data());
     AV_INFO("license_path: %{public}s", license_path.c_str());
-  
+
     BytedEffectRender *effect_render;
-    assert(napi_unwrap(env, thisVar, reinterpret_cast<void **>(&effect_render)) == napi_ok);
+    napi_unwrap(env, thisVar, reinterpret_cast<void **>(&effect_render));
+    if (effect_render == nullptr) { AV_ERROR("SetBundlePath: effect_render is nullptr"); return thisVar; }
     effect_render->bundle_path_ = file_path;
     effect_render->license_path_ = license_path;
     return thisVar;
 }
 
 napi_value BytedEffectRender::EnableBeauty(napi_env env, napi_callback_info info) {
-  
+
     napi_value thisVar;
     size_t argc = 1;
     napi_value args[1];
-    assert(napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr) == napi_ok);
-  
+    napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr);
+
     BytedEffectRender* effect_render;
-    assert(napi_unwrap(env, thisVar, reinterpret_cast<void **>(&effect_render)) == napi_ok);
-  
+    napi_unwrap(env, thisVar, reinterpret_cast<void **>(&effect_render));
+
     if (effect_render == nullptr) {
       AV_ERROR("effect_render is nullptr.");
       return thisVar;
     }
-  
+
     bool enable = false;
-    assert(napi_get_value_bool(env, args[0], &enable) == napi_ok);
+    napi_get_value_bool(env, args[0], &enable);
     AV_INFO("EnableBeauty enable:%{public}d", enable);
-  
+
     effect_render->EnableBeauty(enable);
     return thisVar;
 }
 
 napi_value BytedEffectRender::GetVideoRenderHandle(napi_env env, napi_callback_info info) {
-  
+
   napi_value thisVar;
-  assert(napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr) == napi_ok);
+  napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
 
   BytedEffectRender* byted_render;
-  assert(napi_unwrap(env, thisVar, reinterpret_cast<void **>(&byted_render)) == napi_ok);
+  napi_unwrap(env, thisVar, reinterpret_cast<void **>(&byted_render));
   AV_INFO("GetBytedEffectRenderHandle addr: %{public}p", byted_render);
-  
+  if (byted_render == nullptr) { AV_ERROR("GetVideoRenderHandle: byted_render is nullptr"); return nullptr; }
+
   napi_value handle;
-  assert(napi_create_bigint_uint64(env, (uint64_t)byted_render, &handle) == napi_ok);
+  napi_create_bigint_uint64(env, (uint64_t)byted_render, &handle);
   return handle;
 }
 
@@ -123,21 +138,20 @@ napi_value BytedEffectRender::SetComposerNodes(napi_env env, napi_callback_info 
     napi_value thisVar;
     size_t argc = 1;
     napi_value args[1];
-    assert(napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr) == napi_ok);
-  
+    napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr);
+
     uint32_t len = 0;
-    assert(napi_get_array_length(env, args[0], &len) == napi_ok);
-    
+    napi_get_array_length(env, args[0], &len);
+
     const char** node_paths = new const char*[len];
     for (uint32_t i = 0; i < len; i++) {
       napi_value element;
       napi_get_element(env, args[0], i, &element);
-    
+
       napi_valuetype value_type;
       napi_typeof(env, element, &value_type);
       if (value_type != napi_string) continue;
-    
-      //get string len.
+
       size_t str_len;
       napi_get_value_string_utf8(env, element, nullptr, 0, &str_len);
       char* str_copy = new char[str_len + 1];
@@ -145,12 +159,18 @@ napi_value BytedEffectRender::SetComposerNodes(napi_env env, napi_callback_info 
       napi_get_value_string_utf8(env, element, str_copy, str_len + 1, &copied);
       node_paths[i] = str_copy;
     }
-  
+
     BytedEffectRender* byted_render;
-    assert(napi_unwrap(env, thisVar, reinterpret_cast<void **>(&byted_render)) == napi_ok);
+    napi_unwrap(env, thisVar, reinterpret_cast<void **>(&byted_render));
+    if (byted_render == nullptr) {
+      AV_ERROR("SetComposerNodes: byted_render is nullptr");
+      for (uint32_t i = 0; i < len; i++) delete[] node_paths[i];
+      delete[] node_paths;
+      return thisVar;
+    }
     bef_effect_ai_composer_set_nodes(byted_render->handle_, node_paths, len);
-    
-    for (int i = 0; i < len; i++) 
+
+    for (int i = 0; i < len; i++)
       delete[] node_paths[i];
     delete [] node_paths;
     return thisVar;
@@ -160,24 +180,25 @@ napi_value BytedEffectRender::UpdateComposerNode(napi_env env, napi_callback_inf
     napi_value thisVar;
     size_t argc = 3;
     napi_value args[3];
-    assert(napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr) == napi_ok);
-      
+    napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr);
+
     size_t str_len;
     napi_get_value_string_utf8(env, args[0], nullptr, 0, &str_len);
     std::string node_path(str_len, '\0');
     napi_get_value_string_utf8(env,  args[0], &node_path[0], str_len + 1, &str_len);
     AV_INFO("UpdateComposerNode node_path: %{public}s", node_path.c_str());
-  
+
     napi_get_value_string_utf8(env, args[1], nullptr, 0, &str_len);
     std::string key(str_len, '\0');
     napi_get_value_string_utf8(env, args[1], &key[0], str_len + 1, &str_len);
     AV_INFO("UpdateComposerNode key: %{public}s", key.c_str());
-  
+
     double value = 0.0f;
     napi_get_value_double(env, args[2], &value);
-    
+
     BytedEffectRender* byted_render;
-    assert(napi_unwrap(env, thisVar, reinterpret_cast<void **>(&byted_render)) == napi_ok); 
+    napi_unwrap(env, thisVar, reinterpret_cast<void **>(&byted_render));
+    if (byted_render == nullptr) { AV_ERROR("UpdateComposerNode: byted_render is nullptr"); return thisVar; }
     bef_effect_ai_composer_update_node(byted_render->handle_, node_path.c_str(), key.c_str(), value);
     return thisVar;
 }

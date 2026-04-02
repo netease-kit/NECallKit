@@ -8,7 +8,11 @@ import {
   V2NIMConnectStatus, V2NIMLoginStatus,
 } from '@nimsdk/base';
 import { Context } from '@kit.AbilityKit';
+import common from '@ohos.app.ability.common';
+import router from '@ohos.router';
 import { LoginPage } from './LoginPage';
+import { NECallUI } from '@yunxin/callkit_ui';
+import { NESetupConfig } from '@yunxin/callkit/src/main/ets/api/Models';
 
 
 @Concurrent
@@ -52,6 +56,7 @@ struct Index {
   @State loginStatus: string = 'loginStatus:init';
   @State accountId: string = 'wulei04';
   @State token: string = 'wulei04';
+  @State isAutoLogging: boolean = false;
 
   getUserModel(): UserModel {
     return UserModel.getInstance(getContext(this));
@@ -68,10 +73,12 @@ struct Index {
     let task: taskpool.Task = new taskpool.Task(copyFaceUnityModels, getContext());
     taskpool.execute(task, taskpool.Priority.HIGH).then(() => {
       console.info('copyAppAssets end...')
-      // this.downloadProgressDialog.close()
     }).catch((err: BusinessError) => {
       console.error(`execute copyAppAssets err:${JSON.stringify(err)}`)
     })
+
+    // 尝试自动登录
+    this.tryAutoLogin();
   }
 
   /**
@@ -158,10 +165,74 @@ struct Index {
     // 可以在这里移除监听器、清理资源等
   }
 
+  /**
+   * 尝试自动登录
+   * 读取上次保存的凭证，如果存在则自动执行登录流程
+   */
+  private async tryAutoLogin(): Promise<void> {
+    try {
+      const userModel = this.getUserModel();
+      const savedAccid = await userModel.loadLastLoginAccount();
+      const savedToken = await userModel.loadLastLoginToken();
+
+      if (!savedAccid || !savedToken) {
+        console.log('[Index] 无保存的登录凭证，显示登录页');
+        return;
+      }
+
+      console.log(`[Index] 发现保存的凭证，尝试自动登录: ${savedAccid}`);
+      this.isAutoLogging = true;
+
+      const context = getContext(this) as common.Context;
+      if (!userModel.getNimSdk()) {
+        userModel.nimRepository.createDefaultNim(context);
+      }
+
+      await userModel.getNimSdk().loginService.login(savedAccid, savedToken);
+      console.log('[Index] 自动登录成功');
+
+      const config: NESetupConfig = new NESetupConfig(
+        context,
+        userModel.getNimSdk(),
+        userModel.getAppKey(),
+        savedAccid
+      );
+      await NECallUI.getInstance().setupEngine(config);
+
+      AppStorage.setOrCreate('currentAccountId', savedAccid);
+
+      router.replaceUrl({ url: 'pages/HomePage' }).catch((err: Error) => {
+        console.error('[Index] 自动登录后跳转失败:', err);
+      });
+    } catch (error) {
+      console.error(`[Index] 自动登录失败: ${error instanceof Error ? error.message : String(error)}`);
+      // 自动登录失败，清除过期凭证，显示登录页
+      this.getUserModel().clearLoginCredentials();
+      this.isAutoLogging = false;
+    }
+  }
+
   build() {
-    // Index 作为应用入口，展示登录页面
     Column() {
-      LoginPage({})
+      if (this.isAutoLogging) {
+        // 自动登录中，显示加载状态
+        Column() {
+          LoadingProgress()
+            .width(48)
+            .height(48)
+          Text('自动登录中...')
+            .fontSize(16)
+            .fontColor('#999')
+            .margin({ top: 16 })
+        }
+        .width('100%')
+        .height('100%')
+        .justifyContent(FlexAlign.Center)
+        .alignItems(HorizontalAlign.Center)
+      } else {
+        // 显示登录页面
+        LoginPage({})
+      }
     }
   }
 

@@ -132,4 +132,33 @@ export class NECallUIImpl implements INECallUI {
     CallManager.instance.enableVirtualBackground(enable);
   }
 
+  /**
+   * 启用/禁用来电横幅（Banner）模式
+   * @param enable 是否启用来电横幅
+   */
+  enableIncomingBanner(enable: boolean): void {
+    CallUILog.infoApi(NECallUIImpl._tag, `enableIncomingBanner(enable:${enable})`);
+    CallManager.instance.enableIncomingBanner(enable);
+  }
+
+  /**
+   * 发起群呼
+   * @param params 呼叫参数，需包含 calledAccIds（被叫账号列表，最多 9 人）
+   * @returns 结果
+   */
+  async groupCall(params: NECallParam): Promise<NEResult> {
+    CallUILog.infoApi(NECallUIImpl._tag, `groupCall(calleeCount:${params.calledAccIds?.length ?? 0})`);
+    return await CallManager.instance.startGroupCall(params);
+  }
+
+  /**
+   * 主动加入已存在的群呼
+   * @param callId 群呼 ID
+   * @returns 结果
+   */
+  async joinGroupCall(callId: string): Promise<NEResult> {
+    CallUILog.infoApi(NECallUIImpl._tag, `joinGroupCall(callId:${callId})`);
+    return await CallManager.instance.joinGroupCall(callId);
+  }
+
 }

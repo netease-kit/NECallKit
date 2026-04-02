@@ -43,7 +43,7 @@ export class NimRepository {
     //   },
     //   databaseServiceConfig: {
     //     encrypt: false,
-    //     appKey: "45c6af3c98409b18a84451215d0bdd6e"
+    //     appKey: "your app key"
     //   }
     // }
 

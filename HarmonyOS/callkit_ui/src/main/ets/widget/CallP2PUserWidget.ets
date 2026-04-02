@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import { CallState } from '../impl/CallState';
-import { NECallType, NECallStatus, NECallRole } from '../CallDefine';
+import { NECallType, NECallStatus, NECallRole, NECallScene } from '../CallDefine';
 import { Constants, setStateEvent, setStateEventRefreshTiming } from '../data/Constants';
 import { NERtcVideoView } from '@nertc/nertc_sdk';
 import { CallManager } from '../impl/CallManager';
@@ -48,6 +48,9 @@ export struct CallsP2PUserWidget {
   @State isCameraOpen: boolean = false;
   @State isLocalViewBig: boolean = false;
   @State dotAnimationIndex: number = 0; // 用于三个点闪动动画
+  // 群呼相关状态 (2.0.0+)
+  @State isGroupCall: boolean = false;
+  @State groupCallParticipantCount: number = 0;
   // 保存大画面和小画面的viewId
   _bigViewId: string = "bigView";
   _smallViewId: string = "smallView";
@@ -89,6 +92,10 @@ export struct CallsP2PUserWidget {
     this.callStatusEnum = state.selfUser.callStatus;
     this.isCameraOpen = state.isCameraOpen;
     this.isLocalViewBig = state.isLocalViewBig;
+
+    // 更新群呼状态 (2.0.0+)
+    this.isGroupCall = state.scene === NECallScene.GROUP_CALL;
+    this.groupCallParticipantCount = state.groupCallParticipantCount;
 
     // 更新状态文字
     this.updateCallStatusText(state);
@@ -206,11 +213,26 @@ export struct CallsP2PUserWidget {
 
   private updateCallStatusText(state: CallState): void {
     if (state.selfUser.callStatus === NECallStatus.WAITING) {
-      this.callStatusText = this.isCaller
-        ? this.getString($r('app.string.call_status_waiting_caller'))
-        : this.getString($r('app.string.call_status_waiting_callee'));
+      // 群呼模式显示参与者数量
+      if (this.isGroupCall) {
+        if (this.isCaller) {
+          // 主叫方等待
+          this.callStatusText = `等待接听... (${this.groupCallParticipantCount}人通话)`;
+        } else {
+          // 被叫方等待 - 显示主叫方发起的群呼
+          this.callStatusText = `邀请您加入多人通话 (${this.groupCallParticipantCount}人)`;
+        }
+      } else {
+        this.callStatusText = this.isCaller
+          ? this.getString($r('app.string.call_status_waiting_caller'))
+          : this.getString($r('app.string.call_status_waiting_callee'));
+      }
     } else if (state.selfUser.callStatus === NECallStatus.ACCEPT) {
-      this.callStatusText = this.getString($r('app.string.call_status_connected'));
+      if (this.isGroupCall) {
+        this.callStatusText = `通话中 (${this.groupCallParticipantCount}人)`;
+      } else {
+        this.callStatusText = this.getString($r('app.string.call_status_connected'));
+      }
     } else {
       this.callStatusText = '';
     }

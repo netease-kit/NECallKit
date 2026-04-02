@@ -1,6 +1,7 @@
 import router from '@ohos.router';
 import {SettingRow} from './view/SettingRow'
 import { CallSettingsManager, CallSettingsModel } from '../manager/CallSettingsManager';
+import { NECallUI } from '@yunxin/callkit_ui';
 
 @Entry
 @Component
@@ -27,6 +28,8 @@ export struct SettingPage {
       this.settingsModel.customChannelName = settings.customChannelName;
       this.settingsModel.customRtcUid = settings.customRtcUid;
       this.settingsModel.enableBlur = settings.enableBlur;
+      this.settingsModel.enableIncomingBanner = settings.enableIncomingBanner;
+      NECallUI.getInstance().enableIncomingBanner(settings.enableIncomingBanner);
       this.settingsModel.pushEnabled = settings.pushEnabled;
       this.settingsModel.pushTitle = settings.pushTitle;
       this.settingsModel.pushContent = settings.pushContent;
@@ -186,6 +189,15 @@ export struct SettingPage {
             Toggle({ type: ToggleType.Switch, isOn: this.settingsModel.enableBlur })
               .onChange((isOn: boolean) => {
                 this.settingsModel.enableBlur = isOn;
+              })
+          }
+
+          // 开启来电横幅
+          SettingRow({ label: "开启来电横幅" }) {
+            Toggle({ type: ToggleType.Switch, isOn: this.settingsModel.enableIncomingBanner })
+              .onChange((isOn: boolean) => {
+                this.settingsModel.enableIncomingBanner = isOn;
+                NECallUI.getInstance().enableIncomingBanner(isOn);
               })
           }
 

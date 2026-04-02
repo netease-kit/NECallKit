@@ -38,13 +38,20 @@ VideoFuRender::~VideoFuRender() {
 napi_value VideoFuRender::Construct(napi_env env, napi_callback_info info) {
   AV_INFO("VideoFuRender Construct ...");
   napi_value thisVar;
-  assert(napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr) == napi_ok);
+  if (napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr) != napi_ok) {
+    AV_ERROR("VideoFuRender Construct: napi_get_cb_info failed");
+    return nullptr;
+  }
   VideoFuRender *render = new VideoFuRender();
   render->env_ = env;
-  assert(napi_wrap(env, thisVar, (void*)render, [](napi_env env, void* data, void* hint) {
+  if (napi_wrap(env, thisVar, (void*)render, [](napi_env env, void* data, void* hint) {
     auto fu_render = (VideoFuRender *)data;
     delete fu_render;
-  }, nullptr, &render->process_ref_) == napi_ok);
+  }, nullptr, &render->process_ref_) != napi_ok) {
+    AV_ERROR("VideoFuRender Construct: napi_wrap failed");
+    delete render;
+    return nullptr;
+  }
   return thisVar;
 }
 
@@ -70,34 +77,36 @@ napi_value VideoFuRender::SetBundlePath(napi_env env, napi_callback_info info) {
   napi_value thisVar;
   size_t argc = 1;
   napi_value args[1];
-  assert(napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr) == napi_ok);
-  
+  napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr);
+
   size_t len;
-  assert(napi_get_value_string_utf8(env, args[0], nullptr, 0, &len) == napi_ok);
-  
+  napi_get_value_string_utf8(env, args[0], nullptr, 0, &len);
+
   std::vector<char> buf(len + 1);
-  assert(napi_get_value_string_utf8(env, args[0], buf.data(), len + 1, &len) == napi_ok);
-  
+  napi_get_value_string_utf8(env, args[0], buf.data(), len + 1, &len);
+
   std::string file_path = std::string(buf.data());
   AV_INFO("file_path: %{public}s", file_path.c_str());
-  
+
   VideoFuRender *fu_render;
-  assert(napi_unwrap(env, thisVar, reinterpret_cast<void **>(&fu_render)) == napi_ok);
+  napi_unwrap(env, thisVar, reinterpret_cast<void **>(&fu_render));
+  if (fu_render == nullptr) { AV_ERROR("SetBundlePath: fu_render is nullptr"); return thisVar; }
   fu_render->bundle_path_ = file_path;
   return thisVar;
 }
 
 napi_value VideoFuRender::GetVideoFuRenderHandle(napi_env env, napi_callback_info info) {
-  
+
   napi_value thisVar;
-  assert(napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr) == napi_ok);
-  
+  napi_get_cb_info(env, info, nullptr, nullptr, &thisVar, nullptr);
+
   VideoFuRender* fu_render;
-  assert(napi_unwrap(env, thisVar, reinterpret_cast<void **>(&fu_render)) == napi_ok);
+  napi_unwrap(env, thisVar, reinterpret_cast<void **>(&fu_render));
   AV_INFO("GetVideoFuRenderHandle addr: %{public}p", fu_render);
-  
+  if (fu_render == nullptr) { AV_ERROR("GetVideoFuRenderHandle: fu_render is nullptr"); return nullptr; }
+
   napi_value handle;
-  assert(napi_create_bigint_uint64(env, (uint64_t)fu_render, &handle) == napi_ok);
+  napi_create_bigint_uint64(env, (uint64_t)fu_render, &handle);
   return handle;
 }
 
@@ -105,22 +114,23 @@ napi_value VideoFuRender::SetBeautyParam(napi_env env, napi_callback_info info) 
   napi_value thisVar;
   size_t argc = 2;
   napi_value args[2];
-  assert(napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr) == napi_ok);
-  
+  napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr);
+
   size_t len;
-  assert(napi_get_value_string_utf8(env, args[0], nullptr, 0, &len) == napi_ok);
+  napi_get_value_string_utf8(env, args[0], nullptr, 0, &len);
   std::vector<char> buf(len + 1);
-  assert(napi_get_value_string_utf8(env, args[0], buf.data(), len + 1, &len) == napi_ok);
+  napi_get_value_string_utf8(env, args[0], buf.data(), len + 1, &len);
   std::string key = std::string(buf.data());
   AV_INFO("SetBeautyParam key: %{public}s", key.c_str());
-  
+
   double value;
-  assert(napi_get_value_double(env, args[1], &value) == napi_ok);
+  napi_get_value_double(env, args[1], &value);
   AV_INFO("SetBeautyParam value: %{public}f", value);
-  
+
   VideoFuRender* fu_render;
-  assert(napi_unwrap(env, thisVar, reinterpret_cast<void **>(&fu_render)) == napi_ok);
-  
+  napi_unwrap(env, thisVar, reinterpret_cast<void **>(&fu_render));
+  if (fu_render == nullptr) { AV_ERROR("SetBeautyParam: fu_render is nullptr"); return thisVar; }
+
   if (fu_render->ready_) {
     fu_render->SetBeautyFilterImpl(false, key, value);
   } else {
@@ -133,22 +143,23 @@ napi_value VideoFuRender::SetFilterParam(napi_env env, napi_callback_info info) 
   napi_value thisVar;
   size_t argc = 2;
   napi_value args[2];
-  assert(napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr) == napi_ok);
-  
+  napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr);
+
   size_t len;
-  assert(napi_get_value_string_utf8(env, args[0], nullptr, 0, &len) == napi_ok);
+  napi_get_value_string_utf8(env, args[0], nullptr, 0, &len);
   std::vector<char> buf(len + 1);
-  assert(napi_get_value_string_utf8(env, args[0], buf.data(), len + 1, &len) == napi_ok);
+  napi_get_value_string_utf8(env, args[0], buf.data(), len + 1, &len);
   std::string filter_name = std::string(buf.data());
   AV_INFO("SetFilterParam filter_name: %{public}s", filter_name.c_str());
-  
+
   double filter_level;
-  assert(napi_get_value_double(env, args[1], &filter_level) == napi_ok);
+  napi_get_value_double(env, args[1], &filter_level);
   AV_INFO("SetFilterParam filter_level: %f", filter_level);
-  
+
   VideoFuRender* fu_render;
-  assert(napi_unwrap(env, thisVar, reinterpret_cast<void **>(&fu_render)) == napi_ok);
-  
+  napi_unwrap(env, thisVar, reinterpret_cast<void **>(&fu_render));
+  if (fu_render == nullptr) { AV_ERROR("SetFilterParam: fu_render is nullptr"); return thisVar; }
+
   if (fu_render->ready_) {
     fu_render->SetBeautyFilterImpl(true, filter_name, filter_level);
   } else {
@@ -159,22 +170,22 @@ napi_value VideoFuRender::SetFilterParam(napi_env env, napi_callback_info info) 
 }
 
 napi_value VideoFuRender::EnableBeauty(napi_env env, napi_callback_info info) {
-  
+
   napi_value thisVar;
   size_t argc = 1;
   napi_value args[1];
-  assert(napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr) == napi_ok);
-  
+  napi_get_cb_info(env, info, &argc, args, &thisVar, nullptr);
+
   VideoFuRender* fu_render;
-  assert(napi_unwrap(env, thisVar, reinterpret_cast<void **>(&fu_render)) == napi_ok);
-  
+  napi_unwrap(env, thisVar, reinterpret_cast<void **>(&fu_render));
+
   if (fu_render == nullptr) {
     AV_ERROR("fu_render is nullptr.");
     return thisVar;
   }
-  
+
   bool enable = false;
-  assert(napi_get_value_bool(env, args[0], &enable) == napi_ok);
+  napi_get_value_bool(env, args[0], &enable);
   AV_INFO("EnableBeauty enable:%{public}d", enable);
   
     if (enable && fu_render->running_){
@@ -198,8 +209,14 @@ napi_value VideoFuRender::Init(napi_env env, napi_value exports) {
   };
   
   napi_value clazz;
-  assert(napi_define_class(env, "VideoFuRender", NAPI_AUTO_LENGTH, VideoFuRender::Construct, nullptr, sizeof(properties)/sizeof(properties[0]), properties, &clazz) == napi_ok);
-  assert(napi_set_named_property(env, exports, "VideoFuRender", clazz) == napi_ok);
+  if (napi_define_class(env, "VideoFuRender", NAPI_AUTO_LENGTH, VideoFuRender::Construct, nullptr, sizeof(properties)/sizeof(properties[0]), properties, &clazz) != napi_ok) {
+    AV_ERROR("Failed to define VideoFuRender class");
+    return exports;
+  }
+  if (napi_set_named_property(env, exports, "VideoFuRender", clazz) != napi_ok) {
+    AV_ERROR("Failed to export VideoFuRender");
+    return exports;
+  }
   return exports;
 }
 

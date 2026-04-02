@@ -95,6 +95,26 @@
     {
       "name": "call_accept_failed",
       "value": "接听失败"
+    },
+    {
+      "name": "group_call_exceed_max",
+      "value": "最多支持%d人通话"
+    },
+    {
+      "name": "user_already_in_call",
+      "value": "用户已在通话中"
+    },
+    {
+      "name": "group_call_below_min",
+      "value": "至少需要%d人参与通话"
+    },
+    {
+      "name": "group_call_invalid_param",
+      "value": "呼叫参数无效"
+    },
+    {
+      "name": "group_call_failed",
+      "value": "呼叫失败"
     }
   ]
 }

@@ -120,6 +120,9 @@ export struct LoginPage {
       );
       await NECallUI.getInstance().setupEngine(config);
 
+      // 保存登录凭证，用于下次自动登录
+      await userModel.saveLoginCredentials(accountId, token);
+
       // 记录当前登录账号，供 HomePage 展示
       AppStorage.setOrCreate('currentAccountId', accountId);
 

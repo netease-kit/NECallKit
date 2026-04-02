@@ -2,6 +2,10 @@ import router from '@ohos.router';
 import { UserModel } from '../viewmodel/UserModel';
 import { NECallUI } from '@yunxin/callkit_ui';
 import { CallUILog } from '@yunxin/callkit_ui/src/main/ets/utils/CallUILog';
+import { CallSettingsManager } from '../manager/CallSettingsManager';
+// 导入以注册命名路由（HarmonyOS 跨模块路由机制要求）
+import '@yunxin/callkit_ui/src/main/ets/pages/GroupCallLaunchPage';
+import './GroupCallSettingsPage';
 import { NECallEngine } from '@yunxin/callkit';
 import { BusinessError } from '@ohos.base';
 import { systemDateTime } from '@kit.BasicServicesKit';
@@ -14,6 +18,7 @@ import { CallRecordServiceImpl } from '../service/CallRecordServiceImpl';
 import { CallRecordStorage } from '../service/CallRecordStorage';
 import { RecordUtils } from '../utils/RecordUtils';
 import { V2NIMMessage, V2NIMMessageService, V2NIMKickedOfflineDetail } from '@nimsdk/base';
+import { BuildConfig } from '../config/BuildConfig';
 
 
 let TAG: string = 'HomePage'
@@ -64,6 +69,17 @@ export struct HomePage {
 
       // 注册被踢下线监听
       this.registerKickedOfflineListener();
+
+      // 加载并应用持久化设置（含来电横幅开关）
+      try {
+        const settingsManager = new CallSettingsManager();
+        await settingsManager.loadSettings(context);
+        const settings = settingsManager.getSettings();
+        NECallUI.getInstance().enableIncomingBanner(settings.enableIncomingBanner);
+        CallUILog.info('HomePage', `settings loaded: enableIncomingBanner=${settings.enableIncomingBanner}`);
+      } catch (e) {
+        CallUILog.error('HomePage', `load settings error: ${String(e)}`);
+      }
 
       this.enableBackgroundRunning(true);
     } catch (error) {
@@ -135,8 +151,9 @@ export struct HomePage {
         `NECallUI.logout 失败: ${error instanceof Error ? error.message : String(error)}`);
     }
 
-    // 清除当前账号信息
+    // 清除当前账号信息和保存的登录凭证，防止返回登录页后自动登录
     AppStorage.delete('currentAccountId');
+    this.getUserModel().clearLoginCredentials();
 
     // 使用 replaceUrl 返回登录页面，销毁当前 HomePage
     router.replaceUrl({
@@ -201,7 +218,7 @@ export struct HomePage {
       // 添加需要被拉起应用的bundleName和abilityName
       wants: [
         {
-          bundleName: "com.netease.yunxin.app.hm.videocall",
+          bundleName: "com.netease.yunxin.app.videocall.hm",
           abilityName: "EntryAbility"
         }
       ],
@@ -470,6 +487,14 @@ export struct HomePage {
             .width('100%')
             .textAlign(TextAlign.Start)
         }
+
+        // 打包时间（北京时间）
+        Text(`打包时间：${BuildConfig.BUILD_TIME}`)
+          .fontSize(14)
+          .fontColor($r('app.color.home_text_secondary'))
+          .margin({ top: 4 })
+          .width('100%')
+          .textAlign(TextAlign.Start)
       }
       .width('100%')
       .padding({
@@ -488,7 +513,7 @@ export struct HomePage {
       Button('单人通话')
         .width('80%')
         .height(50)
-        .margin({ bottom: 40 })
+        .margin({ bottom: 16 })
         .backgroundColor($r('app.color.home_button_background'))
         .fontColor($r('app.color.home_button_text'))
         .onClick(() => {
@@ -496,6 +521,22 @@ export struct HomePage {
             url: 'pages/SingleCallPage'
           }).catch((err: Error) => {
             console.error('[HomePage] 跳转到呼叫页面失败:', err);
+          });
+        })
+
+      // 多人通话按钮
+      Button('多人通话')
+        .width('80%')
+        .height(50)
+        .margin({ bottom: 40 })
+        .backgroundColor($r('app.color.home_button_background'))
+        .fontColor($r('app.color.home_button_text'))
+        .onClick(() => {
+          // 使用命名路由跳转到群呼发起页
+          router.pushNamedRoute({
+            name: 'groupCallLaunchPage'
+          }).catch((err: Error) => {
+            console.error('[HomePage] 跳转到群呼发起页面失败:', err);
           });
         })
     }

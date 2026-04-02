@@ -6,9 +6,9 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "@yunxin/callkit": "4.0.1",
-    "@yunxin/callkit_ui": "4.0.1",
-    "@nertc/nertc_sdk": "5.9.11",
+    "@yunxin/callkit": "4.4.0",
+    "@yunxin/callkit_ui": "4.4.0",
+    "@nertc/nertc_sdk": "5.9.15",
     "@nimsdk/message": "10.9.50",
     "@nimsdk/user": "10.9.50",
     "@nimsdk/signalling": "10.9.50",
@@ -18,4 +18,3 @@
     "byteeffect": "file:../ByteEffect"
   }
 }
-

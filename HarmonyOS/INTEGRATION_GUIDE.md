@@ -38,8 +38,8 @@ NERTCCallKit 需要配合云信 IM SDK 使用，您需要：
 ```json5
 {
   "dependencies": {
-    "callkit": "file:../callkit",
-    "callkit_ui": "file:../callkit_ui"
+    "@yunxin/callkit": "4.4.0",
+    "@yunxin/callkit_ui": "4.4.0"
   }
 }
 ```
@@ -49,8 +49,8 @@ NERTCCallKit 需要配合云信 IM SDK 使用，您需要：
 ```json5
 {
   "dependencies": {
-    "callkit": "^1.0.0",
-    "callkit_ui": "^1.0.0"
+    "@yunxin/callkit": "4.4.0",
+    "@yunxin/callkit_ui": "4.4.0"
   }
 }
 ```
@@ -430,4 +430,5 @@ network.on('typeChange', (data) => {
 ## 更新日志
 
 查看各版本的更新内容，确保使用最新功能。
+
 

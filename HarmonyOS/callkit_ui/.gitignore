@@ -4,3 +4,6 @@
 /build
 /.cxx
 /.test
+/package-lock.json
+/package.json
+/tsconfig.json

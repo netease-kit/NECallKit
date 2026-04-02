@@ -25,6 +25,10 @@ export class CallingBellFeature {
   private _context: common.Context | null = null;
   // 自定义接听铃声（仅用于被叫）
   private _customIncomingRingtone: media.AVFileDescriptor | string | null = null;
+  // 当前播放角色，用于选择音频流类型
+  private _currentCallRole: NECallRole = NECallRole.NONE;
+  // 铃声任务代际号：startRing/stopRing 会递增，用于失效旧的异步播放流程
+  private _ringTaskToken: number = 0;
 
   /**
    * 私有构造函数，单例模式
@@ -72,24 +76,41 @@ export class CallingBellFeature {
    * - 被叫（CALLED）：优先使用自定义铃声，如果没有则使用 avchat_ring.mp3
    */
   async startRing(): Promise<void> {
-    CallUILog.info(CallingBellFeature._tag, `startRing`);
-    
-    const callRole = CallState.instance.selfUser.callRole;
+    const token = ++this._ringTaskToken;
+    CallUILog.info(CallingBellFeature._tag, `startRing token=${token}`);
 
-    //设置扬声器播放
-    audio.getAudioManager().getRoutingManager().setCommunicationDevice(audio.CommunicationDeviceType.SPEAKER, true)
+    // 群呼被邀请场景：用户可能曾是主叫，SDK 层 callRole 仍为 CALLER，
+    // 但 isGroupCallInvited 标记了当前是被邀请状态，应使用被叫铃声
+    const callRole = CallState.instance.isGroupCallInvited
+      ? NECallRole.CALLED
+      : CallState.instance.selfUser.callRole;
+    this._currentCallRole = callRole;
+
+    // 被叫方设置扬声器播放来电铃声
+    if (callRole === NECallRole.CALLED) {
+      try {
+        await audio.getAudioManager().getRoutingManager()
+          .setCommunicationDevice(audio.CommunicationDeviceType.SPEAKER, true);
+      } catch (e) {
+        CallUILog.warn(CallingBellFeature._tag, `setCommunicationDevice failed: ${String(e)}`);
+      }
+    }
 
     // 被叫时，优先使用自定义铃声
     if (callRole === NECallRole.CALLED && this._customIncomingRingtone !== null) {
       CallUILog.info(CallingBellFeature._tag, `被叫方，使用自定义铃声`);
-      await this.playRingtone(this._customIncomingRingtone);
+      await this.playRingtone(this._customIncomingRingtone, token);
       return;
     }
 
     // 获取默认铃声并播放
     const defaultRingtone = await this.getDefaultRingtone(callRole);
+    if (!this.isRingTaskValid(token)) {
+      CallUILog.info(CallingBellFeature._tag, `startRing aborted: token invalid after getDefaultRingtone, token=${token}`);
+      return;
+    }
     if (defaultRingtone) {
-      await this.playRingtone(defaultRingtone);
+      await this.playRingtone(defaultRingtone, token);
     }
   }
 
@@ -133,47 +154,62 @@ export class CallingBellFeature {
   /**
    * 停止播放铃声
    */
-  stopRing(): void {
-    CallUILog.info(CallingBellFeature._tag, `stopRing`);
-    this.stopRingtone();
+  async stopRing(): Promise<void> {
+    const token = ++this._ringTaskToken;
+    CallUILog.info(CallingBellFeature._tag, `stopRing begin, invalidateToken=${token}`);
+    await this.stopRingtone();
+    CallUILog.info(CallingBellFeature._tag, `stopRing done`);
   }
 
   /**
    * 播放铃声
    * @param source 铃声源（AVFileDescriptor 或 string 路径）
    */
-  private async playRingtone(source: media.AVFileDescriptor | string): Promise<void> {
+  private async playRingtone(source: media.AVFileDescriptor | string, token: number): Promise<void> {
+    if (!this.isRingTaskValid(token)) {
+      CallUILog.info(CallingBellFeature._tag, `playRingtone aborted before start: token invalid, token=${token}`);
+      return;
+    }
+
     const sourceType = typeof source === 'string' ? 'URL' : 'FileDescriptor';
-    CallUILog.info(CallingBellFeature._tag, `开始播放铃声，类型: ${sourceType}`);
+    CallUILog.info(CallingBellFeature._tag, `开始播放铃声，类型: ${sourceType}, token=${token}`);
     
     try {
       // 如果已有播放器正在播放，先停止
       if (this._ringtonePlayer) {
-        this.stopRingtone();
+        await this.stopRingtone();
       }
 
       // 创建新的 AVPlayer 实例
-      this._ringtonePlayer = await media.createAVPlayer();
+      const player = await media.createAVPlayer();
+      if (!this.isRingTaskValid(token)) {
+        CallUILog.info(CallingBellFeature._tag, `playRingtone aborted after create player: token invalid, token=${token}`);
+        await this.releasePlayer(player);
+        return;
+      }
+      this._ringtonePlayer = player;
 
-      // 根据 source 类型设置播放源
+      // 先注册状态变化监听，再设置播放源
+      // 重要：fdSrc 赋值会触发 idle→initialized 状态转换，
+      // 如果在赋值之后才注册监听，会丢失 initialized 事件，导致 prepare() 不被调用，铃声无法播放
+      player.on('stateChange', async (state: string, reason: media.StateChangeReason) => {
+        await this.handlePlayerStateChange(player, state, reason, token);
+      });
+
+      // 根据 source 类型设置播放源（触发状态转换）
       if (typeof source === 'string') {
-        this._ringtonePlayer.url = source;
+        player.url = source;
         CallUILog.info(CallingBellFeature._tag, `使用 URL 播放: ${source}`);
       } else {
-        this._ringtonePlayer.fdSrc = source;
+        player.fdSrc = source;
         CallUILog.info(CallingBellFeature._tag, `使用文件描述符播放`);
       }
 
-      // 注册状态变化监听
-      this._ringtonePlayer.on('stateChange', async (state: string, reason: media.StateChangeReason) => {
-        await this.handlePlayerStateChange(state, reason);
-      });
-
-      CallUILog.info(CallingBellFeature._tag, `播放器初始化完成，当前状态: ${this._ringtonePlayer.state}`);
+      CallUILog.info(CallingBellFeature._tag, `播放器初始化完成，当前状态: ${player.state}, token=${token}`);
 
     } catch (error) {
       CallUILog.error(CallingBellFeature._tag, `播放铃声失败:: ${String(error)}`);
-      this.releasePlayer();
+      await this.releasePlayer();
     }
   }
 
@@ -182,9 +218,15 @@ export class CallingBellFeature {
    * @param state 播放器状态
    * @param reason 状态变化原因
    */
-  private async handlePlayerStateChange(state: string, reason: media.StateChangeReason): Promise<void> {
-    const player = this._ringtonePlayer;
-    if (!player) {
+  private async handlePlayerStateChange(
+    player: media.AVPlayer,
+    state: string,
+    reason: media.StateChangeReason,
+    token: number
+  ): Promise<void> {
+    if (!this.isRingTaskValid(token) || this._ringtonePlayer !== player) {
+      CallUILog.info(CallingBellFeature._tag, `ignore stale player state: state=${state}, token=${token}, activeToken=${this._ringTaskToken}`);
+      await this.releasePlayer(player);
       return;
     }
 
@@ -195,15 +237,25 @@ export class CallingBellFeature {
       case 'initialized':
         CallUILog.info(CallingBellFeature._tag, `播放器状态: initialized，准备播放器`);
         try {
+          // 主叫方使用 MUSIC 流（不受静音/振动模式影响，与 Android STREAM_VOICE_CALL 对齐）
+          // 被叫方使用 RINGTONE 流（跟随系统铃声设置）
+          const streamUsage = this._currentCallRole === NECallRole.CALLER
+            ? audio.StreamUsage.STREAM_USAGE_MUSIC
+            : audio.StreamUsage.STREAM_USAGE_RINGTONE;
+          CallUILog.info(CallingBellFeature._tag, `audioRendererInfo: usage=${streamUsage}, role=${this._currentCallRole}`);
           player.audioRendererInfo = {
-            usage: audio.StreamUsage.STREAM_USAGE_RINGTONE,
+            usage: streamUsage,
             rendererFlags: 0
           }
 
           await player.prepare();
+          if (!this.isRingTaskValid(token) || this._ringtonePlayer !== player) {
+            await this.releasePlayer(player);
+            return;
+          }
         } catch (error) {
           CallUILog.error(CallingBellFeature._tag, `prepare 失败:: ${String(error)}`);
-          this.releasePlayer();
+          await this.releasePlayer(player);
         }
         break;
       case 'prepared':
@@ -212,10 +264,14 @@ export class CallingBellFeature {
           // 设置循环播放
           player.loop = true;
           await player.play();
+          if (!this.isRingTaskValid(token) || this._ringtonePlayer !== player) {
+            await this.releasePlayer(player);
+            return;
+          }
           CallUILog.info(CallingBellFeature._tag, `播放成功`);
         } catch (error) {
           CallUILog.error(CallingBellFeature._tag, `play 失败:: ${String(error)}`);
-          this.releasePlayer();
+          await this.releasePlayer(player);
         }
         break;
       case 'playing':
@@ -235,7 +291,7 @@ export class CallingBellFeature {
         break;
       case 'error':
         CallUILog.error(CallingBellFeature._tag, `播放器状态: error, 原因: ${reason}`);
-        this.releasePlayer();
+        await this.releasePlayer(player);
         break;
       default:
         CallUILog.warn(CallingBellFeature._tag, `未知播放器状态: ${state}`);
@@ -246,14 +302,16 @@ export class CallingBellFeature {
   /**
    * 释放播放器资源
    */
-  private releasePlayer(): void {
-    if (this._ringtonePlayer) {
+  private async releasePlayer(player: media.AVPlayer | null = this._ringtonePlayer): Promise<void> {
+    if (player) {
       try {
-        this._ringtonePlayer.release();
+        await player.release();
       } catch (error) {
         CallUILog.error(CallingBellFeature._tag, `释放播放器失败:: ${String(error)}`);
       } finally {
-        this._ringtonePlayer = null;
+        if (this._ringtonePlayer === player) {
+          this._ringtonePlayer = null;
+        }
       }
     }
   }
@@ -261,19 +319,23 @@ export class CallingBellFeature {
   /**
    * 停止铃声
    */
-  private stopRingtone(): void {
-    if (!this._ringtonePlayer) {
+  private async stopRingtone(): Promise<void> {
+    const player = this._ringtonePlayer;
+    if (!player) {
       return;
     }
 
     try {
-      this._ringtonePlayer.stop();
+      await player.stop();
       CallUILog.info(CallingBellFeature._tag, `铃声已停止`);
     } catch (error) {
       CallUILog.error(CallingBellFeature._tag, `停止铃声失败:: ${String(error)}`);
     } finally {
-      this.releasePlayer();
+      await this.releasePlayer(player);
     }
   }
-}
 
+  private isRingTaskValid(token: number): boolean {
+    return token === this._ringTaskToken;
+  }
+}

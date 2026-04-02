@@ -1,6 +1,6 @@
 {
   "name": "@yunxin/callkit_ui",
-  "version": "4.0.1",
+  "version": "4.4.0",
   "description": "云信呼叫组件 UIKit 是网易云信推出的音视频通话UI组件，提供音视频通话场景下常见的 1V1 音视频通话、群组音视频通话等功能",
   "keywords": ["呼叫组件", "UIKit", "音视频", "网易云信", "云信", "RTC"],
   "homepage": "https://yunxin.163.com/",
@@ -9,7 +9,7 @@
   "author": "Netease RTC Team",
   "license": "MIT",
   "dependencies": {
-    "@yunxin/callkit": "4.0.1",
+    "@yunxin/callkit": "4.4.0",
     "@nertc/nertc_sdk": "5.9.11",
     //虚拟背景插件，不用虚拟背景的话可以不依赖这个插件
     "@nertc/person_segment_plugin": "1.0.0",
