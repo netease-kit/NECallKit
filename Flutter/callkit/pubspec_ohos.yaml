@@ -1,7 +1,6 @@
-name: netease_callkit_ui
-description: "netease callkit_ui is a ui kit about audio&video calls launched by CommsEase."
+name: netease_callkit
+description: "netease callkit is a kit about audio&video calls launched by CommsEase."
 version: 4.4.3
-repository: https://github.com/netease-kit/NECallKit
 homepage: https://yunxin.163.com/
 
 environment:
@@ -11,43 +10,31 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_localizations:
-    sdk: flutter
-  yunxin_alog: ^2.0.6
-  hawk_meta: ^0.0.1
-  file: ^7.0.1
-  intl: any
   path_provider:
     git:
       url: https://gitcode.com/openharmony-tpc/flutter_packages.git
       path: packages/path_provider/path_provider
       ref: br_path_provider-v2.1.5_ohos
-  plugin_platform_interface: ^2.1.8
-  shared_preferences: 
-    git:
-        url: "https://gitcode.com/openharmony-tpc/flutter_packages.git"
-        path: "./packages/shared_preferences/shared_preferences"
-  crypto: ^3.0.7
+  yunxin_alog: ^2.0.0
+  hawk_meta: ^0.0.1
   netease_common: ^2.0.0
+  json_annotation: ^4.8.1
+  uuid: ^4.5.1
   nim_core_v2:
     git:
       url: "https://github.com/netease-kit/NIM-Flutter-SDK-OHOS.git"
-  fluttertoast: 
-    git:
-      url: "https://gitcode.com/openharmony-sig/flutter_fluttertoast.git"
-  flutter_screenutil: ^5.9.3
-  wakelock:
-    git:
-        url: "https://gitcode.com/openharmony-sig/flutter_wakelock.git"
-        path: ./wakelock
-  netease_callkit:
-    path: ./callkit
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  intl_utils: ^2.8.8
+  pigeon:
+   git:
+     url: "https://gitee.com/openharmony-sig/flutter_packages.git"
+     path: "packages/pigeon"
+  build_runner:
+  hawk_source_gen: ^0.0.3
+  json_serializable: ^6.7.1
 
 dependency_overrides:
   path_provider:
@@ -61,7 +48,6 @@ dependency_overrides:
 
 # The following section is specific to Flutter packages.
 flutter:
-  generate: true
   # This section identifies this Flutter project as a plugin project.
   # The 'pluginClass' specifies the class (in Java, Kotlin, Swift, Objective-C, etc.)
   # which should be registered in the plugin registry. This is required for
@@ -75,18 +61,18 @@ flutter:
   plugin:
     platforms:
       android:
-        package: com.netease.yunxin.flutter.plugins.callkit.ui
-        pluginClass: CallKitUIPlugin
+        package: com.netease.yunxin.flutter.plugins.callkit
+        pluginClass: CallkitPlugin
       ios:
-        pluginClass: CallKitUIPlugin
+        pluginClass: CallkitPlugin
       ohos:
-        package: netease_callkit_ui
-        pluginClass: CallkitUiPlugin
+        package: netease_callkit
+        pluginClass: CallkitPlugin
 
   # To add assets to your plugin package, add an assets section, like this:
-  assets:
-    - assets/audios/
-    - assets/images/
+  # assets:
+  #   - images/a_dot_burr.jpeg
+  #   - images/a_dot_ham.jpeg
   #
   # For details regarding assets in packages, see
   # https://flutter.dev/assets-and-images/#from-packages

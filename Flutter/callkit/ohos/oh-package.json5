@@ -1,0 +1,14 @@
+{
+  "name": "netease_callkit",
+  "version": "1.0.0",
+  "description": "Please describe the basic information.",
+  "main": "index.ets",
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@yunxin/callkit": "4.4.0",
+    "@nertc/nertc_sdk": "5.9.11",
+    "@nimsdk/base": "10.9.60-flutter",
+    "@nimsdk/nim": "10.9.60-flutter"
+  }
+}
