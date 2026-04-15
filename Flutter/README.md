@@ -22,6 +22,9 @@ Here we take the integration with UI (i.e., NECallKit) as an example, which is a
 - **Step2**: Integrate NECallKit into your project. Detailed integration process for each platform/framework: [Flutter](https://doc.yunxin.163.com/nertccallkit/guide/DYyMDk4OTY?platform=flutter) 
 - **Step3**: Make your first video call!
 
+## OHOS Version
+** To run the OHOS version, replace the pubspec.yaml file in each directory with the corresponding pubspec_ohos.yaml file from the project. **
+
 ## Contact Us
 
 - For more information about this scenario, please refer to [Audio/Video Calling Documentation](https://doc.yunxin.163.com/nertccallkit/guide/DYyMDk4OTY?platform=flutter)
