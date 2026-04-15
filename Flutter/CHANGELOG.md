@@ -1,3 +1,17 @@
+## [4.4.5] - 2026-04-15
+### Added
+- 增加flutter ohos端
+
+### Compatibility
+- Compatible with `callkit` Flutter 4.4.3
+## [4.4.3] - 2026-04-08
+### Added
+- 适配 `callkit` Flutter 4.4.3，支持 iOS LiveCommunicationKit `accept` / `hangup` response 回调上抛到 Flutter 层。
+- 示例工程补充了对应回调的浮层提示展示，便于验证系统来电界面的接听与拒绝反馈链路。
+
+### Compatibility
+- Compatible with `callkit` Flutter 4.4.3
+
 ## [4.4.0] - 2026-04-01
 ### Added
 - 新增群呼（多人音视频通话）功能

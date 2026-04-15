@@ -2,6 +2,8 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
@@ -42,16 +44,20 @@ class _CallsIndividualUserWidgetState extends State<CallsIndividualUserWidget>
       key: _bigViewKey,
       onPlatformViewCreated: (viewId) {
         _bigViewId = viewId;
+      },
+      onVideoViewReady: () {
+        // HarmonyOS: 必须等待 onLoad 回调后再设置视频画布
+        if (_bigViewId == null) return;
         bool isLocalViewBig = CallState.instance.isLocalViewBig;
         if (isLocalViewBig) {
-          CallManager.instance.setupLocalView(viewId);
+          CallManager.instance.setupLocalView(_bigViewId!);
           if (CallState.instance.isCameraOpen) {
-            CallManager.instance.openCamera(CallState.instance.camera, viewId);
+            CallManager.instance.openCamera(CallState.instance.camera, _bigViewId!);
           }
         } else {
           if (CallState.instance.remoteUserList.isNotEmpty) {
             CallManager.instance.setupRemoteView(
-                CallState.instance.remoteUserList[0].id, viewId);
+                CallState.instance.remoteUserList[0].id, _bigViewId!);
           }
         }
       });
@@ -61,17 +67,21 @@ class _CallsIndividualUserWidgetState extends State<CallsIndividualUserWidget>
       key: _smallViewKey,
       onPlatformViewCreated: (viewId) {
         _smallViewId = viewId;
+      },
+      onVideoViewReady: () {
+        // HarmonyOS: 必须等待 onLoad 回调后再设置视频画布
+        if (_smallViewId == null) return;
         // 初始状态：小画面显示远程视频
         bool isLocalViewBig = CallState.instance.isLocalViewBig;
         if (isLocalViewBig) {
           if (CallState.instance.remoteUserList.isNotEmpty) {
             CallManager.instance.setupRemoteView(
-                CallState.instance.remoteUserList[0].id, viewId);
+                CallState.instance.remoteUserList[0].id, _smallViewId!);
           }
         } else {
-          CallManager.instance.setupLocalView(viewId);
+          CallManager.instance.setupLocalView(_smallViewId!);
           if (CallState.instance.isCameraOpen) {
-            CallManager.instance.openCamera(CallState.instance.camera, viewId);
+            CallManager.instance.openCamera(CallState.instance.camera, _smallViewId!);
           }
         }
       });
@@ -147,9 +157,24 @@ class _CallsIndividualUserWidgetState extends State<CallsIndividualUserWidget>
     }
 
     // 如果悬浮窗未打开或通话未接听，则释放本地视频资源
-    if (!CallState.instance.isOpenFloatWindow ||
-        CallState.instance.selfUser.callStatus != NECallStatus.accept) {
+    // 但需排除从画中画返回时新旧页面切换的场景
+    final shouldReleaseLocalView = !CallState.instance.isOpenFloatWindow ||
+        CallState.instance.selfUser.callStatus != NECallStatus.accept;
+    
+    // OHOS画中画场景：如果启用了应用外悬浮窗且正在通话中，
+    // 可能是从画中画返回导致的页面重建，此时不应释放画布
+    // 因为新页面可能已经设置好了画布，这里释放会导致新页面画布失效
+    final isPotentialPipReturn = Platform.isOhos &&
+        CallState.instance.enableFloatWindowOutOfApp &&
+        CallState.instance.enableFloatWindow &&
+        CallState.instance.selfUser.callStatus == NECallStatus.accept &&
+        NECallKitNavigatorObserver.currentPage == CallPage.callingPage;
+    
+    if (shouldReleaseLocalView && !isPotentialPipReturn) {
+      CallKitUILog.i(_tag, 'dispose: releasing local view (shouldRelease=$shouldReleaseLocalView, isPipReturn=$isPotentialPipReturn)');
       CallManager.instance.setupLocalView(-1);
+    } else {
+      CallKitUILog.i(_tag, 'dispose: skipping local view release to preserve canvas for new page (shouldRelease=$shouldReleaseLocalView, isPipReturn=$isPotentialPipReturn)');
     }
 
     super.dispose();

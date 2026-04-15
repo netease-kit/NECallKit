@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class GlobalPreferences {
   static const String _keyLoginInfo = 'login_info';
   static const String _keyShowIncomingBanner = 'show_incoming_banner';
+  static const String _keyEnableFloatWindowOutOfApp = 'enable_float_window_out_of_app';
 
   static GlobalPreferences? _instance;
   SharedPreferences? _prefs;
@@ -39,5 +40,15 @@ class GlobalPreferences {
   Future<void> setShowIncomingBanner(bool value) async {
     await _ensureInitialized();
     await _prefs?.setBool(_keyShowIncomingBanner, value);
+  }
+
+  Future<bool> get enableFloatWindowOutOfApp async {
+    await _ensureInitialized();
+    return _prefs?.getBool(_keyEnableFloatWindowOutOfApp) ?? false;
+  }
+
+  Future<void> setEnableFloatWindowOutOfApp(bool value) async {
+    await _ensureInitialized();
+    await _prefs?.setBool(_keyEnableFloatWindowOutOfApp, value);
   }
 }

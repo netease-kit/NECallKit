@@ -134,6 +134,10 @@ abstract class NECallKitPlatform extends PlatformInterface {
     return await instance.stopPIP();
   }
 
+  Future<bool> isPipRunning() async {
+    return await instance.isPipRunning();
+  }
+
   Future<void> setIncomingBannerEnabled(bool enable) async {
     await instance.setIncomingBannerEnabled(enable);
   }

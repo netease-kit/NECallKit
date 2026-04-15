@@ -11,6 +11,23 @@ class ToastUtils {
     );
   }
 
+  static void showFloatingToast(
+    BuildContext context,
+    String message, {
+    Duration duration = const Duration(seconds: 2),
+  }) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: duration,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      ),
+    );
+  }
+
   static void showLoading() {
     // 简单的加载提示
     print('Loading...');

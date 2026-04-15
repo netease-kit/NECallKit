@@ -42,7 +42,14 @@ class _GroupCallPageState extends State<GroupCallPage> {
   final List<String> _manualContacts = [];
 
   /// 预设联系人列表
-  static final List<String> _presetContacts = [];
+  static final List<String> _presetContacts = [
+    // lcd001-lcd010
+    ...List.generate(10, (i) => 'lcd${(i + 1).toString().padLeft(3, '0')}'),
+    // lqj001-lqj010
+    ...List.generate(10, (i) => 'lqj${(i + 1).toString().padLeft(3, '0')}'),
+    // wulei01-wulei10
+    ...List.generate(10, (i) => 'wulei${(i + 1).toString().padLeft(2, '0')}'),
+  ];
 
   /// 获取全部联系人列表（手动添加 + 预设）
   List<String> get _allContacts => [..._manualContacts, ..._presetContacts];
@@ -511,7 +518,14 @@ class _GroupCallInvitePageState extends State<GroupCallInvitePage> {
   final List<String> _manualContacts = [];
 
   /// 预设联系人列表
-  static final List<String> _presetContacts = [];
+  static final List<String> _presetContacts = [
+    // lcd001-lcd010
+    ...List.generate(10, (i) => 'lcd${(i + 1).toString().padLeft(3, '0')}'),
+    // lqj001-lqj010
+    ...List.generate(10, (i) => 'lqj${(i + 1).toString().padLeft(3, '0')}'),
+    // wulei01-wulei10
+    ...List.generate(10, (i) => 'wulei${(i + 1).toString().padLeft(2, '0')}'),
+  ];
 
   /// 获取全部联系人列表（手动添加 + 预设）
   List<String> get _allContacts => [..._manualContacts, ..._presetContacts];
