@@ -359,6 +359,42 @@ class _CallsWidgetState extends State<CallsWidget>
 
   void _openFloatWindow() async {
     CallKitUILog.i(_tag, 'CallsWidget openFloatWindow()');
+    
+    // 鸿蒙平台：视频通话使用画中画（PiP），语音通话使用普通悬浮窗
+    if (Platform.isOhos) {
+      if (CallState.instance.callType == NECallType.video) {
+        // 视频通话：使用画中画模式
+        debugPrint('NECallKitPip: Video call, opening PiP on HarmonyOS');
+        try {
+          // 先初始化画中画配置
+          debugPrint('NECallKitPip: Calling setupPIP first...');
+          await NECallKitPlatform.instance.setupPIP();
+          
+          // 然后启动画中画
+          debugPrint('NECallKitPip: Calling startPIP...');
+          final success = await NECallKitPlatform.instance.startPIP();
+          debugPrint('NECallKitPip: startPIP result=$success');
+          if (success) {
+            // 画中画启动成功，退出通话页面
+            debugPrint('NECallKitPip: PiP started successfully, exiting calling page');
+            if (NECallKitNavigatorObserver.currentPage == CallPage.callingPage) {
+              NECallKitNavigatorObserver.getInstance().exitCallingPage();
+            }
+          } else {
+            debugPrint('NECallKitPip: PiP failed to start');
+          }
+        } catch (e) {
+          debugPrint('NECallKitPip: Error starting PiP: $e');
+        }
+      } else {
+        // 语音通话：使用普通悬浮窗
+        debugPrint('NECallKitFloatWindow: Audio call, opening float window on HarmonyOS');
+        await CallManager.instance.openFloatWindowWithPageState();
+      }
+      return;
+    }
+    
+    // Android: 检查悬浮窗权限
     if (Platform.isAndroid) {
       var hasFloat = await NECallKitPlatform.instance.hasFloatPermission();
       if (!hasFloat) {
@@ -376,7 +412,10 @@ class _CallsWidgetState extends State<CallsWidget>
           return;
         }
       }
-    } else if (Platform.isIOS) {}
+    } else if (Platform.isIOS) {
+    } else if (Platform.isOhos) {
+      // OHOS 子窗口无需特殊权限
+    }
     await CallManager.instance.openFloatWindowWithPageState();
   }
 

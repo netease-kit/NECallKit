@@ -9,6 +9,7 @@ import 'package:flutter/widgets.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
+import 'package:wakelock/wakelock.dart';
 import 'package:netease_callkit_ui/src/data/constants.dart';
 import 'package:netease_callkit_ui/src/data/user.dart';
 import 'package:netease_callkit_ui/src/event/event_notify.dart';
@@ -57,7 +58,9 @@ class CallManager {
     NEEventNotify().register(setStateEventOnCallReceived, (arg) async {
       if ((Platform.isAndroid &&
               await NECallKitPlatform.instance.isAppInForeground()) ||
-          Platform.isIOS) {
+          Platform.isIOS ||
+          (Platform.isOhos &&
+              await NECallKitPlatform.instance.isAppInForeground())) {
         if (_enableIncomingBanner &&
             CallState.instance.selfUser.callRole == NECallRole.called) {
           // 并发来电检查：若横幅已显示，说明已有一路来电，新来电回复忙线并丢弃
@@ -68,12 +71,12 @@ class CallManager {
           }
           CallKitUILog.i(_tag, 'showIncomingBanner enableIncomingBanner=true');
           _bannerIsActive = true;
-          // 先同步来电方信息到 native，确保 iOS NECallState 有最新数据再展示横幅
+          // 先同步来电方信息到 native，确保原生层有最新数据再展示横幅
           await NECallKitPlatform.instance.updateCallStateToNative();
           await NECallKitPlatform.instance.setIncomingBannerEnabled(true);
-          // Android: 直接调用 showIncomingBanner() 触发 WindowManager 展示横幅；
-          // iOS 层由 NEFlutterIncomingBannerHandler 响应并展示 NEIncomingCallBannerWindow。
-          if (Platform.isAndroid) {
+          // Android/Ohos: 直接调用 showIncomingBanner() 触发横幅展示
+          // iOS 层由 NEFlutterIncomingBannerHandler 响应并展示 NEIncomingCallBannerWindow
+          if (Platform.isAndroid || Platform.isOhos) {
             await NECallKitPlatform.instance.showIncomingBanner();
           }
 
@@ -358,6 +361,10 @@ class CallManager {
         apnsCername: certificateConfig?.apnsCername,
         pkCername: certificateConfig?.pkCername,
       );
+    } else if (Platform.isOhos) {
+      options = NIMOHOSSDKOptions(
+        appKey: appKey,
+      );
     }
     var initRet = await NimCore.instance.initialize(options);
     if (initRet.code == 0) {
@@ -456,7 +463,7 @@ class CallManager {
         'isInNativeIncomingBanner = ${CallState.instance.isInNativeIncomingBanner},'
         'isScreenLocked = ${await CallManager.instance.isScreenLocked()}');
 
-    // 如果启用了应用外悬浮窗，且在通话中，则停止画中画
+    // iOS: 如果启用了应用外悬浮窗，且在通话中，则停止画中画
     if (Platform.isIOS &&
         CallState.instance.enableFloatWindowOutOfApp &&
         CallState.instance.isIOSOpenFloatWindowOutOfApp &&
@@ -471,6 +478,16 @@ class CallManager {
       }
       // 重新设置画中画
       NECallKitPlatform.instance.setupPIP();
+    }
+
+    // OHOS: 如果启用了应用外悬浮窗，且在通话中（视频画中画或语音悬浮窗）
+    if (Platform.isOhos &&
+        CallState.instance.enableFloatWindowOutOfApp &&
+        CallState.instance.enableFloatWindow &&
+        CallState.instance.selfUser.callStatus == NECallStatus.accept) {
+      // 检查画中画是否正在运行
+      final isPipRunning = await NECallKitPlatform.instance.isPipRunning();
+      CallKitUILog.i(_tag, 'handleAppEnterForeground: OHOS isPipRunning=$isPipRunning, isOpenFloatWindow=${CallState.instance.isOpenFloatWindow}');
     }
 
     if (CallState.instance.selfUser.callStatus != NECallStatus.none &&
@@ -490,22 +507,26 @@ class CallManager {
   }
 
   void handleAppEnterBackground() async {
-    CallKitUILog.i(
-        _tag,
+    print(
         'CallManager handleAppEnterBackground() '
+        'Platform.isOhos = ${Platform.isOhos},'
+        'enableFloatWindowOutOfApp = ${CallState.instance.enableFloatWindowOutOfApp},'
+        'enableFloatWindow = ${CallState.instance.enableFloatWindow},'
         'callStatus = ${CallState.instance.selfUser.callStatus},'
+        'callType = ${CallState.instance.callType},'
         'currentPage = ${NECallKitNavigatorObserver.currentPage},'
         'isOpenFloatWindow = ${CallState.instance.isOpenFloatWindow},'
         'isIOSOpenFloatWindowOutOfApp = ${CallState.instance.isIOSOpenFloatWindowOutOfApp}');
 
-    // 如果启用了应用外悬浮窗，且在通话中，则启动画中画
+    // Android: 如果启用了应用外悬浮窗，且在通话中，则启动普通悬浮窗
     if (Platform.isAndroid &&
         CallState.instance.enableFloatWindowOutOfApp &&
         CallState.instance.enableFloatWindow &&
         CallState.instance.selfUser.callStatus == NECallStatus.accept) {
       openFloatWindowWithPageState();
     }
-    // 进入后台启动画中画
+
+    // iOS: 进入后台启动画中画（仅视频通话）
     if (Platform.isIOS &&
         CallState.instance.enableFloatWindowOutOfApp &&
         CallState.instance.enableFloatWindow &&
@@ -522,7 +543,8 @@ class CallManager {
     CallKitUILog.i(_tag, 'CallManager openFloatWindowWithState()');
     if ((Platform.isAndroid &&
             await NECallKitPlatform.instance.hasFloatPermission()) ||
-        Platform.isIOS) {
+        Platform.isIOS ||
+        Platform.isOhos) {
       openFloatWindow();
       if (NECallKitNavigatorObserver.currentPage == CallPage.callingPage) {
         NECallKitNavigatorObserver.getInstance().exitCallingPage();
@@ -555,7 +577,7 @@ class CallManager {
 
     // 如果当前已经有通话页面，不需要再次 push，只需要刷新状态即可
     if (NECallKitNavigatorObserver.currentPage == CallPage.callingPage &&
-        Platform.isIOS) {
+        (Platform.isIOS || Platform.isOhos)) {
       CallKitUILog.i(_tag,
           'backCallingPageFormFloatWindow: Already in calling page, just update state');
       CallState.instance.isOpenFloatWindow = false;
@@ -580,8 +602,8 @@ class CallManager {
     _enableIncomingBanner = enable;
     // 同步通知 Java 侧，确保 WindowManager.showIncomingBanner() 不会提前返回
     NECallKitPlatform.instance.setIncomingBannerEnabled(enable);
-    // Android 横幅需要悬浮窗权限，开启时自动跳转设置页申请
-    if (enable && Platform.isAndroid) {
+    // Android/OHOS 横幅需要悬浮窗权限，开启时自动跳转设置页申请
+    if (enable && (Platform.isAndroid || Platform.isOhos)) {
       NECallKitPlatform.instance.hasFloatPermission().then((hasPermission) {
         if (!hasPermission) {
           CallKitUILog.i(_tag, 'enableIncomingBanner: no float permission, requesting...');
@@ -626,7 +648,24 @@ class CallManager {
 
   Future<void> enableWakeLock(bool enable) async {
     CallKitUILog.i(_tag, 'CallManager enableWakeLock($enable)');
-    await NECallKitPlatform.instance.enableWakeLock(enable);
+    
+    // 鸿蒙平台使用 wakelock 插件
+    if (Platform.isOhos) {
+      try {
+        if (enable) {
+          await Wakelock.enable();
+          CallKitUILog.i(_tag, 'Wakelock enabled successfully (ohos)');
+        } else {
+          await Wakelock.disable();
+          CallKitUILog.i(_tag, 'Wakelock disabled successfully (ohos)');
+        }
+      } catch (e) {
+        CallKitUILog.e(_tag, 'Failed to set wakelock on ohos: $e');
+      }
+    } else {
+      // Android/iOS 使用原有的 MethodChannel 实现
+      await NECallKitPlatform.instance.enableWakeLock(enable);
+    }
   }
 
   void showIncomingBanner() {

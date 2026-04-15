@@ -53,6 +53,7 @@ class NECallKitNavigatorObserver extends NavigatorObserver {
       NECallKitNavigatorObserver.getInstance().navigator?.pop();
     }
     currentPage = CallPage.none;
+    isClose = true;
   }
 }
 

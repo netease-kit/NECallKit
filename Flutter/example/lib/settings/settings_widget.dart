@@ -104,6 +104,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
                   onChanged: (value) {
                     setState(() {
                       SettingsConfig.enableFloatWindowOutOfApp = value;
+                      GlobalPreferences().setEnableFloatWindowOutOfApp(value);
                       NECallKitUI.instance.enableFloatWindowOutOfApp(
                           SettingsConfig.enableFloatWindowOutOfApp);
                     });
@@ -111,7 +112,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
             ],
           ),
         ),
-        if (Platform.isAndroid || Platform.isIOS)
+        if (Platform.isAndroid || Platform.isIOS || Platform.isOhos)
           SizedBox(
             height: 40,
             child: Row(

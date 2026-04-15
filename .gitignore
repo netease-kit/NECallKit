@@ -95,3 +95,7 @@ local.properties
 
 # Signing certificates
 signing/
+Flutter/example/android/app/.cxx
+Flutter/example/.claude
+Flutter/callkit/example/ohos/oh_modules/.ohpm
+example/ohos/oh_modules/.ohpm

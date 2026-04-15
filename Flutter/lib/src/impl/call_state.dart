@@ -94,6 +94,20 @@ class CallState {
             CallManager.instance.pullBackgroundApp();
           }
         }
+      } else if (Platform.isOhos) {
+        // OHOS 平台：直接启动通话页面，无需特殊权限检查
+        if (CallState.instance.enableIncomingBanner) {
+          CallState.instance.isInNativeIncomingBanner = true;
+          await NECallKitPlatform.instance.setIncomingBannerEnabled(true);
+          CallManager.instance.showIncomingBanner();
+        } else {
+          if (await NECallKitPlatform.instance.isAppInForeground()) {
+            CallState.instance.isInNativeIncomingBanner = false;
+            CallManager.instance.launchCallingPage();
+          } else {
+            CallManager.instance.pullBackgroundApp();
+          }
+        }
       }
     },
     onCallEnd: (NECallEndInfo info) async {
@@ -129,11 +143,17 @@ class CallState {
         CallManager.instance.closeCamera();
       }
 
-      // 如果启用了应用外悬浮窗，清理画中画资源
-      if (Platform.isIOS &&
+      // 如果启用了应用外悬浮窗，清理画中画资源（iOS 和鸿蒙）
+      if ((Platform.isIOS || Platform.isOhos) &&
           CallState.instance.enableFloatWindowOutOfApp &&
           CallState.instance.enableFloatWindow) {
         await NECallKitPlatform.instance.disposePIP();
+      }
+
+      // 如果悬浮窗打开中，关闭悬浮窗（处理未启用应用外悬浮窗但普通悬浮窗已显示的情况）
+      if (CallState.instance.isOpenFloatWindow) {
+        CallKitUILog.i(_tag, 'NECallObserver onCallEnd: stopping float window');
+        await NECallKitPlatform.instance.stopFloatWindow();
       }
 
       // iOS 来电横幅自动 dismiss（T023）
@@ -160,8 +180,22 @@ class CallState {
       } else {
         CallManager.instance.openMicrophone();
       }
-      CallManager.instance
-          .setSpeakerphoneOn(CallState.instance.isEnableSpeaker);
+      
+      // 视频通话接通后默认开启扬声器（延迟1秒）
+      if (info.callType == NECallType.video) {
+        CallState.instance.isEnableSpeaker = true;
+        // 延迟1秒后开启扬声器
+        Future.delayed(const Duration(seconds: 1), () async {
+          await CallManager.instance
+              .setSpeakerphoneOn(CallState.instance.isEnableSpeaker);
+          CallKitUILog.i(_tag, 'NECallObserver: Delayed speaker enabled after 1 second');
+        });
+      } else {
+        // 音频通话立即设置（使用听筒）
+        await CallManager.instance
+            .setSpeakerphoneOn(CallState.instance.isEnableSpeaker);
+      }
+      
       CallState.instance.startTimer();
       CallState.instance.isLocalViewBig = false;
       CallState.instance.isInNativeIncomingBanner = false;
@@ -169,8 +203,8 @@ class CallState {
       CallKitUILog.i(_tag,
           'NECallObserver onCallConnected: enableFloatWindowOutOfApp = ${CallState.instance.enableFloatWindowOutOfApp}, enableFloatWindow = ${CallState.instance.enableFloatWindow}');
 
-      // 如果启用了应用外悬浮窗，设置画中画
-      if (Platform.isIOS &&
+      // 如果启用了应用外悬浮窗，设置画中画（iOS 和 OHOS）
+      if ((Platform.isIOS || Platform.isOhos) &&
           CallState.instance.enableFloatWindowOutOfApp &&
           CallState.instance.enableFloatWindow &&
           CallState.instance.callType == NECallType.video) {

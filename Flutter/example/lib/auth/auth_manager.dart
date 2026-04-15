@@ -89,6 +89,8 @@ class AuthManager {
 
     SettingsConfig.showIncomingBanner =
         await GlobalPreferences().showIncomingBanner;
+    SettingsConfig.enableFloatWindowOutOfApp =
+        await GlobalPreferences().enableFloatWindowOutOfApp;
     NECallKitUI.instance.enableFloatWindow(SettingsConfig.enableFloatWindow);
     NECallKitUI.instance
         .enableFloatWindowOutOfApp(SettingsConfig.enableFloatWindowOutOfApp);

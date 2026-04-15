@@ -10,6 +10,7 @@ import 'package:callkit_example/pages/group_call_page.dart';
 import 'package:callkit_example/service/call_record_service.dart';
 import 'package:callkit_example/service/call_record_service_impl.dart';
 import 'package:callkit_example/settings/settings_config.dart';
+import 'package:callkit_example/utils/toast_utils.dart';
 import 'package:callkit_example/utils/record_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -35,6 +36,7 @@ class _HomePageRouteState extends State<HomePageRoute> {
 
   String _version = 'Unknown';
   final _callkitPlugin = NECallEngine.instance;
+  late final NECallEngineDelegate _delegate;
   late StreamSubscription _messageSubscription;
   StreamSubscription? _authInfoSubscription;
   final CallRecordServiceImpl _callRecordService = CallRecordServiceImpl();
@@ -59,6 +61,28 @@ class _HomePageRouteState extends State<HomePageRoute> {
       }
     });
 
+    _delegate = NECallEngineDelegate(
+      onLCKAccept: (NELCKAcceptResult result) {
+        if (!mounted) {
+          return;
+        }
+        ToastUtils.showFloatingToast(
+          context,
+          'LCK Accept: code=${result.code}, msg=${result.msg ?? "success"}',
+        );
+      },
+      onLCKHangup: (NELCKHangupResult result) {
+        if (!mounted) {
+          return;
+        }
+        ToastUtils.showFloatingToast(
+          context,
+          'LCK Hangup: code=${result.code}, msg=${result.msg ?? "success"}',
+        );
+      },
+    );
+    _callkitPlugin.addCallDelegate(_delegate);
+
     getVersion();
     _requestNotificationPermissions();
     // 页面显示时更新用户信息（昵称和头像）
@@ -75,6 +99,7 @@ class _HomePageRouteState extends State<HomePageRoute> {
   void dispose() {
     _messageSubscription.cancel();
     _authInfoSubscription?.cancel();
+    _callkitPlugin.removeCallDelegate(_delegate);
     super.dispose();
   }
 
@@ -208,7 +233,7 @@ class _HomePageRouteState extends State<HomePageRoute> {
               ),
             ),
             SizedBox(
-              child: Text("Version:$_version"),
+              child: Text("Version:4.4.5"),
             )
           ],
         ));

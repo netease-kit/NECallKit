@@ -1,0 +1,32 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "callkit_ui_ohos"
+    },
+    {
+      "name": "perm_microphone_reason",
+      "value": "Voice calls need microphone permission"
+    },
+    {
+      "name": "perm_camera_reason",
+      "value": "Video calls need camera permission"
+    },
+    {
+      "name": "perm_read_media_reason",
+      "value": "Selecting media needs read storage permission"
+    },
+    {
+      "name": "perm_write_media_reason",
+      "value": "Saving media needs write storage permission"
+    }
+  ]
+}

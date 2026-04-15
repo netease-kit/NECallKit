@@ -1,0 +1,12 @@
+{
+  "name": "netease_callkit_ui",
+  "version": "1.0.0",
+  "description": "Please describe the basic information.",
+  "main": "index.ets",
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@nertc/nertc_sdk": "5.9.11",
+    "@yunxin/callkit": "4.4.0"
+  }
+}

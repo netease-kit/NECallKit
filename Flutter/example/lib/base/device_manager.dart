@@ -24,6 +24,8 @@ class DeviceManager {
       _clientType = 1; // aos
     } else if (Platform.isIOS) {
       _clientType = 2; // ios
+    } else if (Platform.isOhos) {
+      _clientType = 4; // ohos
     } else if (Platform.isWindows || Platform.isMacOS) {
       _clientType = 3; // pc
     }

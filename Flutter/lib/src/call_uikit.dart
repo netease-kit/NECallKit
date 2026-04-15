@@ -182,7 +182,7 @@ class NECallKitUI {
   }
 
   void enableIncomingBanner(bool enable) {
-    if (Platform.isAndroid || Platform.isIOS) {
+     if (Platform.isAndroid || Platform.isIOS || Platform.isOhos) {
       CallManager.instance.enableIncomingBanner(enable);
     } else {
       CallKitUILog.e(_tag, 'CallManager enableIncomingBanner not support');

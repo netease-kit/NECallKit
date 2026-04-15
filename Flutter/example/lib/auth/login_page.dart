@@ -2,7 +2,9 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
+import 'dart:io';
 import 'package:callkit_example/auth/login_info.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:callkit_example/l10n/app_localizations.dart';
 import 'auth_manager.dart';
@@ -24,6 +26,40 @@ class LoginRoute extends StatefulWidget {
 class LoginState extends State<LoginRoute> {
   final TextEditingController _accountIdController = TextEditingController();
   final TextEditingController _tokenController = TextEditingController();
+
+  /// 用于 OHOS 平台打开 URL 的 MethodChannel
+  static const _urlLauncherChannel = MethodChannel('com.netease.callkit/url_launcher');
+
+  /// 检测是否为 OHOS 平台
+  bool get _isOhos {
+    try {
+      return Platform.operatingSystem == 'ohos';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 打开文档 URL
+  Future<void> _launchDocUrl(BuildContext context) async {
+    const docUrl =
+        'https://doc.yunxin.163.com/messaging2/guide/jU0Mzg0MTU?platform=client#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E6%B3%A8%E5%86%8C-im-%E8%B4%A6%E5%8F%B7';
+    
+    try {
+      if (_isOhos) {
+        // OHOS 平台使用 MethodChannel 调用原生代码打开 URL
+        await _urlLauncherChannel.invokeMethod('openUrl', {'url': docUrl});
+      } else {
+        // 其他平台使用 url_launcher
+        final uri = Uri.parse(docUrl);
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      print('Failed to launch URL: $e');
+      if (context.mounted) {
+        ToastUtils.showToast(context, '无法打开链接: $e');
+      }
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -59,16 +95,7 @@ class LoginState extends State<LoginRoute> {
               const SizedBox(height: 12),
               // Link to open registration doc in external browser
               GestureDetector(
-                onTap: () async {
-                  try {
-                    final uri = Uri.parse(
-                        'https://doc.yunxin.163.com/messaging2/guide/jU0Mzg0MTU?platform=client#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E6%B3%A8%E5%86%8C-im-%E8%B4%A6%E5%8F%B7');
-                    await launchUrl(uri,
-                        mode: LaunchMode.externalApplication);
-                  } catch (e) {
-                    print('Failed to launch URL: $e');
-                  }
-                },
+                onTap: () => _launchDocUrl(context),
                 child: Text(
                   AppLocalizations.of(context)!.how_to_get_account_token,
                   textAlign: TextAlign.center,

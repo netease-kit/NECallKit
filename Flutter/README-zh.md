@@ -22,6 +22,9 @@ _[English](https://github.com/netease-kit/NECallKit/blob/main/Flutter/README.md)
 - **Step2**：接入 NECallKit 到您的项目中，各平台/框架详细的接入流程：[Flutter](https://doc.yunxin.163.com/nertccallkit/guide/DYyMDk4OTY?platform=flutter) 
 - **Step3**：拨打您的第一个视频通话！
 
+## OHOS版本
+** 若要运行OHOS版本，需要用项目中所有的pubspec_ohos.yaml替换其所在目录的pubspec.yaml **
+
 ## 联系我们
 
 - 如果想要了解该场景的更多信息，请参见[音视频呼叫文档](https://doc.yunxin.163.com/nertccallkit/guide/DYyMDk4OTY?platform=flutter)

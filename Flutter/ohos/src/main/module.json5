@@ -1,0 +1,10 @@
+{
+  "module": {
+    "name": "netease_callkit_ui",
+    "type": "har",
+    "deviceTypes": [
+      "default",
+      "tablet"
+    ]
+  }
+}

@@ -127,8 +127,7 @@ class _SingleCallWidgetState extends State<SingleCallWidget> {
                       fontWeight: FontWeight.normal,
                       color: Colors.black),
                 ),
-                SizedBox(
-                    width: 300,
+                Expanded(
                     child: TextField(
                         controller: _userIdController,
                         textAlign: TextAlign.right,

@@ -1,0 +1,9 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- Network error icon: signal with X -->
+<rect x="2" y="16" width="4" height="6" rx="1" fill="white" fill-opacity="0.3"/>
+<rect x="8" y="12" width="4" height="10" rx="1" fill="white" fill-opacity="0.3"/>
+<rect x="14" y="8" width="4" height="14" rx="1" fill="white" fill-opacity="0.3"/>
+<rect x="20" y="4" width="4" height="18" rx="1" fill="white" fill-opacity="0.3"/>
+<!-- X mark -->
+<path d="M16 8L20 12M20 8L16 12" stroke="#F44336" stroke-width="2" stroke-linecap="round"/>
+</svg>

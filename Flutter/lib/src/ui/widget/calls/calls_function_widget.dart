@@ -575,7 +575,7 @@ class CallsFunctionWidget {
 
     try {
       PermissionResult permissionRequestResult = PermissionResult.requesting;
-      if (Platform.isAndroid || Platform.isIOS) {
+      if (Platform.isAndroid || Platform.isIOS || Platform.isOhos) {
         permissionRequestResult =
             await Permission.request(CallState.instance.callType);
       }

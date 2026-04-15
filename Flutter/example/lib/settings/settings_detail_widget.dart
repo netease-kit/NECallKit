@@ -80,6 +80,8 @@ class _SettingsDetailWidgetState extends State<SettingsDetailWidget> {
       case SettingWidgetType.extendInfo:
         SettingsConfig.extendInfo = _data;
         break;
+      case SettingWidgetType.offlinePush:
+        break;
     }
   }
 

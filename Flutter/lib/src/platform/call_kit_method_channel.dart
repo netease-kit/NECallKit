@@ -13,6 +13,7 @@ import 'package:netease_callkit_ui/src/event/event_notify.dart';
 import 'package:netease_callkit_ui/src/impl/call_manager.dart';
 import 'package:netease_callkit_ui/src/impl/call_state.dart';
 import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
+import 'package:netease_callkit_ui/src/ui/call_navigator_observer.dart';
 import 'package:netease_callkit_ui/src/utils/permission.dart';
 
 class MethodChannelNECallKit extends NECallKitPlatform {
@@ -27,7 +28,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> startForegroundService(NECallType type) async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel.invokeMethod(
           'startForegroundService', <String, dynamic>{'mediaType': type.index});
     }
@@ -35,7 +36,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> stopForegroundService() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel
           .invokeMethod('stopForegroundService', <String, dynamic>{});
     }
@@ -43,7 +44,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> startRing(String filePath, {bool isCalled = false}) async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel
           .invokeMethod('startRing', <String, dynamic>{'filePath': filePath, 'isCalled': isCalled});
     }
@@ -51,14 +52,14 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> stopRing() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel.invokeMethod('stopRing', <String, dynamic>{});
     }
   }
 
   @override
   Future<void> updateCallStateToNative() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       var remoteUserList = <dynamic>[];
       for (var i = 0; i < CallState.instance.remoteUserList.length; ++i) {
         remoteUserList.add(CallState.instance.remoteUserList[i].toJson());
@@ -81,21 +82,21 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> startFloatWindow() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel.invokeMethod('startFloatWindow', <String, dynamic>{});
     }
   }
 
   @override
   Future<void> stopFloatWindow() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel.invokeMethod('stopFloatWindow', <String, dynamic>{});
     }
   }
 
   @override
   Future<bool> hasFloatPermission() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       final result = await methodChannel
           .invokeMethod('hasFloatPermission', <String, dynamic>{});
       return result as bool? ?? false;
@@ -106,7 +107,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> requestFloatPermission() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel
           .invokeMethod('requestFloatPermission', <String, dynamic>{});
     }
@@ -124,7 +125,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<bool> isAppInForeground() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       final result = await methodChannel
           .invokeMethod('isAppInForeground', <String, dynamic>{});
       return result as bool? ?? false;
@@ -136,7 +137,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
   @override
   Future<bool> showIncomingBanner() async {
     try {
-      if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
         await methodChannel
             .invokeMethod('showIncomingBanner', <String, dynamic>{});
       } else {
@@ -152,7 +153,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   Future<bool> initResources(Map resources) async {
     try {
-      if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
         await methodChannel.invokeMethod(
             'initResources', <String, dynamic>{'resources': resources});
       } else {
@@ -168,14 +169,14 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> openMicrophone() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel.invokeMethod('openMicrophone', <String, dynamic>{});
     }
   }
 
   @override
   Future<void> closeMicrophone() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel.invokeMethod('closeMicrophone', <String, dynamic>{});
     }
   }
@@ -183,7 +184,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
   @override
   Future<bool> hasPermissions(
       {required List<PermissionType> permissions}) async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       var permissionsList = <int>[];
       for (var element in permissions) {
         permissionsList.add(element.index);
@@ -203,7 +204,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
       String description = '',
       String settingsTip = ''}) async {
     try {
-      if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
         var permissionsList = <int>[];
         for (var element in permissions) {
           permissionsList.add(element.index);
@@ -235,7 +236,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> pullBackgroundApp() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel
           .invokeMethod('pullBackgroundApp', <String, dynamic>{});
     }
@@ -251,7 +252,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> enableWakeLock(bool enable) async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel
           .invokeMethod('enableWakeLock', <String, dynamic>{'enable': enable});
     }
@@ -259,7 +260,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<bool> setupPIP() async {
-    if (!kIsWeb && Platform.isIOS) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isOhos)) {
       final result =
           await methodChannel.invokeMethod('setupPIP', <String, dynamic>{});
       return result as bool? ?? false;
@@ -269,14 +270,14 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> disposePIP() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel.invokeMethod('disposePIP', <String, dynamic>{});
     }
   }
 
   @override
   Future<bool> startPIP() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       final result =
           await methodChannel.invokeMethod('startPIP', <String, dynamic>{});
       return result as bool? ?? false;
@@ -286,9 +287,19 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> stopPIP() async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel.invokeMethod('stopPIP', <String, dynamic>{});
     }
+  }
+
+  @override
+  Future<bool> isPipRunning() async {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
+      final result =
+          await methodChannel.invokeMethod('isPipRunning', <String, dynamic>{});
+      return result as bool? ?? false;
+    }
+    return false;
   }
 
   @override
@@ -321,7 +332,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
 
   @override
   Future<void> setIncomingBannerEnabled(bool enable) async {
-    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+    if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
       await methodChannel
           .invokeMethod('setIncomingBannerEnabled', {'enable': enable});
     }
@@ -330,7 +341,7 @@ class MethodChannelNECallKit extends NECallKitPlatform {
   @override
   Future<void> cancelIncomingBanner() async {
     try {
-      if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
+      if (!kIsWeb && (Platform.isIOS || Platform.isAndroid || Platform.isOhos)) {
         await methodChannel.invokeMethod('cancelIncomingBanner', {});
       }
     } on PlatformException catch (_) {
@@ -373,6 +384,25 @@ class MethodChannelNECallKit extends NECallKitPlatform {
         break;
       case 'voipChangeAccept':
         _handleVoipAccept();
+        break;
+      // 画中画相关回调（鸿蒙）
+      case 'onPipStarted':
+        _handlePipStarted();
+        break;
+      case 'onPipStopped':
+        _handlePipStopped();
+        break;
+      case 'onPipHangUp':
+        _handleVoipHangup();
+        break;
+      case 'onPipAnswer':
+        _handleVoipAccept();
+        break;
+      case 'onPipToggleMute':
+        _handlePipToggleMute(call);
+        break;
+      case 'pipAboutToStart':
+        _handlePipAboutToStart();
         break;
       default:
         debugPrint('flutter: MethodNotImplemented ${call.method}');
@@ -440,6 +470,48 @@ class MethodChannelNECallKit extends NECallKitPlatform {
   void _handleVoipAccept() {
     if (CallState.instance.selfUser.callStatus == NECallStatus.waiting) {
       CallManager.instance.accept();
+    }
+  }
+
+  void _handlePipStarted() {
+    debugPrint('PiP started on HarmonyOS');
+    // 可以在这里处理画中画启动后的逻辑
+  }
+
+  void _handlePipStopped() {
+    debugPrint('PiP stopped on HarmonyOS');
+    // 可以在这里处理画中画停止后的逻辑
+  }
+
+  void _handlePipToggleMute(MethodCall call) {
+    if (CallState.instance.selfUser.callStatus != NECallStatus.none) {
+      final muted = call.arguments['muted'] as bool? ?? false;
+      CallState.instance.isMicrophoneMute = muted;
+      muted
+          ? CallManager.instance.closeMicrophone(false)
+          : CallManager.instance.openMicrophone(false);
+      NEEventNotify().notify(setStateEvent);
+    }
+  }
+
+  void _handlePipAboutToStart() {
+    debugPrint('flutter: _handlePipAboutToStart called');
+    // 检查 OHOS 条件
+    final isOhosConditionMet = Platform.isOhos &&
+        CallState.instance.enableFloatWindowOutOfApp &&
+        CallState.instance.enableFloatWindow &&
+        CallState.instance.selfUser.callStatus == NECallStatus.accept;
+    
+    if (isOhosConditionMet) {
+      debugPrint('flutter: _handlePipAboutToStart: entering OHOS branch, callType = ${CallState.instance.callType}');
+      if (CallState.instance.callType == NECallType.video) {
+        // 视频通话：画中画已在通话接通时初始化并设置了自动启动
+        // 系统会自动在退后台时启动画中画，这里只需要退出通话页面
+        debugPrint('flutter: _handlePipAboutToStart: OHOS video call, PiP should auto start');
+        if (NECallKitNavigatorObserver.currentPage == CallPage.callingPage) {
+          NECallKitNavigatorObserver.getInstance().exitCallingPage();
+        }
+      } 
     }
   }
 }
