@@ -25,7 +25,8 @@ dependencies:
   nim_core_v2: ^10.9.4+1
   fluttertoast: ^8.2.14
   flutter_screenutil: ^5.9.3
-  netease_callkit: ^4.4.0
+  netease_callkit: 
+   path: ./callkit
 
 dev_dependencies:
   flutter_test:

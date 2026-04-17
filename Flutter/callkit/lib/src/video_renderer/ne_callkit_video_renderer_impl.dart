@@ -26,7 +26,7 @@ class _NECallkitVideoRendererImpl extends NECallkitVideoRenderer {
 
   @override
   Future<void> initialize() async {
-    if (Platform.isAndroid || Platform.isIOS || Platform.isOhos) {
+    if (Platform.isAndroid || Platform.isIOS || CallkitPlatformCompat.isOhos) {
       _textureId = await _api.createVideoRenderer();
       _rendererEventSubscription =
           EventChannel('NECallkitRenderer/Texture$_textureId')

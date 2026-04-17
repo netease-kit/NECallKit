@@ -4,6 +4,7 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 
 import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
@@ -94,7 +95,7 @@ class CallState {
             CallManager.instance.pullBackgroundApp();
           }
         }
-      } else if (Platform.isOhos) {
+      } else if (PlatformCompat.isOhos) {
         // OHOS 平台：直接启动通话页面，无需特殊权限检查
         if (CallState.instance.enableIncomingBanner) {
           CallState.instance.isInNativeIncomingBanner = true;
@@ -144,7 +145,7 @@ class CallState {
       }
 
       // 如果启用了应用外悬浮窗，清理画中画资源（iOS 和鸿蒙）
-      if ((Platform.isIOS || Platform.isOhos) &&
+      if ((Platform.isIOS || PlatformCompat.isOhos) &&
           CallState.instance.enableFloatWindowOutOfApp &&
           CallState.instance.enableFloatWindow) {
         await NECallKitPlatform.instance.disposePIP();
@@ -204,7 +205,7 @@ class CallState {
           'NECallObserver onCallConnected: enableFloatWindowOutOfApp = ${CallState.instance.enableFloatWindowOutOfApp}, enableFloatWindow = ${CallState.instance.enableFloatWindow}');
 
       // 如果启用了应用外悬浮窗，设置画中画（iOS 和 OHOS）
-      if ((Platform.isIOS || Platform.isOhos) &&
+      if ((Platform.isIOS || PlatformCompat.isOhos) &&
           CallState.instance.enableFloatWindowOutOfApp &&
           CallState.instance.enableFloatWindow &&
           CallState.instance.callType == NECallType.video) {

@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:io';
+import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:netease_callkit_ui/l10n/l10n.dart';
@@ -182,7 +183,7 @@ class NECallKitUI {
   }
 
   void enableIncomingBanner(bool enable) {
-     if (Platform.isAndroid || Platform.isIOS || Platform.isOhos) {
+     if (Platform.isAndroid || Platform.isIOS || PlatformCompat.isOhos) {
       CallManager.instance.enableIncomingBanner(enable);
     } else {
       CallKitUILog.e(_tag, 'CallManager enableIncomingBanner not support');

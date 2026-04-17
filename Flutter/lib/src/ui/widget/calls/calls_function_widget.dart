@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:io';
+import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 
 import 'package:flutter/material.dart';
 import 'package:netease_callkit/netease_callkit.dart';
@@ -575,7 +576,7 @@ class CallsFunctionWidget {
 
     try {
       PermissionResult permissionRequestResult = PermissionResult.requesting;
-      if (Platform.isAndroid || Platform.isIOS || Platform.isOhos) {
+      if (Platform.isAndroid || Platform.isIOS || PlatformCompat.isOhos) {
         permissionRequestResult =
             await Permission.request(CallState.instance.callType);
       }

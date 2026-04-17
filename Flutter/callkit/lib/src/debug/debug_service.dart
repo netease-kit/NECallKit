@@ -4,6 +4,7 @@
 
 
 import 'dart:io';
+import 'package:netease_callkit/src/platform_compat.dart';
 
 import 'package:flutter/cupertino.dart';
 import 'package:hawk_meta/hawk_meta.dart';
@@ -36,7 +37,7 @@ class DebugService {
         // apnsCername: certificateConfig?.apnsCername,
         // pkCername: certificateConfig?.pkCername,
       );
-    } else if (Platform.isOhos) {
+    } else if (CallkitPlatformCompat.isOhos) {
       options = NIMAndroidSDKOptions(
         appKey: appKey,
       );

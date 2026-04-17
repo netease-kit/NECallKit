@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:io';
+import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 
 import 'package:flutter/material.dart';
 import 'package:netease_callkit/netease_callkit.dart';
@@ -164,7 +165,7 @@ class _CallsIndividualUserWidgetState extends State<CallsIndividualUserWidget>
     // OHOS画中画场景：如果启用了应用外悬浮窗且正在通话中，
     // 可能是从画中画返回导致的页面重建，此时不应释放画布
     // 因为新页面可能已经设置好了画布，这里释放会导致新页面画布失效
-    final isPotentialPipReturn = Platform.isOhos &&
+    final isPotentialPipReturn = PlatformCompat.isOhos &&
         CallState.instance.enableFloatWindowOutOfApp &&
         CallState.instance.enableFloatWindow &&
         CallState.instance.selfUser.callStatus == NECallStatus.accept &&
