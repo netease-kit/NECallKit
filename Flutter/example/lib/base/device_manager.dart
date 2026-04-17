@@ -4,6 +4,8 @@
 
 import 'dart:io';
 
+import 'package:callkit_example/base/platform_compat.dart';
+
 class DeviceManager {
   factory DeviceManager() {
     _instance ??= DeviceManager._internal();
@@ -24,7 +26,7 @@ class DeviceManager {
       _clientType = 1; // aos
     } else if (Platform.isIOS) {
       _clientType = 2; // ios
-    } else if (Platform.isOhos) {
+    } else if (PlatformCompat.isOhos) {
       _clientType = 4; // ohos
     } else if (Platform.isWindows || Platform.isMacOS) {
       _clientType = 3; // pc

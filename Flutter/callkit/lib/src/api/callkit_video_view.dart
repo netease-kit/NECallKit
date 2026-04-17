@@ -75,11 +75,11 @@ class NECallkitVideoViewState extends State<NECallkitVideoView> {
           gestureRecognizers: widget.gestureRecognizers,
         ),
       );
-    } else if (!kIsWeb && Platform.isOhos) {
+    } else if (!kIsWeb && CallkitPlatformCompat.isOhos) {
       // OHOS 平台使用 OhosView
       return GestureDetector(
         behavior: HitTestBehavior.opaque,
-        child: OhosView(
+        child: callkit_video_view_builder.buildOhosCallkitVideoView(
           viewType: viewType,
           onPlatformViewCreated: _onPlatformViewCreated,
           hitTestBehavior: PlatformViewHitTestBehavior.transparent,
@@ -124,6 +124,11 @@ class NECallkitVideoViewState extends State<NECallkitVideoView> {
     // 监听 Native 端的 onLoad 回调
     _channel?.setMethodCallHandler(_handleMethodCall);
     widget.onPlatformViewCreated?.call(id);
+    // Android/iOS does not send explicit `onLoad`, so trigger readiness after
+    // platform view creation to keep behavior aligned with OHOS.
+    if (!CallkitPlatformCompat.isOhos) {
+      widget.onVideoViewReady?.call();
+    }
   }
 
   Future<dynamic> _handleMethodCall(MethodCall call) async {

@@ -4,6 +4,7 @@
 
 import 'dart:io';
 
+import 'package:callkit_example/base/platform_compat.dart';
 import 'package:callkit_example/settings/settings_config.dart';
 import 'package:callkit_example/settings/settings_detail_widget.dart';
 import 'package:callkit_example/utils/global_preferences.dart';
@@ -112,7 +113,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
             ],
           ),
         ),
-        if (Platform.isAndroid || Platform.isIOS || Platform.isOhos)
+        if (Platform.isAndroid || Platform.isIOS || PlatformCompat.isOhos)
           SizedBox(
             height: 40,
             child: Row(

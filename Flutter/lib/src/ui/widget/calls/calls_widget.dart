@@ -4,6 +4,7 @@
 
 import 'dart:async';
 import 'dart:io';
+import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 
 import 'package:flutter/material.dart';
 import 'package:netease_callkit/netease_callkit.dart';
@@ -361,7 +362,7 @@ class _CallsWidgetState extends State<CallsWidget>
     CallKitUILog.i(_tag, 'CallsWidget openFloatWindow()');
     
     // 鸿蒙平台：视频通话使用画中画（PiP），语音通话使用普通悬浮窗
-    if (Platform.isOhos) {
+    if (PlatformCompat.isOhos) {
       if (CallState.instance.callType == NECallType.video) {
         // 视频通话：使用画中画模式
         debugPrint('NECallKitPip: Video call, opening PiP on HarmonyOS');
@@ -413,7 +414,7 @@ class _CallsWidgetState extends State<CallsWidget>
         }
       }
     } else if (Platform.isIOS) {
-    } else if (Platform.isOhos) {
+    } else if (PlatformCompat.isOhos) {
       // OHOS 子窗口无需特殊权限
     }
     await CallManager.instance.openFloatWindowWithPageState();

@@ -4,12 +4,10 @@
 
 allprojects {
     repositories {
-          maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/jcenter' }
-        maven { url 'http://maven.aliyun.com/nexus/content/groups/public' }
-
         google()
         mavenCentral()
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/nexus/content/groups/public' }
         maven {
             url  "https://oss.sonatype.org/content/repositories/snapshots/"
         }

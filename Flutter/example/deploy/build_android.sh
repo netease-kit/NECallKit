@@ -13,6 +13,7 @@ archive_director_name=$3
 archive_name=$4
 build_type=$5
 
+sh "${project_path}/deploy/switch_nim_sdk_options_factory.sh" android
 fvm flutter clean
 fvm flutter pub upgrade
 fvm flutter build apk --release
