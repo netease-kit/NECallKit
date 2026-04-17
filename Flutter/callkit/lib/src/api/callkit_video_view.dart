@@ -75,19 +75,6 @@ class NECallkitVideoViewState extends State<NECallkitVideoView> {
           gestureRecognizers: widget.gestureRecognizers,
         ),
       );
-    } else if (!kIsWeb && CallkitPlatformCompat.isOhos) {
-      // OHOS 平台使用 OhosView
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        child: callkit_video_view_builder.buildOhosCallkitVideoView(
-          viewType: viewType,
-          onPlatformViewCreated: _onPlatformViewCreated,
-          hitTestBehavior: PlatformViewHitTestBehavior.transparent,
-          creationParams: creationParams,
-          creationParamsCodec: const StandardMessageCodec(),
-          gestureRecognizers: widget.gestureRecognizers,
-        ),
-      );
     } else {
       // 其他未支持平台
       if (_id != null) {

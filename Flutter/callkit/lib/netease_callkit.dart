@@ -18,9 +18,6 @@ import 'package:netease_common/netease_common.dart';
 import 'netease_callkit.dart';
 import 'src/impl/callkit_impl.dart';
 import 'src/impl/group_callkit_impl.dart';
-import 'src/api/callkit_video_view_builder_stub.dart'
-    if (dart.library.ohos) 'src/api/callkit_video_view_builder_ohos.dart'
-    as callkit_video_view_builder;
 
 // Re-export pigeon classes for public API (needed by group_callkit_impl and external consumers)
 export 'src/impl/pigeon.dart' hide SimpleResponse;

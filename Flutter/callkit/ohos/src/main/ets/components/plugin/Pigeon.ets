@@ -2836,18 +2836,22 @@ class CallKitEventSinkCodec extends StandardMessageCodec {
       case this.getByte(129):
         return CallInfo.fromList(super.readValue(buffer));
       case this.getByte(130):
-        return CallTypeChangeInfo.fromList(super.readValue(buffer));
+        return CallResponse.fromList(super.readValue(buffer));
       case this.getByte(131):
-        return InviteInfo.fromList(super.readValue(buffer));
+        return CallTypeChangeInfo.fromList(super.readValue(buffer));
       case this.getByte(132):
-        return NERtcAsrCaptionResult.fromList(super.readValue(buffer));
+        return InviteInfo.fromList(super.readValue(buffer));
       case this.getByte(133):
-        return RecordConfig.fromList(super.readValue(buffer));
+        return NERtcAsrCaptionResult.fromList(super.readValue(buffer));
       case this.getByte(134):
-        return RtcInfo.fromList(super.readValue(buffer));
+        return RecordConfig.fromList(super.readValue(buffer));
       case this.getByte(135):
-        return SignalInfo.fromList(super.readValue(buffer));
+        return RtcInfo.fromList(super.readValue(buffer));
       case this.getByte(136):
+        return SignalInfo.fromList(super.readValue(buffer));
+      case this.getByte(137):
+        return SimpleResponse.fromList(super.readValue(buffer));
+      case this.getByte(138):
         return UserInfo.fromList(super.readValue(buffer));
       default:
         return super.readValueOfType(type, buffer);
@@ -2861,26 +2865,32 @@ class CallKitEventSinkCodec extends StandardMessageCodec {
     } else if (value instanceof CallInfo) {
       stream.writeUint8(this.getByte(129));
       this.writeValue(stream, (value as CallInfo).toList());
-    } else if (value instanceof CallTypeChangeInfo) {
+    } else if (value instanceof CallResponse) {
       stream.writeUint8(this.getByte(130));
+      this.writeValue(stream, (value as CallResponse).toList());
+    } else if (value instanceof CallTypeChangeInfo) {
+      stream.writeUint8(this.getByte(131));
       this.writeValue(stream, (value as CallTypeChangeInfo).toList());
     } else if (value instanceof InviteInfo) {
-      stream.writeUint8(this.getByte(131));
+      stream.writeUint8(this.getByte(132));
       this.writeValue(stream, (value as InviteInfo).toList());
     } else if (value instanceof NERtcAsrCaptionResult) {
-      stream.writeUint8(this.getByte(132));
+      stream.writeUint8(this.getByte(133));
       this.writeValue(stream, (value as NERtcAsrCaptionResult).toList());
     } else if (value instanceof RecordConfig) {
-      stream.writeUint8(this.getByte(133));
+      stream.writeUint8(this.getByte(134));
       this.writeValue(stream, (value as RecordConfig).toList());
     } else if (value instanceof RtcInfo) {
-      stream.writeUint8(this.getByte(134));
+      stream.writeUint8(this.getByte(135));
       this.writeValue(stream, (value as RtcInfo).toList());
     } else if (value instanceof SignalInfo) {
-      stream.writeUint8(this.getByte(135));
-      this.writeValue(stream, (value as SignalInfo).toList());
-    } else if (value instanceof UserInfo) {
       stream.writeUint8(this.getByte(136));
+      this.writeValue(stream, (value as SignalInfo).toList());
+    } else if (value instanceof SimpleResponse) {
+      stream.writeUint8(this.getByte(137));
+      this.writeValue(stream, (value as SimpleResponse).toList());
+    } else if (value instanceof UserInfo) {
+      stream.writeUint8(this.getByte(138));
       this.writeValue(stream, (value as UserInfo).toList());
     } else {
       super.writeValue(stream, value);
@@ -2923,6 +2933,22 @@ export class CallKitEventSink {
             this.binaryMessenger, "dev.flutter.pigeon.CallKitEventSink.onCallConnected", CallKitEventSink.getCodec());
     channel.send(
         [infoArg],
+        channelReply => callback.reply(null));
+  }
+  onLCKAccept(responseArg: CallResponse, callback: Reply<void>) {
+    let channel: BasicMessageChannel<Object> =
+        new BasicMessageChannel<Object>(
+            this.binaryMessenger, "dev.flutter.pigeon.CallKitEventSink.onLCKAccept", CallKitEventSink.getCodec());
+    channel.send(
+        [responseArg],
+        channelReply => callback.reply(null));
+  }
+  onLCKHangup(responseArg: SimpleResponse, callback: Reply<void>) {
+    let channel: BasicMessageChannel<Object> =
+        new BasicMessageChannel<Object>(
+            this.binaryMessenger, "dev.flutter.pigeon.CallKitEventSink.onLCKHangup", CallKitEventSink.getCodec());
+    channel.send(
+        [responseArg],
         channelReply => callback.reply(null));
   }
   onCallTypeChange(infoArg: CallTypeChangeInfo, callback: Reply<void>) {
