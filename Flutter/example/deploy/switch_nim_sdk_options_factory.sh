@@ -14,11 +14,16 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 EXAMPLE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PLUGIN_ROOT="$(cd "${EXAMPLE_ROOT}/.." && pwd)"
 IMPL_DIR="${PLUGIN_ROOT}/lib/src/impl"
-CALLKIT_ROOT="$(cd "${PLUGIN_ROOT}/../callkit" && pwd)"
+CALLKIT_ROOT="$(cd "${PLUGIN_ROOT}/./callkit" && pwd)"
+CALLKIT_API_DIR="${CALLKIT_ROOT}/lib/src/api"
 
 TARGET_FILE="${IMPL_DIR}/nim_sdk_options_factory.dart"
 DEFAULT_FILE="${IMPL_DIR}/nim_sdk_options_factory_stub.dart"
 OHOS_FILE="${IMPL_DIR}/nim_sdk_options_factory_ohos.dart"
+
+VIDEO_BUILDER_TARGET_FILE="${CALLKIT_API_DIR}/callkit_video_view.dart"
+VIDEO_BUILDER_DEFAULT_FILE="${CALLKIT_API_DIR}/callkit_video_view_builder_stub.dart"
+VIDEO_BUILDER_OHOS_FILE="${CALLKIT_API_DIR}/callkit_video_view_builder_ohos.dart"
 
 switch_pubspec_for_dir() {
   local target_dir="$1"
@@ -73,10 +78,14 @@ case "${TARGET_PLATFORM}" in
   ohos)
     cp "${OHOS_FILE}" "${TARGET_FILE}"
     echo "Switched nim_sdk_options_factory.dart to OHOS implementation."
+    cp "${VIDEO_BUILDER_OHOS_FILE}" "${VIDEO_BUILDER_TARGET_FILE}"
+    echo "Switched callkit_video_view_builder.dart to OHOS implementation."
     ;;
   android|ios)
     cp "${DEFAULT_FILE}" "${TARGET_FILE}"
     echo "Switched nim_sdk_options_factory.dart to Android/iOS implementation."
+    cp "${VIDEO_BUILDER_DEFAULT_FILE}" "${VIDEO_BUILDER_TARGET_FILE}"
+    echo "Switched callkit_video_view_builder.dart to Android/iOS implementation."
     ;;
   *)
     echo "Unsupported platform: ${TARGET_PLATFORM}"
