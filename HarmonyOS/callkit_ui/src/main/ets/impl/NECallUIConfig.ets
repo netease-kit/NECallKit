@@ -11,4 +11,9 @@ export interface NECallUIConfig {
    * 使用 SubWindow 覆盖层实现横幅展示。
    */
   enableIncomingBanner?: boolean;
+
+  /**
+   * 是否显示通话流程相关 toast 提示。默认 true。
+   */
+  enableCallToast?: boolean;
 }
