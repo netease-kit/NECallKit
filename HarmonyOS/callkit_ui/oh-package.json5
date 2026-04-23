@@ -9,7 +9,7 @@
   "author": "Netease RTC Team",
   "license": "MIT",
   "dependencies": {
-    "@yunxin/callkit": "4.4.0",
+    "@yunxin/callkit": "4.4.6",
     "@nertc/nertc_sdk": "5.9.11",
     //虚拟背景插件，不用虚拟背景的话可以不依赖这个插件
     "@nertc/person_segment_plugin": "1.0.0",
