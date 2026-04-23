@@ -6,6 +6,7 @@ import AbilityAccessCtrl, { Permissions } from '@ohos.abilityAccessCtrl';
 import bundleManager from '@ohos.bundle.bundleManager';
 import { NECallType, NEErrorCode } from '@yunxin/callkit';
 import { CallUILog } from './CallUILog';
+import { ToastUtils } from './ToastUtils';
 import common from '@ohos.app.ability.common';
 import Want from '@ohos.app.ability.Want';
 import { promptAction } from '@kit.ArkUI';
@@ -205,10 +206,7 @@ export class PermissionUtils {
     } catch (error) {
       CallUILog.error(PermissionUtils.TAG, `showPermissionDeniedGuidance: exception=${String(error)}`);
       // 降级方案：显示简单的 toast
-      promptAction.showToast({
-        message: message,
-        duration: 3000
-      });
+      ToastUtils.showToastWithString(context, message);
     }
   }
 
@@ -281,5 +279,13 @@ export class PermissionUtils {
         return '媒体权限未授予';
     }
   }
-}
 
+  /**
+   * 显示权限拒绝 toast（兼容旧调用）
+   * @param context 上下文（当前实现无需使用）
+   * @param errorCode 错误码
+   */
+  static showPermissionDeniedToast(context: common.UIAbilityContext, errorCode: number): void {
+    ToastUtils.showToastWithString(context, PermissionUtils.getPermissionDeniedMessage(errorCode));
+  }
+}

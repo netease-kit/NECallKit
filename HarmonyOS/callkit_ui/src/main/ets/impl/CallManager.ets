@@ -271,8 +271,14 @@ export class CallManager {
    * @param uiConfig UI 配置（可选）
    */
   setUIConfig(uiConfig: NECallUIConfig): void {
-    this._uiConfig = uiConfig;
-    CallUILog.info(CallManager._tag, `setUIConfig(enableIncomingBanner:${uiConfig.enableIncomingBanner})`);
+    const enableCallToast = uiConfig.enableCallToast ?? ToastUtils.isToastEnabled();
+    this._uiConfig = {
+      enableIncomingBanner: uiConfig.enableIncomingBanner,
+      enableCallToast: enableCallToast
+    };
+    ToastUtils.setToastEnabled(enableCallToast);
+    CallUILog.info(CallManager._tag,
+      `setUIConfig(enableIncomingBanner:${uiConfig.enableIncomingBanner}, enableCallToast:${enableCallToast})`);
   }
 
   /**
@@ -598,6 +604,8 @@ export class CallManager {
   async accept(): Promise<NEResult> {
     CallUILog.info(CallManager._tag, `accept: isGroupCall=${CallState.instance.isGroupCall()}`);
 
+    // 权限在进入通话页面时已请求（与 Android 对齐），接听时不再检查
+
     let resultCode: number = 0;
     let resultMessage: string = '';
 
@@ -915,8 +923,50 @@ export class CallManager {
    * @returns 结果
    */
   async setSelfInfo(nickname: string, avatar: string): Promise<NEResult> {
-    // TODO: 实现设置自己信息
-    return new NEResult(0, '');
+    const accountId = CallState.instance.selfUser.id || this._accountId || '';
+    if (accountId.length === 0) {
+      CallUILog.error(CallManager._tag, `setSelfInfo failed: accountId is empty`);
+      return new NEResult(-1, 'setSelfInfo failed: accountId is empty');
+    }
+
+    const normalizedNickname = nickname.trim();
+    const normalizedAvatar = avatar.trim();
+
+    // 1) 立即更新本地通话状态，保障 UI 立刻生效
+    CallState.instance.selfUser.nickname = normalizedNickname.length > 0 ? normalizedNickname : accountId;
+    CallState.instance.selfUser.avatar = normalizedAvatar;
+
+    // 如果自己在 caller/calleeList 中，也同步一份，避免通话过程中的角色视图不一致
+    if (CallState.instance.caller.id === accountId) {
+      CallState.instance.caller.nickname = CallState.instance.selfUser.nickname;
+      CallState.instance.caller.avatar = normalizedAvatar;
+    }
+    const selfInCallee = CallState.instance.calleeList.find((user) => user.id === accountId);
+    if (selfInCallee) {
+      selfInCallee.nickname = CallState.instance.selfUser.nickname;
+      selfInCallee.avatar = normalizedAvatar;
+    }
+
+    NEEventNotify.getInstance().notify(setStateEvent, {});
+
+    // 2) 尝试同步到 NIM 资料，保证对端后续拉取到一致的昵称/头像
+    const updateResult = await NimUtils.updateSelfUserProfile(
+      CallState.instance.selfUser.nickname,
+      normalizedAvatar
+    );
+    if (!updateResult.success) {
+      CallUILog.warn(
+        CallManager._tag,
+        `setSelfInfo local updated, but sync to NIM failed: ${updateResult.message}`
+      );
+      return new NEResult(0, `local updated, nim sync failed: ${updateResult.message}`);
+    }
+
+    CallUILog.info(
+      CallManager._tag,
+      `setSelfInfo success: accountId=${accountId}, nickname=${CallState.instance.selfUser.nickname}, avatar=${normalizedAvatar.length > 0 ? '有' : '无'}`
+    );
+    return new NEResult(0, 'success');
   }
 
   /**
@@ -1064,10 +1114,25 @@ export class CallManager {
    */
   enableIncomingBanner(enable: boolean): void {
     if (!this._uiConfig) {
-      this._uiConfig = {};
+      this._uiConfig = {
+        enableCallToast: ToastUtils.isToastEnabled()
+      };
     }
     this._uiConfig.enableIncomingBanner = enable;
     CallUILog.info(CallManager._tag, `enableIncomingBanner enable = ${enable}`);
+  }
+
+  /**
+   * 启用/禁用通话流程 toast 提示
+   * @param enable 是否启用
+   */
+  enableCallToast(enable: boolean): void {
+    if (!this._uiConfig) {
+      this._uiConfig = {};
+    }
+    this._uiConfig.enableCallToast = enable;
+    ToastUtils.setToastEnabled(enable);
+    CallUILog.info(CallManager._tag, `enableCallToast enable = ${enable}`);
   }
 
   /**

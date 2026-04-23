@@ -6,6 +6,25 @@ import { NIMInterface, V2NIMUser } from '@nimsdk/base';
 import { User } from '../data/User';
 import { CallUILog } from './CallUILog';
 
+interface SelfUserProfileUpdateParams {
+  name?: string;
+  avatar?: string;
+}
+
+export class SelfUserProfileUpdateResult {
+  success: boolean = false;
+  message: string = '';
+
+  constructor(success: boolean, message: string) {
+    this.success = success;
+    this.message = message;
+  }
+}
+
+interface UserServiceWithProfileUpdate {
+  updateSelfUserProfile?: (params: SelfUserProfileUpdateParams) => Promise<void>;
+}
+
 /**
  * NIM 工具类
  * NIM 工具类
@@ -139,5 +158,38 @@ export class NimUtils {
     user.nickname = accountId;
     return user;
   }
-}
 
+  /**
+   * 更新当前登录用户资料（昵称、头像）
+   * @param nickname 昵称
+   * @param avatar 头像 URL
+   * @returns 更新结果
+   */
+  static async updateSelfUserProfile(
+    nickname: string,
+    avatar: string
+  ): Promise<SelfUserProfileUpdateResult> {
+    const nim = NimUtils._nimInstance;
+    if (!nim || !nim.userService) {
+      return new SelfUserProfileUpdateResult(false, 'NIM userService 不可用');
+    }
+
+    const userService = nim.userService as UserServiceWithProfileUpdate;
+    if (!userService.updateSelfUserProfile) {
+      return new SelfUserProfileUpdateResult(false, '当前 NIM SDK 不支持 updateSelfUserProfile');
+    }
+
+    const params: SelfUserProfileUpdateParams = {};
+    params.name = nickname;
+    params.avatar = avatar;
+
+    try {
+      await userService.updateSelfUserProfile(params);
+      return new SelfUserProfileUpdateResult(true, 'success');
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      CallUILog.warn(NimUtils.TAG, `updateSelfUserProfile failed: ${errMsg}`);
+      return new SelfUserProfileUpdateResult(false, errMsg);
+    }
+  }
+}

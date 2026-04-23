@@ -12,6 +12,22 @@ interface ResourceWithId {
 
 export class ToastUtils {
   static TAG = "CallMainPage";
+  private static toastEnabled: boolean = true;
+
+  /**
+   * 设置 toast 开关
+   * @param enable 是否启用
+   */
+  public static setToastEnabled(enable: boolean): void {
+    ToastUtils.toastEnabled = enable;
+  }
+
+  /**
+   * 获取 toast 开关状态
+   */
+  public static isToastEnabled(): boolean {
+    return ToastUtils.toastEnabled;
+  }
   /**
    * 获取国际化字符串
    * @param resId 资源对象
@@ -37,6 +53,9 @@ export class ToastUtils {
    * @param message 信息
    */
   public static showToast(context: common.UIAbilityContext, messageRes: Resource): void {
+    if (!ToastUtils.toastEnabled) {
+      return;
+    }
     try {
       const message = ToastUtils.getString(context, messageRes);
       promptAction.showToast({
@@ -54,6 +73,9 @@ export class ToastUtils {
    * @param message 信息字符串
    */
   public static showToastWithString(context: common.UIAbilityContext, message: string): void {
+    if (!ToastUtils.toastEnabled) {
+      return;
+    }
     try {
       promptAction.showToast({
         message: message,

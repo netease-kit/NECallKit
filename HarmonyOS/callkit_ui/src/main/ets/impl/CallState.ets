@@ -148,7 +148,7 @@ export class CallState {
    */
   readonly observer: NECallEngineDelegate = new NECallEngineDelegate({
     onReceiveInvited: async (info: NEInviteInfo) => {
-      CallUILog.info(CallState._tag, `onReceiveInvited(callerAccId:${info.inviter}, callType:${info.callType}, callScene:${info.callScene}, participantCount:${info.participantCount})`);
+      CallUILog.info(CallState._tag, `onReceiveInvited(callerAccId:${info.inviter}, callType:${info.callType},callScene:${info.callScene}, participantCount:${info.participantCount}, extrainfo:${info.extraInfo}, globalInfo:${info.globalExtra})`);
       const incomingTaskToken = CallState.instance.beginIncomingTask();
 
       // 处理来电逻辑（先设置角色），传递群呼相关参数

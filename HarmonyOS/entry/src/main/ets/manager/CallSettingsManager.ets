@@ -14,6 +14,7 @@ export class CallSettingsModel {
 
   enableBlur: boolean = false;              // 虚化
   enableIncomingBanner: boolean = false;    // 开启来电横幅
+  enableCallToast: boolean = true;          // 是否显示通话流程 toast
 
   // 推送设置
   pushEnabled: boolean = true;              // 是否启用推送
@@ -50,6 +51,7 @@ export class CallSettingsManager {
       this.callSettings.customRtcUid = await this.preferences.get('customRtcUid', '') as string;
       this.callSettings.enableBlur = await this.preferences.get('enableBlur', false) as boolean;
       this.callSettings.enableIncomingBanner = await this.preferences.get('enableIncomingBanner', false) as boolean;
+      this.callSettings.enableCallToast = await this.preferences.get('enableCallToast', true) as boolean;
       this.callSettings.pushEnabled = await this.preferences.get('pushEnabled', true) as boolean;
       this.callSettings.pushTitle = await this.preferences.get('pushTitle', '') as string;
       this.callSettings.pushContent = await this.preferences.get('pushContent', '') as string;
@@ -113,6 +115,7 @@ export class CallSettingsManager {
       await this.preferences.put('customRtcUid', this.callSettings.customRtcUid);
       await this.preferences.put('enableBlur', this.callSettings.enableBlur);
       await this.preferences.put('enableIncomingBanner', this.callSettings.enableIncomingBanner);
+      await this.preferences.put('enableCallToast', this.callSettings.enableCallToast);
       await this.preferences.put('pushEnabled', this.callSettings.pushEnabled);
       await this.preferences.put('pushTitle', this.callSettings.pushTitle);
       await this.preferences.put('pushContent', this.callSettings.pushContent);
@@ -126,4 +129,3 @@ export class CallSettingsManager {
     }
   }
 }
-

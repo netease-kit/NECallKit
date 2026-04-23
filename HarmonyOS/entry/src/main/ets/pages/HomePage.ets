@@ -76,7 +76,9 @@ export struct HomePage {
         await settingsManager.loadSettings(context);
         const settings = settingsManager.getSettings();
         NECallUI.getInstance().enableIncomingBanner(settings.enableIncomingBanner);
-        CallUILog.info('HomePage', `settings loaded: enableIncomingBanner=${settings.enableIncomingBanner}`);
+        NECallUI.getInstance().enableCallToast(settings.enableCallToast);
+        CallUILog.info('HomePage',
+          `settings loaded: enableIncomingBanner=${settings.enableIncomingBanner}, enableCallToast=${settings.enableCallToast}`);
       } catch (e) {
         CallUILog.error('HomePage', `load settings error: ${String(e)}`);
       }
@@ -547,5 +549,4 @@ export struct HomePage {
     .alignItems(HorizontalAlign.Center)
   }
 }
-
 

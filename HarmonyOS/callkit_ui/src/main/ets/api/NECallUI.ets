@@ -85,6 +85,12 @@ export interface INECallUI {
   enableIncomingBanner(enable: boolean): void;
 
   /**
+   * 启用/禁用通话流程 toast 提示
+   * @param enable 是否启用 toast 提示
+   */
+  enableCallToast(enable: boolean): void;
+
+  /**
    * 发起群呼
    * @param params 呼叫参数，需包含 calledAccIds（被叫账号列表，最多 9 人）
    * @returns 结果
@@ -116,7 +122,7 @@ export namespace NECallUI {
    * @returns 版本号
    */
   export function version(): string {
-    return "4.4.0";
+    return "4.4.6";
   }
 
   /**

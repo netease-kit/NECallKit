@@ -2,16 +2,21 @@ import router from '@ohos.router';
 import {SettingRow} from './view/SettingRow'
 import { CallSettingsManager, CallSettingsModel } from '../manager/CallSettingsManager';
 import { NECallUI } from '@yunxin/callkit_ui';
+import promptAction from '@ohos.promptAction';
+import { UserModel } from '../viewmodel/UserModel';
 
 @Entry
 @Component
 export struct SettingPage {
   @State settingsModel: CallSettingsModel = new CallSettingsModel();
+  @State selfNickname: string = '';
+  @State selfAvatar: string = '';
   private callSettingsManager: CallSettingsManager = new CallSettingsManager();
   private readonly TAG: string = 'Settings';
 
   aboutToAppear(): void {
     this.loadSettings();
+    this.loadSelfInfo();
   }
 
   /**
@@ -30,6 +35,8 @@ export struct SettingPage {
       this.settingsModel.enableBlur = settings.enableBlur;
       this.settingsModel.enableIncomingBanner = settings.enableIncomingBanner;
       NECallUI.getInstance().enableIncomingBanner(settings.enableIncomingBanner);
+      this.settingsModel.enableCallToast = settings.enableCallToast;
+      NECallUI.getInstance().enableCallToast(settings.enableCallToast);
       this.settingsModel.pushEnabled = settings.pushEnabled;
       this.settingsModel.pushTitle = settings.pushTitle;
       this.settingsModel.pushContent = settings.pushContent;
@@ -53,6 +60,50 @@ export struct SettingPage {
       console.info(`[${this.TAG}] Settings saved successfully`);
     } catch (error) {
       console.error(`[${this.TAG}] saveSettings error:`, error);
+    }
+  }
+
+  /**
+   * 加载当前用户资料（用于 setSelfInfo 调试入口预填）
+   */
+  async loadSelfInfo(): Promise<void> {
+    try {
+      const accountId = AppStorage.get<string>('currentAccountId') ?? '';
+      if (accountId.length === 0) {
+        return;
+      }
+      const userModel = UserModel.getInstance(getContext(this));
+      const nim = userModel.getNimSdk();
+      if (!nim || !nim.userService) {
+        return;
+      }
+      const userProfiles = await nim.userService.getUserList([accountId]);
+      if (userProfiles && userProfiles.length > 0) {
+        const profile = userProfiles[0];
+        this.selfNickname = profile.name || accountId;
+        this.selfAvatar = profile.avatar || '';
+      } else {
+        this.selfNickname = accountId;
+      }
+    } catch (error) {
+      console.error(`[${this.TAG}] loadSelfInfo error:`, error);
+    }
+  }
+
+  /**
+   * 调用 callkit_ui 的 setSelfInfo 入口
+   */
+  async applySelfInfo(): Promise<void> {
+    try {
+      const result = await NECallUI.getInstance().setSelfInfo(this.selfNickname, this.selfAvatar);
+      if (result.code === 0) {
+        promptAction.showToast({ message: '昵称/头像已应用到通话UI' });
+      } else {
+        promptAction.showToast({ message: `设置失败: ${result.message || result.code}` });
+      }
+    } catch (error) {
+      console.error(`[${this.TAG}] applySelfInfo error:`, error);
+      promptAction.showToast({ message: '设置失败，请查看日志' });
     }
   }
 
@@ -201,6 +252,46 @@ export struct SettingPage {
               })
           }
 
+          // 是否显示通话流程 toast
+          SettingRow({ label: "显示通话提示Toast" }) {
+            Toggle({ type: ToggleType.Switch, isOn: this.settingsModel.enableCallToast })
+              .onChange((isOn: boolean) => {
+                this.settingsModel.enableCallToast = isOn;
+                NECallUI.getInstance().enableCallToast(isOn);
+              })
+          }
+
+          // ========== 用户信息设置（Demo） ==========
+          this.SectionTitle('用户信息（Demo）')
+
+          SettingRow({ label: "自定义昵称" }) {
+            TextInput({ text: this.selfNickname, placeholder: '请输入昵称' })
+              .width(200)
+              .height(36)
+              .backgroundColor('#FFFFFF')
+              .borderRadius(8)
+              .padding({ left: 8, right: 8 })
+              .onChange((value: string) => {
+                this.selfNickname = value;
+              })
+          }
+
+          SettingRow({ label: "自定义头像URL" }) {
+            TextInput({ text: this.selfAvatar, placeholder: 'https://...' })
+              .width(200)
+              .height(36)
+              .backgroundColor('#FFFFFF')
+              .borderRadius(8)
+              .padding({ left: 8, right: 8 })
+              .onChange((value: string) => {
+                this.selfAvatar = value;
+              })
+          }
+
+          this.LinkRow('应用昵称/头像到通话UI', async () => {
+            await this.applySelfInfo();
+          })
+
           // ========== 推送设置 ==========
           this.SectionTitle('推送设置')
 
@@ -272,4 +363,3 @@ export struct SettingPage {
     .backgroundColor('#1C1C1E')
   }
 }
-

@@ -11,9 +11,10 @@ import router from '@ohos.router';
 import { CallMainWidget } from '../widget/CallMainWidget';
 import common from '@ohos.app.ability.common';
 import { CallUILog } from '../utils/CallUILog';
-import { NECallEndInfo, NECallEndReason, NEGroupCall } from '@yunxin/callkit';
+import { NECallEndInfo, NECallEndReason, NEGroupCall, NEErrorCode } from '@yunxin/callkit';
 import { promptAction } from '@kit.ArkUI';
 import { ToastUtils } from '../utils/ToastUtils';
+import { PermissionUtils } from '../utils/PermissionUtils';
 
 /**
  * Resource 对象接口，用于访问资源ID
@@ -83,6 +84,32 @@ export struct CallMainPage {
 
     // 注册通话结束事件监听
     NEEventNotify.getInstance().register(setStateEventOnCallEnd, this.endCallback);
+
+    // 请求媒体权限（与 Android BaseP2pCallFragment.onPermissionRequest 对齐）
+    this.requestMediaPermissions();
+  }
+
+  /**
+   * 请求媒体权限
+   * 与 Android 对齐：在进入通话页面时请求权限，而不是在接听时请求
+   */
+  private async requestMediaPermissions(): Promise<void> {
+    const context = getContext(this) as common.UIAbilityContext;
+    if (!context) {
+      CallUILog.warn(CallMainPage.TAG, 'requestMediaPermissions: context is null');
+      return;
+    }
+
+    const callType = CallState.instance.callType;
+    const permissionCode = await PermissionUtils.requestMediaPermissions(context, callType);
+    if (permissionCode !== NEErrorCode.SUCCESS) {
+      CallUILog.warn(CallMainPage.TAG, `requestMediaPermissions: permission denied, code=${permissionCode}`);
+      PermissionUtils.showPermissionDeniedToast(context, permissionCode);
+      // 权限被拒绝时，不自动关闭页面（与 Android 行为一致）
+      // 用户可以继续操作，但某些功能可能受限
+    } else {
+      CallUILog.info(CallMainPage.TAG, 'requestMediaPermissions: permission granted');
+    }
   }
 
   onPageShow(): void {

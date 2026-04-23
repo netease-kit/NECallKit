@@ -142,6 +142,15 @@ export class NECallUIImpl implements INECallUI {
   }
 
   /**
+   * 启用/禁用通话流程 toast 提示
+   * @param enable 是否启用 toast 提示
+   */
+  enableCallToast(enable: boolean): void {
+    CallUILog.infoApi(NECallUIImpl._tag, `enableCallToast(enable:${enable})`);
+    CallManager.instance.enableCallToast(enable);
+  }
+
+  /**
    * 发起群呼
    * @param params 呼叫参数，需包含 calledAccIds（被叫账号列表，最多 9 人）
    * @returns 结果
