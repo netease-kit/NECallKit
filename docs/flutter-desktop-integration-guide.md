@@ -275,23 +275,14 @@ class AppDelegate: FlutterAppDelegate {
 }
 ```
 
-### 6.3 使用线上依赖构建 `macOS`
+### 6.3 构建运行 `macOS`
 
-当前桌面桥接脚本支持多种资源模式。对客户项目，推荐直接使用已发布包和在线 framework 下载模式：
+客户项目通常直接执行即可：
 
 ```bash
-export NE_CALL_DESKTOP_MACOS_BRIDGE_MODE=packaged
-export NE_CALL_DESKTOP_MACOS_FRAMEWORK_MODE=download
-
 flutter pub get
 flutter run -d macos
 ```
-
-说明：
-
-- `BRIDGE_MODE=packaged` 表示直接使用包内携带的 `libne_callkit.dylib`。
-- `FRAMEWORK_MODE=download` 表示首次构建时自动下载 macOS 运行时 framework。
-- 建议在本地终端和 CI 环境都配置这两个环境变量。
 
 ## 7. Windows 宿主工程改造
 
@@ -335,18 +326,12 @@ LRESULT FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
 
 ### 7.2 Windows 构建说明
 
-常规客户接入保持默认构建模式即可：
+客户项目通常直接执行即可：
 
 ```bash
 flutter pub get
 flutter run -d windows
 ```
-
-说明：
-
-- 当前 Windows 插件构建脚本支持 `packaged`、`download`、`source` 三种模式。
-- 默认 `auto` 模式下会优先使用可用的包内 bridge 和运行时资源。
-- 如客户环境需要内网镜像，可再按需配置 Windows 相关环境变量。
 
 ## 8. 可选的桌面设备管理接口
 
@@ -378,19 +363,20 @@ await NECallEngine.instance.setAudioPlaybackDevice('<speaker-device-id>');
 
 ## 10. 常见问题
 
-### 10.1 macOS 构建报 `No local desktop source configured`
+### 10.1 macOS 构建失败
 
 原因：
 
-- 当前构建脚本进入了本地 desktop 源码兜底分支。
+- 常见原因包括本机 Flutter 环境异常、Xcode/CocoaPods 环境异常，或本地构建缓存异常。
 
 处理方式：
 
 ```bash
-export NE_CALL_DESKTOP_MACOS_BRIDGE_MODE=packaged
-export NE_CALL_DESKTOP_MACOS_FRAMEWORK_MODE=download
+flutter pub get
 flutter run -d macos
 ```
+
+如果仍然失败，优先检查 Flutter SDK、Xcode、CocoaPods 和本机网络环境是否正常。
 
 ### 10.2 来电后 Flutter 通话页没有弹出
 
@@ -428,4 +414,3 @@ flutter run -d macos
 
 - 客户文档中统一使用占位符，例如 `<appKey>`、`<userId>`、`<token>`、`<peerUserId>`。
 - 不要把 Demo 中的测试账号、测试 token、测试域名、内部下载地址写入对外文档。
-- 若客户采用 CI 构建 `macOS`，请把桌面资源模式环境变量固化到构建脚本。
