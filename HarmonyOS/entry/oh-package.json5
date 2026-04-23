@@ -6,8 +6,8 @@
   "author": "",
   "license": "",
   "dependencies": {
-    "@yunxin/callkit": "4.4.0",
-    "@yunxin/callkit_ui": "4.4.0",
+    "@yunxin/callkit": "4.4.6",
+    "@yunxin/callkit_ui": "4.4.6",
     "@nertc/nertc_sdk": "5.9.15",
     "@nimsdk/message": "10.9.50",
     "@nimsdk/user": "10.9.50",
