@@ -49,8 +49,8 @@ NERTCCallKit 需要配合云信 IM SDK 使用，您需要：
 ```json5
 {
   "dependencies": {
-    "@yunxin/callkit": "4.4.0",
-    "@yunxin/callkit_ui": "4.4.0"
+    "@yunxin/callkit": "4.4.6",
+    "@yunxin/callkit_ui": "4.4.6"
   }
 }
 ```

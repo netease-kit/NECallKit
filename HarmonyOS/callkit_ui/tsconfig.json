@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "target": "ES6",
+    "strict": false,
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "allowJs": true,
+    "moduleResolution": "Node",
+    "lib": ["ES2020", "DOM"],
+    "declaration": true,
+    "declarationDir": "types",
+    "sourceMap": true,
+    "stripInternal": true,
+    "strictNullChecks": false
+  },
+  "include": ["docs"],
+  "typedocOptions": {
+    "entryPoints": [
+      "docs/src/Models.d.ets",
+      "docs/src/NECallCallback.d.ets",
+      "docs/src/NECallEngine.d.ets"
+    ],
+    "disableSources": true,
+    "hideGenerator": true,
+    "out": "dist/api",
+    "name": "CallUIKit HarmonyOS"
+  }
+}
