@@ -139,7 +139,7 @@ Future<void> startAudioCall(String peerUserId) async {
 }
 ```
 
-来电、接听、挂断、切换音视频等通话内操作由 `NECallKitUI` 通话页处理；若需要监听业务事件，可额外注册 `NECallEngineDelegate`。
+来电、接听、挂断等通话内操作由 `NECallKitUI` 通话页处理；若需要监听业务事件，可额外注册 `NECallEngineDelegate`。
 
 ## 5. 桌面端退出清理
 
@@ -357,6 +357,7 @@ await NECallEngine.instance.setAudioPlaybackDevice('<speaker-device-id>');
 ## 9. 当前桌面端能力边界
 
 - 当前桌面端主线能力为 `1v1 音视频通话`。
+- 当前桌面端暂不支持通话中音频/视频切换。
 - 群呼相关能力在当前桌面实现中未作为交付能力启用。
 - `ASR 字幕`、`虚拟背景状态回调` 等部分接口在桌面端不会回调。
 - 来电 UI 依赖 `navigatorObserver` 自动拉起，若客户使用自定义路由框架，必须保证根 `Navigator` 对观察者可见。
@@ -401,16 +402,3 @@ flutter run -d macos
 - `macOS` 的 `Info.plist` 和 `entitlements` 是否已补齐。
 - 系统隐私设置中是否授予应用摄像头和麦克风权限。
 - 客户应用是否在登录成功后才发起通话。
-
-## 11. 推荐接入顺序
-
-1. 先在一个干净的 Flutter 桌面工程中接入 `netease_callkit_ui`。
-2. 挂载 `NECallKitUI.delegate` 和 `NECallKitUI.navigatorObserver`。
-3. 完成 `login -> call -> hangup -> logout` 主流程打通。
-4. 增加 `macOS` / `Windows` 宿主退出清理逻辑。
-5. 再补充设备选择、昵称头像同步、业务页面跳转等定制能力。
-
-## 12. 交付建议
-
-- 客户文档中统一使用占位符，例如 `<appKey>`、`<userId>`、`<token>`、`<peerUserId>`。
-- 不要把 Demo 中的测试账号、测试 token、测试域名、内部下载地址写入对外文档。
