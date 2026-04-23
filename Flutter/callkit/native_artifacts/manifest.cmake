@@ -13,7 +13,7 @@
 #     ne_callkit.dll
 #     *.dll required by NERtc / observability
 
-set(NE_CALL_ARTIFACT_VERSION "4.4.5-beta.1")
+set(NE_CALL_ARTIFACT_VERSION "4.5.0")
 
 # Optional shared base URL. When set, platform archive URLs are derived as:
 #   ${NE_CALL_ARTIFACT_BASE_URL}/${archive_name}
@@ -33,11 +33,11 @@ set(NE_CALL_UPSTREAM_OBSERVABILITY_WINDOWS_SDK_URL
     "https://yx-web-nosdn.netease.im/package/NEXKitBase_Windows_v1.2.0.zip?download=NEXKitBase_Windows_v1.2.0.zip")
 
 set(NE_CALL_ARTIFACT_MACOS_ARCHIVE
-    "netease_callkit_desktop_macos_universal_4.4.5-beta.1.zip")
+    "netease_callkit_desktop_macos_universal_4.5.0.zip")
 set(NE_CALL_ARTIFACT_MACOS_SHA256 "")
 set(NE_CALL_ARTIFACT_MACOS_ROOT_DIR "")
 
 set(NE_CALL_ARTIFACT_WINDOWS_X64_ARCHIVE
-    "netease_callkit_desktop_windows_x64_4.4.5-beta.1.zip")
+    "netease_callkit_desktop_windows_x64_4.5.0.zip")
 set(NE_CALL_ARTIFACT_WINDOWS_X64_SHA256 "")
 set(NE_CALL_ARTIFACT_WINDOWS_X64_ROOT_DIR "")
