@@ -1,4 +1,4 @@
-include: package:dart_flutter_team_lints/analysis_options.yaml
+include: package:flutter_lints/flutter.yaml
 analyzer:
   language:
     strict-casts: true
@@ -15,6 +15,8 @@ analyzer:
   exclude:
     # Ignore generated files
     - 'example/**'
+    - 'callkit/**'
+    - 'lib/src/impl/nim_sdk_options_factory_ohos.dart'
 
 linter:
   rules:

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 class ExtendButton extends StatelessWidget {
   const ExtendButton(
       {required this.imgUrl,
-      this.tips = "",
+      this.tips = '',
       this.onTap,
       this.imgHeight = 0,
       this.imgOffsetX = 0,

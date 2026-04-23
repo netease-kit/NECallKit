@@ -4,20 +4,20 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 
-import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 import 'package:netease_callkit_ui/src/data/constants.dart';
 import 'package:netease_callkit_ui/src/data/user.dart';
 import 'package:netease_callkit_ui/src/event/event_notify.dart';
-import 'package:netease_callkit_ui/src/extensions/calling_bell_feature.dart';
 import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
+import 'package:netease_callkit_ui/src/platform/call_kit_runtime_adapter.dart';
+import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 import 'package:netease_callkit_ui/src/utils/nim_utils.dart';
 
 class CallState {
   static const String _tag = 'CallState';
   static final CallState instance = CallState._internal();
+  static const CallKitRuntimeAdapter _runtimeAdapter = CallKitRuntimeAdapter();
 
   factory CallState() {
     return instance;
@@ -37,6 +37,7 @@ class CallState {
   int timeCount = 0;
   int startTime = 0;
   Timer? _timer;
+  String currentCallId = '';
   String groupId = '';
   bool isCameraOpen = false;
   NECamera camera = NECamera.front;
@@ -49,6 +50,7 @@ class CallState {
   NetworkQualityHint networkQualityReminder = NetworkQualityHint.none;
 
   bool isLocalViewBig = true;
+  bool preferLocalPreviewBeforeRemoteVideo = false;
   bool isOpenFloatWindow = false;
   bool isIOSOpenFloatWindowOutOfApp = false;
   bool enableIncomingBanner = false;
@@ -56,21 +58,40 @@ class CallState {
 
   bool isStartForegroundService = false;
 
+  static bool shouldShowRemoteCancelToast({
+    required NECallTerminalCode reasonCode,
+    required NECallRole callRole,
+  }) {
+    if (reasonCode == NECallTerminalCode.calleeCancel) {
+      return true;
+    }
+    return reasonCode == NECallTerminalCode.callerCancel &&
+        callRole == NECallRole.called;
+  }
+
+  static bool shouldEnterCallingPageAfterLckAccept({
+    required CallPage currentPage,
+    required bool isOpenFloatWindow,
+  }) {
+    return currentPage == CallPage.none && !isOpenFloatWindow;
+  }
+
   final NECallEngineDelegate observer = NECallEngineDelegate(
     onReceiveInvited: (NEInviteInfo info) async {
       CallKitUILog.i(_tag,
-          'NECallObserver onReceiveInvited(callerAccId:${info.callerAccId}, callType:${info.callType})');
+          'NECallObserver onReceiveInvited(callerAccId:${info.callerAccId}, callType:${info.callType}, callId:${info.callId})');
+      CallState.instance.currentCallId = info.callId ?? '';
       // 先处理来电逻辑（设置 callRole 为 called），再播放铃声
       // 否则 startRing 读取的 callRole 还是默认值，会播放错误的铃声
       await CallState.instance.handleCallReceivedData(
           info.callerAccId, [], info.channelId ?? '', info.callType);
-      CallingBellFeature.startRing();
+      await _runtimeAdapter.startIncomingRing();
       await NECallKitPlatform.instance.updateCallStateToNative();
       // await CallManager.instance.enableWakeLock(true);
       if (Platform.isIOS) {
         if (CallState.instance.enableIncomingBanner) {
           CallState.instance.isInNativeIncomingBanner = true;
-          await NECallKitPlatform.instance.showIncomingBanner();
+          CallManager.instance.showIncomingBanner();
         } else {
           CallState.instance.isInNativeIncomingBanner = false;
           CallManager.instance.launchCallingPage();
@@ -95,6 +116,11 @@ class CallState {
             CallManager.instance.pullBackgroundApp();
           }
         }
+      } else if (Platform.isMacOS || Platform.isWindows) {
+        // Desktop reuses the Flutter calling page, so an incoming invite must
+        // explicitly drive the same launch flow that mobile foreground calls use.
+        CallState.instance.isInNativeIncomingBanner = false;
+        CallManager.instance.launchCallingPage();
       } else if (PlatformCompat.isOhos) {
         // OHOS 平台：直接启动通话页面，无需特殊权限检查
         if (CallState.instance.enableIncomingBanner) {
@@ -113,7 +139,16 @@ class CallState {
     },
     onCallEnd: (NECallEndInfo info) async {
       CallKitUILog.i(_tag,
-          'NECallObserver onCallEnd(reasonCode:${info.reasonCode}, message:${info.message})');
+          'NECallObserver onCallEnd(reasonCode:${info.reasonCode}, message:${info.message}, callId:${info.callId}, currentCallId:${CallState.instance.currentCallId})');
+      if ((Platform.isMacOS || Platform.isWindows) &&
+          info.callId != null &&
+          info.callId!.isNotEmpty &&
+          CallState.instance.currentCallId.isNotEmpty &&
+          info.callId != CallState.instance.currentCallId) {
+        CallKitUILog.i(_tag,
+            'NECallObserver onCallEnd ignored stale desktop event: eventCallId=${info.callId}, currentCallId=${CallState.instance.currentCallId}');
+        return;
+      }
       if (info.reasonCode == NECallTerminalCode.busy) {
         CallManager.instance.showToast(NECallKitUI.localizations.userBusy);
       } else if (info.reasonCode == NECallTerminalCode.calleeReject ||
@@ -133,12 +168,15 @@ class CallState {
           CallManager.instance
               .showToast(NECallKitUI.localizations.remoteTimeout);
         }
-      } else if (info.reasonCode == NECallTerminalCode.calleeCancel) {
+      } else if (shouldShowRemoteCancelToast(
+        reasonCode: info.reasonCode,
+        callRole: CallState.instance.selfUser.callRole,
+      )) {
         CallManager.instance.showToast(NECallKitUI.localizations.remoteCancel);
       } else {
         CallKitUILog.i(_tag, 'NECallObserver onCallEnd: ${info.reasonCode}');
       }
-      CallingBellFeature.stopRing();
+      await _runtimeAdapter.stopRing();
       if (CallState.instance.callType == NECallType.video &&
           CallState.instance.isCameraOpen) {
         CallManager.instance.closeCamera();
@@ -157,6 +195,8 @@ class CallState {
         await NECallKitPlatform.instance.stopFloatWindow();
       }
 
+      CallManager.instance.clearBannerActiveState();
+
       // iOS 来电横幅自动 dismiss（T023）
       if (Platform.isIOS && CallState.instance.isInNativeIncomingBanner) {
         await NECallKitPlatform.instance.cancelIncomingBanner();
@@ -171,9 +211,10 @@ class CallState {
     onCallConnected: (NECallInfo info) async {
       CallKitUILog.i(_tag,
           'NECallObserver onCallConnected(callId:${info.callId}, callType:${info.callType})');
+      CallState.instance.currentCallId = info.callId;
       CallState.instance.startTime =
           DateTime.now().millisecondsSinceEpoch ~/ 1000;
-      CallingBellFeature.stopRing();
+      await _runtimeAdapter.stopRing();
       CallState.instance.callType = info.callType;
       CallState.instance.selfUser.callStatus = NECallStatus.accept;
       if (CallState.instance.isMicrophoneMute) {
@@ -181,7 +222,7 @@ class CallState {
       } else {
         CallManager.instance.openMicrophone();
       }
-      
+
       // 视频通话接通后默认开启扬声器（延迟1秒）
       if (info.callType == NECallType.video) {
         CallState.instance.isEnableSpeaker = true;
@@ -189,16 +230,19 @@ class CallState {
         Future.delayed(const Duration(seconds: 1), () async {
           await CallManager.instance
               .setSpeakerphoneOn(CallState.instance.isEnableSpeaker);
-          CallKitUILog.i(_tag, 'NECallObserver: Delayed speaker enabled after 1 second');
+          CallKitUILog.i(
+              _tag, 'NECallObserver: Delayed speaker enabled after 1 second');
         });
       } else {
         // 音频通话立即设置（使用听筒）
         await CallManager.instance
             .setSpeakerphoneOn(CallState.instance.isEnableSpeaker);
       }
-      
+
       CallState.instance.startTimer();
       CallState.instance.isLocalViewBig = false;
+      CallState.instance.preferLocalPreviewBeforeRemoteVideo =
+          info.callType == NECallType.video;
       CallState.instance.isInNativeIncomingBanner = false;
 
       CallKitUILog.i(_tag,
@@ -209,6 +253,10 @@ class CallState {
           CallState.instance.enableFloatWindowOutOfApp &&
           CallState.instance.enableFloatWindow &&
           CallState.instance.callType == NECallType.video) {
+        // 被叫接听成功会先走一次原生状态同步，主叫直连场景不会。
+        // 这里先把 accept 状态同步给原生，再初始化 PiP，避免首次 setupPIP
+        // 仍看到旧的 waiting 状态而直接跳过。
+        await NECallKitPlatform.instance.updateCallStateToNative();
         final success = await NECallKitPlatform.instance.setupPIP();
         CallKitUILog.i(
             _tag, 'NECallObserver onCallConnected: setupPIP result = $success');
@@ -217,6 +265,34 @@ class CallState {
       NEEventNotify().notify(setStateEvent);
       NEEventNotify().notify(setStateEventOnCallBegin);
       NECallKitPlatform.instance.updateCallStateToNative();
+    },
+    onLCKAccept: (NELCKAcceptResult result) async {
+      CallKitUILog.i(_tag,
+          'NECallObserver onLCKAccept(code:${result.code}, callId:${result.callInfo?.callId}, currentCallId:${CallState.instance.currentCallId})');
+      if (!Platform.isIOS || result.code != 0) {
+        return;
+      }
+
+      await CallManager.applySingleCallAcceptSuccess(
+        runtimeAdapter: _runtimeAdapter,
+        callState: CallState.instance,
+        syncCallStateToNative: () {
+          NECallKitPlatform.instance.updateCallStateToNative();
+        },
+        callInfo: result.callInfo,
+      );
+
+      CallState.instance.isInNativeIncomingBanner = false;
+      CallManager.instance.clearBannerActiveState();
+      await NECallKitPlatform.instance.cancelIncomingBanner();
+      NEEventNotify().notify(setStateEvent);
+
+      if (shouldEnterCallingPageAfterLckAccept(
+        currentPage: NECallKitNavigatorObserver.currentPage,
+        isOpenFloatWindow: CallState.instance.isOpenFloatWindow,
+      )) {
+        CallManager.instance.enterCallingPageFromBanner();
+      }
     },
     onCallTypeChange: (NECallTypeChangeInfo info) {
       CallKitUILog.i(_tag,
@@ -231,6 +307,10 @@ class CallState {
       for (var remoteUser in CallState.instance.remoteUserList) {
         if (remoteUser.id == userID) {
           remoteUser.videoAvailable = available;
+          if (available &&
+              CallState.instance.preferLocalPreviewBeforeRemoteVideo) {
+            CallState.instance.preferLocalPreviewBeforeRemoteVideo = false;
+          }
           NEEventNotify().notify(setStateEvent);
           NECallKitPlatform.instance.updateCallStateToNative();
           return;
@@ -244,6 +324,10 @@ class CallState {
       for (var remoteUser in CallState.instance.remoteUserList) {
         if (remoteUser.id == userID) {
           remoteUser.videoAvailable = !muted;
+          if (!muted &&
+              CallState.instance.preferLocalPreviewBeforeRemoteVideo) {
+            CallState.instance.preferLocalPreviewBeforeRemoteVideo = false;
+          }
           NEEventNotify().notify(setStateEvent);
           NECallKitPlatform.instance.updateCallStateToNative();
           return;
@@ -400,6 +484,7 @@ class CallState {
 
     CallState.instance.callType = NECallType.audio;
     CallState.instance.timeCount = 0;
+    CallState.instance.currentCallId = '';
     CallState.instance.groupId = '';
 
     CallState.instance.isMicrophoneMute = false;
@@ -408,6 +493,7 @@ class CallState {
     CallState.instance.isEnableSpeaker = false;
 
     CallState.instance.isLocalViewBig = true;
+    CallState.instance.preferLocalPreviewBeforeRemoteVideo = false;
     CallState.instance.enableBlurBackground = false;
 
     // 重置悬浮窗状态

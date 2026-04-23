@@ -48,7 +48,7 @@ Future<bool> initializeMessages(String localeName) {
   }
   var lib = _deferredLibraries[availableLocale];
   lib == null ? new SynchronousFuture(false) : lib();
-  initializeInternalMessageLookup(() => new CompositeMessageLookup());
+  initializeInternalMessageLookup(CompositeMessageLookup.new);
   messageLookup.addLocale(availableLocale, _findGeneratedMessagesFor);
   return new SynchronousFuture(true);
 }

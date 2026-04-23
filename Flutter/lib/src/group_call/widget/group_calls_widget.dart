@@ -210,7 +210,7 @@ class _GroupCallsWidgetState extends State<GroupCallsWidget>
   /// 如果没有头像则使用深色渐变背景
   Widget _buildBlurredBackground() {
     // 使用本地用户（自己）的头像作为背景
-    final String? backgroundAvatar = _findLocalUserAvatar();
+    final backgroundAvatar = _findLocalUserAvatar();
 
     return Positioned.fill(
       child: Stack(

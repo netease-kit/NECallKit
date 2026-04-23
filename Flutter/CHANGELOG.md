@@ -1,9 +1,14 @@
-## [4.4.5] - 2026-04-15
+## [4.5.0] - 2026-04-23
 ### Added
-- 增加flutter ohos端
+- 支持 Flutter 桌面端（macOS / Windows）接入。
 
 ### Compatibility
-- Compatible with `callkit` Flutter 4.4.3
+- Compatible with `callkit` Flutter 4.5.0
+
+## [4.4.5-beta.1] - 2026-04-21
+### Changed
+- 发布测试。
+
 ## [4.4.3] - 2026-04-08
 ### Added
 - 适配 `callkit` Flutter 4.4.3，支持 iOS LiveCommunicationKit `accept` / `hangup` response 回调上抛到 Flutter 层。

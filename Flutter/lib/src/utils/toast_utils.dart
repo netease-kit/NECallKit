@@ -25,6 +25,36 @@ class ToastUtils {
   static final _requests = ListQueue<_ToastRequest>();
   static bool _scheduled = false;
 
+  // Insert a toast directly into a known OverlayState, bypassing Overlay.of().
+  // Use this when the available BuildContext IS the overlay (e.g. navigator.overlay.context),
+  // which has no ancestor Overlay and would cause Overlay.of() to throw.
+  static void showToastOnOverlay(
+    OverlayState overlayState,
+    String? text, {
+    Duration duration = const Duration(seconds: 2),
+  }) {
+    if (text == null) return;
+    if (!overlayState.mounted) return;
+    final entry = OverlayEntry(
+      builder: (_) => Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 80),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: edgeInsets,
+              decoration: decoration,
+              child: Text(text, style: style),
+            ),
+          ),
+        ),
+      ),
+    );
+    overlayState.insert(entry);
+    Future<void>.delayed(duration).then((_) => entry.remove());
+  }
+
   static void showToast(
     BuildContext context,
     String? text, {

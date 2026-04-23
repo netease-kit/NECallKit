@@ -24,19 +24,21 @@ Here we take the integration with UI (i.e., NECallKit) as an example, which is a
 
 ## OHOS Version
 
-> **Note**: To run the OHOS version, please first download [Flutter for HarmonyOS](https://gitcode.com/openharmony-tpc/flutter_flutter/tree/master), then run the script to switch to the Harmony version.
+> **Note**: To run the OHOS version, please first download [Flutter for HarmonyOS](https://gitcode.com/openharmony-tpc/flutter_flutter/tree/master), then run the switch script from the repository root.
 
 **Switch to Harmony version:**
 
 ```bash
-sh Flutter/example/deploy/switch_nim_sdk_options_factory.sh ohos
+sh Flutter/callkit_ui/example/deploy/switch_nim_sdk_options_factory.sh ohos
 ```
 
 **Switch back to Android/iOS version:**
 
 ```bash
-sh Flutter/example/deploy/switch_nim_sdk_options_factory.sh android/ios
+sh Flutter/callkit_ui/example/deploy/switch_nim_sdk_options_factory.sh android
 ```
+
+You can also pass `ios` when switching back to the non-OHOS version.
 
 ## Contact Us
 
@@ -58,4 +60,3 @@ NetEase YunXin has launched integrated, scalable, feature-business-fused end-to-
 - [Listen Together](https://github.com/netease-kit/NEListenTogether)
 - [Online Karaoke](https://github.com/netease-kit/NEKaraoke)
 - [YunXin Entertainment Social Server Nemo](https://github.com/netease-kit/nemo)
-

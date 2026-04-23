@@ -1,3 +1,15 @@
+## [4.5.0] - 2026-04-23
+### Added
+- 支持 Flutter 桌面端（macOS / Windows）接入。
+
+### Compatibility
+- 兼容 `callkit` Android 4.4.0 版本
+- 兼容 `callkit` iOS 4.4.3 版本
+
+## [4.4.5-beta.1] - 2026-04-21
+### Changed
+- 发布测试。
+
 ## [4.4.3] - 2026-04-08
 ### Added
 - iOS 新增 LiveCommunicationKit `accept` / `hangup` response 回调透传能力，Flutter 业务层可监听系统来电界面的接听与拒绝结果。

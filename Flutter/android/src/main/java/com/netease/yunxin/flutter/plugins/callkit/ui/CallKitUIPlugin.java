@@ -4,18 +4,23 @@
 
 package com.netease.yunxin.flutter.plugins.callkit.ui;
 
+import android.app.ActivityManager;
 import androidx.activity.ComponentActivity;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import com.netease.yunxin.flutter.plugins.callkit.ui.event.EventManager;
+import com.netease.yunxin.flutter.plugins.callkit.ui.service.ServiceInitializer;
 import com.netease.yunxin.flutter.plugins.callkit.ui.state.CallState;
 import com.netease.yunxin.flutter.plugins.callkit.ui.utils.CallUILog;
 import com.netease.yunxin.flutter.plugins.callkit.ui.utils.Constants;
 import com.netease.yunxin.flutter.plugins.callkit.ui.utils.WakeLock;
+import com.netease.yunxin.flutter.plugins.callkit.ui.view.floatwindow.FloatWindowService;
 import com.netease.yunxin.flutter.plugins.callkit.ui.view.incomingfloatwindow.IncomingFloatView;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding;
+import io.flutter.plugin.common.PluginRegistry;
+import java.util.List;
 import java.util.Map;
 
 public class CallKitUIPlugin implements FlutterPlugin, ActivityAware, EventManager.INotifyEvent {
@@ -33,6 +38,9 @@ public class CallKitUIPlugin implements FlutterPlugin, ActivityAware, EventManag
 
   private CallKitUIHandler mCallKitManager;
   private OnBackPressedCallback mBackPressedCallback;
+  private ActivityPluginBinding mActivityBinding;
+  private final PluginRegistry.UserLeaveHintListener mUserLeaveHintListener =
+      ServiceInitializer::markUserLeaveHint;
 
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -93,7 +101,9 @@ public class CallKitUIPlugin implements FlutterPlugin, ActivityAware, EventManag
 
   @Override
   public void onAttachedToActivity(@NonNull ActivityPluginBinding binding) {
+    mActivityBinding = binding;
     WakeLock.getInstance().setActivity(binding.getActivity());
+    mActivityBinding.addOnUserLeaveHintListener(mUserLeaveHintListener);
     if (binding.getActivity() instanceof ComponentActivity) {
       attachBackPressedCallback((ComponentActivity) binding.getActivity());
     }
@@ -101,13 +111,16 @@ public class CallKitUIPlugin implements FlutterPlugin, ActivityAware, EventManag
 
   @Override
   public void onDetachedFromActivityForConfigChanges() {
+    detachUserLeaveHintListener();
     WakeLock.getInstance().setActivity(null);
     mBackPressedCallback = null;
   }
 
   @Override
   public void onReattachedToActivityForConfigChanges(@NonNull ActivityPluginBinding binding) {
+    mActivityBinding = binding;
     WakeLock.getInstance().setActivity(binding.getActivity());
+    mActivityBinding.addOnUserLeaveHintListener(mUserLeaveHintListener);
     if (binding.getActivity() instanceof ComponentActivity) {
       attachBackPressedCallback((ComponentActivity) binding.getActivity());
     }
@@ -115,21 +128,36 @@ public class CallKitUIPlugin implements FlutterPlugin, ActivityAware, EventManag
 
   @Override
   public void onDetachedFromActivity() {
+    detachUserLeaveHintListener();
     WakeLock.getInstance().setActivity(null);
     mBackPressedCallback = null;
+  }
+
+  private void detachUserLeaveHintListener() {
+    if (mActivityBinding == null) {
+      return;
+    }
+    mActivityBinding.removeOnUserLeaveHintListener(mUserLeaveHintListener);
+    mActivityBinding = null;
   }
 
   private void attachBackPressedCallback(ComponentActivity activity) {
     // Intercept back press while the incoming banner is showing to prevent the Activity from
     // being destroyed (which would tear down the Flutter engine and lose all Dart state).
-    // Instead, move the task to background so the engine stays alive for the accept flow.
+    // The same applies after the call page is minimized into the native float window.
     mBackPressedCallback =
         new OnBackPressedCallback(true) {
           @Override
           public void handleOnBackPressed() {
             IncomingFloatView floatView = CallState.getInstance().mIncomingFloatView;
-            if (floatView != null && floatView.isShowing()) {
-              CallUILog.i(TAG, "back pressed while banner showing, moving task to background");
+            boolean isBannerShowing = floatView != null && floatView.isShowing();
+            boolean isFloatWindowRunning = isFloatWindowServiceRunning(activity);
+            if (isBannerShowing || isFloatWindowRunning) {
+              CallUILog.i(
+                  TAG,
+                  "back pressed while "
+                      + (isBannerShowing ? "banner showing" : "float window running")
+                      + ", moving task to background");
               activity.moveTaskToBack(true);
               return;
             }
@@ -139,6 +167,29 @@ public class CallKitUIPlugin implements FlutterPlugin, ActivityAware, EventManag
           }
         };
     activity.getOnBackPressedDispatcher().addCallback(activity, mBackPressedCallback);
+  }
+
+  private boolean isFloatWindowServiceRunning(ComponentActivity activity) {
+    try {
+      ActivityManager activityManager = activity.getSystemService(ActivityManager.class);
+      if (activityManager == null) {
+        return false;
+      }
+      List<ActivityManager.RunningServiceInfo> runningServices =
+          activityManager.getRunningServices(Integer.MAX_VALUE);
+      if (runningServices == null) {
+        return false;
+      }
+      String targetClassName = FloatWindowService.class.getName();
+      for (ActivityManager.RunningServiceInfo runningService : runningServices) {
+        if (targetClassName.equals(runningService.service.getClassName())) {
+          return true;
+        }
+      }
+    } catch (Throwable throwable) {
+      CallUILog.e(TAG, "check FloatWindowService running failed: " + throwable.getMessage());
+    }
+    return false;
   }
 
   @Override

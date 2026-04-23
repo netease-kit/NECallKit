@@ -1,0 +1,18 @@
+// Application-level settings for the Runner target.
+//
+// This may be replaced with something auto-generated from metadata (e.g., pubspec.yaml) in the
+// future. If not, the values below would default to using the project name when this becomes a
+// 'flutter create' template.
+
+// The application's name. By default this is also the title of the Flutter window.
+PRODUCT_NAME = callkit_example
+
+// The application's bundle identifier
+PRODUCT_BUNDLE_IDENTIFIER = com.netease.yunxin.flutter.plugins.callkit.ui.sampleapp.callkitExample
+
+// The copyright displayed in application information
+PRODUCT_COPYRIGHT = Copyright © 2026 com.netease.yunxin.flutter.plugins.callkit.ui.sampleapp. All rights reserved.
+
+// Example-only workaround: nim_core_v2_macos currently ships x86_64-only yx_alog.
+ARCHS[sdk=macosx*] = x86_64
+EXCLUDED_ARCHS[sdk=macosx*] = arm64

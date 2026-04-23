@@ -5,7 +5,7 @@
 class Constants {
   static const String pluginVersion = '3.0.0';
   static const String defaultAvatar =
-      "https://yx-web-nosdn.netease.im/common/8aaaf3fb0524d941d603f32c877d897d/default-avatar.png";
+      'https://yx-web-nosdn.netease.im/common/8aaaf3fb0524d941d603f32c877d897d/default-avatar.png';
 
   static const int blurLevelHigh = 3;
   static const int blurLevelClose = 0;

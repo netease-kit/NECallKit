@@ -20,8 +20,8 @@ class DebugService {
 
   DebugService._internal();
 
-    Future<VoidResult> debugLogin(String appKey, String accountId, String token) async {
-
+  Future<VoidResult> debugLogin(
+      String appKey, String accountId, String token) async {
     late NIMSDKOptions options;
     if (Platform.isAndroid) {
       options = NIMAndroidSDKOptions(
@@ -36,6 +36,11 @@ class DebugService {
         //enableV2CloudConversation: true,
         // apnsCername: certificateConfig?.apnsCername,
         // pkCername: certificateConfig?.pkCername,
+      );
+    } else if (Platform.isMacOS || Platform.isWindows) {
+      options = NIMPCSDKOptions(
+        basicOption: NIMBasicOption(),
+        appKey: appKey,
       );
     } else if (CallkitPlatformCompat.isOhos) {
       options = NIMAndroidSDKOptions(

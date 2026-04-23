@@ -10,7 +10,7 @@ import 'package:nim_core_v2/nim_core.dart';
 class NimUtils {
   static Future<User> getUserInfo(String accountId) async {
     final imUserInfo = await getUserInfos([accountId]);
-    User user = User();
+    var user = User();
     user.id = accountId;
     user.nickname = imUserInfo[0].nickname;
     user.avatar = imUserInfo[0].avatar;
@@ -18,11 +18,11 @@ class NimUtils {
   }
 
   static Future<List<User>> getUserInfos(List<String> accountIds) async {
-    List<User> userList = [];
+    var userList = <User>[];
     final imUserInfo =
         await NimCore.instance.userService.getUserList(accountIds);
     imUserInfo.data?.forEach((element) {
-      User user = User();
+      var user = User();
       user.id = StringStream.makeNull(element.accountId, '');
       user.nickname = StringStream.makeNull(element.name, '');
       user.avatar =

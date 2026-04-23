@@ -57,7 +57,7 @@ export class GroupCallKitPlatform extends GroupCallKitApi {
   // ============================================================================
 
   init(config: NEGroupConfigParam, result: Result<GroupSimpleResponse>): void {
-    console.info(`[${TAG}] init called with appKey=${config.getAppKey()}`);
+    console.info(`[${TAG}] init called`);
     // TODO: 接入鸿蒙侧群呼 SDK
     result.success(okGroupSimple());
   }
