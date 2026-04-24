@@ -13,7 +13,7 @@ import '../ne_call_engine_desktop_impl.dart';
 
 class NECallKitImpl implements NECallEngine, pigeon.CallKitEventSink {
   static const String _tag = 'NECallKitImpl';
-  static const String fltVersion = '4.5.0';
+  static const String fltVersion = '4.5.0+2';
 
   final _api = pigeon.CallKitApi();
   final _desktopImpl = NECallEngineDesktopImpl.instance;

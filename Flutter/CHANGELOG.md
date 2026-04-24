@@ -1,3 +1,17 @@
+## [4.5.0+2] - 2026-04-24
+### Fixed
+- 修复 Windows 平台下 `callkit_ui` 缺少 `runtimeobject` 链接导致构建失败的问题。
+
+### Compatibility
+- Compatible with `callkit` Flutter 4.5.0+2
+
+## [4.5.0+1] - 2026-04-24
+### Changed
+- 对齐 `callkit` Flutter 4.5.0+1 热修版本。
+
+### Compatibility
+- Compatible with `callkit` Flutter 4.5.0+1
+
 ## [4.5.0] - 2026-04-23
 ### Added
 - 支持 Flutter 桌面端（macOS / Windows）接入。

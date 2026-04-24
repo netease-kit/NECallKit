@@ -36,6 +36,21 @@ def run(cmd, cwd=None):
   subprocess.run(cmd, cwd=cwd, check=True)
 
 
+def resolve_cmake_generator():
+  override = read_env("NE_CALL_DESKTOP_MACOS_CMAKE_GENERATOR")
+  if override:
+    return override
+  if shutil.which("ninja"):
+    return "Ninja"
+  if shutil.which("xcodebuild"):
+    return "Xcode"
+  raise SystemExit(
+      "Unable to find a usable CMake generator. "
+      "Install Ninja, or ensure Xcode command line tools are available, "
+      "or set NE_CALL_DESKTOP_MACOS_CMAKE_GENERATOR explicitly."
+  )
+
+
 def require_path(path, description):
   if not path.exists():
     raise SystemExit(f"Missing {description}: {path}")
@@ -337,6 +352,7 @@ def build_nim_core_v2_wrapper_libraries(wrapper_root, build_root):
     shutil.rmtree(build_root)
   build_root.mkdir(parents=True, exist_ok=True)
 
+  generator = resolve_cmake_generator()
   cmake_args = [
       "cmake",
       "-S",
@@ -344,7 +360,7 @@ def build_nim_core_v2_wrapper_libraries(wrapper_root, build_root):
       "-B",
       str(build_root),
       "-G",
-      "Ninja",
+      generator,
       "-DINSTALL_CPP_WRAPPER=OFF",
       "-DBUILD_SHARED_LIBS=OFF",
       "-DCMAKE_CXX_STANDARD=14",
@@ -366,11 +382,11 @@ def build_nim_core_v2_wrapper_libraries(wrapper_root, build_root):
       str(build_root),
       "--config",
       "Release",
+      "--parallel",
+      "4",
       "--target",
       "nim_cpp_wrapper",
       "nim_wrapper_util",
-      "-j",
-      "4",
   ], check=True, env=build_env)
 
   return {

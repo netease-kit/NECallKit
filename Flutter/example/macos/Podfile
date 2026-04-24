@@ -45,6 +45,9 @@ def prepare_nim_core_v2_wrapper_libraries
   wrapper_root_dir = File.expand_path(File.join(__dir__, 'Flutter', 'ephemeral', 'nim_core_v2_wrapper'))
   build_dir = File.join(wrapper_root_dir, 'build')
   lib_dir = File.join(wrapper_root_dir, 'lib')
+  cmake_generator = ENV['NE_CALL_DESKTOP_MACOS_CMAKE_GENERATOR']
+  cmake_generator = 'Ninja' if cmake_generator.to_s.empty? && !`which ninja 2>/dev/null`.strip.empty?
+  cmake_generator = 'Xcode' if cmake_generator.to_s.empty?
 
   FileUtils.mkdir_p(lib_dir)
 
@@ -52,7 +55,7 @@ def prepare_nim_core_v2_wrapper_libraries
     'cmake',
     '-S', wrapper_root,
     '-B', build_dir,
-    '-G', 'Ninja',
+    '-G', cmake_generator,
     '-DINSTALL_CPP_WRAPPER=OFF',
     '-DBUILD_SHARED_LIBS=OFF',
     '-DCMAKE_CXX_STANDARD=14',
@@ -65,7 +68,7 @@ def prepare_nim_core_v2_wrapper_libraries
     raise 'Failed to configure nim_core_v2 wrapper static libraries'
   end
 
-  unless system('cmake', '--build', build_dir, '--config', 'Release', '--target', 'nim_cpp_wrapper', 'nim_wrapper_util', '-j', '4')
+  unless system('cmake', '--build', build_dir, '--config', 'Release', '--parallel', '4', '--target', 'nim_cpp_wrapper', 'nim_wrapper_util')
     raise 'Failed to build nim_core_v2 wrapper static libraries'
   end
 

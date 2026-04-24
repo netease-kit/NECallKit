@@ -29,5 +29,7 @@ target_include_directories(${PLUGIN_NAME} INTERFACE
 target_link_libraries(${PLUGIN_NAME} PRIVATE
   flutter
   flutter_wrapper_plugin
+  # C++/WinRT device permission queries depend on Ro* APIs from RuntimeObject.
+  runtimeobject.lib
   winmm
 )
