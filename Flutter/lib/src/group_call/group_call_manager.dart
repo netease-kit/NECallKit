@@ -4,24 +4,26 @@
 
 import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:netease_callkit/netease_callkit.dart';
-import 'group_call_state.dart';
-import 'group_call_ui_state.dart';
-import 'group_call_member_ui.dart';
-import 'widget/group_calls_widget.dart';
-import 'widget/group_call_incoming_page.dart';
+
+import '../call_define.dart';
+import '../call_uikit.dart';
+import '../data/constants.dart';
+import '../extensions/calling_bell_feature.dart';
 import '../ui/call_navigator_observer.dart';
 import '../utils/callkit_ui_log.dart';
 import '../utils/nim_utils.dart';
-import '../utils/string_stream.dart';
 import '../utils/permission.dart';
-import '../call_define.dart';
-import '../data/constants.dart';
-import '../extensions/calling_bell_feature.dart';
-import '../call_uikit.dart';
+import '../utils/string_stream.dart';
+import 'group_call_member_ui.dart';
+import 'group_call_state.dart';
+import 'group_call_ui_state.dart';
 import 'speaking_state_manager.dart';
+import 'widget/group_call_incoming_page.dart';
+import 'widget/group_calls_widget.dart';
 
 /// 群呼业务逻辑管理器 (单例)
 ///
@@ -244,7 +246,7 @@ class GroupCallManager {
       if (_pendingGroupCallCompleter != null && !_pendingGroupCallCompleter!.isCompleted) {
         _pendingGroupCallCompleter!.complete(result);
       }
-    }).catchError((e) {
+    }).catchError((Object e) {
       if (_pendingGroupCallCompleter != null && !_pendingGroupCallCompleter!.isCompleted) {
         _pendingGroupCallCompleter!.complete(
           NEGroupCallResult(code: -1, msg: '${NECallKitUI.localizations.groupCallCreateFailed}: $e'),
@@ -441,7 +443,7 @@ class GroupCallManager {
   /// 返回 true 表示权限可用
   Future<bool> _checkAndRequestCameraPermission() async {
     // 检查是否已有相机权限
-    bool hasPermission = await Permission.has(
+    var hasPermission = await Permission.has(
       permissions: [PermissionType.camera],
     );
 
@@ -764,7 +766,7 @@ class GroupCallManager {
           );
 
     navigator.push(
-      MaterialPageRoute(builder: (context) => page),
+      MaterialPageRoute<void>(builder: (context) => page),
     );
     _isPageLaunched = true;
   }
@@ -831,7 +833,7 @@ class GroupCallManager {
   /// 返回 true 表示权限可用且音频设备初始化成功
   Future<bool> _checkAndInitializeAudio() async {
     // 检查是否已有麦克风权限
-    bool hasPermission = await Permission.has(
+    var hasPermission = await Permission.has(
       permissions: [PermissionType.microphone],
     );
 
@@ -846,7 +848,9 @@ class GroupCallManager {
         CallKitUILog.i(_tag, '_checkAndInitializeAudio: microphone permission granted');
       } else {
         CallKitUILog.i(_tag, '_checkAndInitializeAudio: microphone permission denied');
-        _showErrorToast(NECallKitUI.localizations.startMicrophonePermissionDenied);
+        _showErrorToast(
+          NECallKitUI.localizations.needToAccessMicrophonePermission,
+        );
         return false;
       }
     }

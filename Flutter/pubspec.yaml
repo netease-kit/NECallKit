@@ -1,6 +1,6 @@
 name: netease_callkit_ui
 description: "netease callkit_ui is a ui kit about audio&video calls launched by CommsEase."
-version: 4.4.0
+version: 4.5.0+2
 repository: https://github.com/netease-kit/NECallKit
 homepage: https://yunxin.163.com/
 
@@ -22,11 +22,11 @@ dependencies:
   shared_preferences: ^2.3.3
   crypto: ^3.0.7
   netease_common: ^2.0.0
-  nim_core_v2: ^10.9.4+1
+  nim_core_v2: ^10.9.5+3
+  permission_handler: ^11.0.1
   fluttertoast: ^8.2.14
   flutter_screenutil: ^5.9.3
-  netease_callkit: 
-   path: ./callkit
+  netease_callkit: ^4.5.0+2
 
 dev_dependencies:
   flutter_test:
@@ -56,6 +56,10 @@ flutter:
         package: com.netease.yunxin.flutter.plugins.callkit.ui
         pluginClass: CallKitUIPlugin
       ios:
+        pluginClass: CallKitUIPlugin
+      macos:
+        pluginClass: CallKitUIPlugin
+      windows:
         pluginClass: CallKitUIPlugin
 
   # To add assets to your plugin package, add an assets section, like this:

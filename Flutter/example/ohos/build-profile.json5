@@ -5,13 +5,13 @@
         "name": "default",
         "type": "HarmonyOS",
         "material": {
-          "certpath": "/Users/minga/.ohos/config/default_ohos_HHLYzi1aAEjQvJZkSbfBW0SV_kFCZi317qaNLwhL-Z8=.cer",
+          "certpath": "/Users/admin/.ohos/config/default_ohos_v-wBniTBUuGiTBCeAmUNC-UsWbzik7ONVa6cBTn2828=.cer",
           "keyAlias": "debugKey",
-          "keyPassword": "0000001B6FB52FC3F22301F81CC69B9453277CD7033743EBAE87C9520F55B67C5D63E567652BDCABF34C54",
-          "profile": "/Users/minga/.ohos/config/default_ohos_HHLYzi1aAEjQvJZkSbfBW0SV_kFCZi317qaNLwhL-Z8=.p7b",
+          "keyPassword": "0000001BAF07EAAEC2B67D074B7EA098D9FAF6F1476AD1D8CD7F2F4FEB99A16946EEC118F3ED873FAA917B",
+          "profile": "/Users/admin/.ohos/config/default_ohos_v-wBniTBUuGiTBCeAmUNC-UsWbzik7ONVa6cBTn2828=.p7b",
           "signAlg": "SHA256withECDSA",
-          "storeFile": "/Users/minga/.ohos/config/default_ohos_HHLYzi1aAEjQvJZkSbfBW0SV_kFCZi317qaNLwhL-Z8=.p12",
-          "storePassword": "0000001B42C9448E2EA198D167D9288B825E02301CB1D01F8016F0BDDE98BE35893626818EF2AE5D7C2BE3"
+          "storeFile": "/Users/admin/.ohos/config/default_ohos_v-wBniTBUuGiTBCeAmUNC-UsWbzik7ONVa6cBTn2828=.p12",
+          "storePassword": "0000001B5501FBA48DB29DB57B813E2460B893913C6646FA0913DE8D240AF06E6E4CAE9F62AC7DB27D1786"
         }
       }
     ],

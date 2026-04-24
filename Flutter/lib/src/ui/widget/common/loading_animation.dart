@@ -49,7 +49,7 @@ class LoadingAnimationState extends State<LoadingAnimation>
 
   Widget _buildDot(int index) {
     const double size = 10;
-    final double opacity =
+    final opacity =
         ((1.0 - ((_controller.value - 0.33 * index) % 1.0)) * 10 + 5) / 20;
     return Padding(
       padding: const EdgeInsets.all(4.0),

@@ -3,8 +3,9 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import '../group_call_manager.dart';
+
 import '../../utils/callkit_ui_log.dart';
+import '../group_call_manager.dart';
 
 /// 安全关闭页面的 Mixin
 ///

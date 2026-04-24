@@ -21,6 +21,24 @@
 - **Step2**：接入 NECallKit 到您的项目中，各平台/框架详细的接入流程：[Flutter](https://doc.yunxin.163.com/nertccallkit/guide/DYyMDk4OTY?platform=flutter)
 - **Step3**：拨打您的第一个视频通话！
 
+## OHOS 版本
+
+> **说明**：如需运行 OHOS 版本，请先下载 [Flutter for HarmonyOS](https://gitcode.com/openharmony-tpc/flutter_flutter/tree/master)，然后在仓库根目录执行切换脚本。
+
+**切换到鸿蒙版本：**
+
+```bash
+sh Flutter/callkit_ui/example/deploy/switch_nim_sdk_options_factory.sh ohos
+```
+
+**切回 Android/iOS 版本：**
+
+```bash
+sh Flutter/callkit_ui/example/deploy/switch_nim_sdk_options_factory.sh android
+```
+
+切回非 OHOS 版本时，传入 `ios` 也可以。
+
 ## 联系我们
 
 - 如果想要了解该场景的更多信息，请参见[音视频呼叫文档](https://doc.yunxin.163.com/nertccallkit/guide/DYyMDk4OTY?platform=flutter)

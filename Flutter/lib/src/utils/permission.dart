@@ -37,9 +37,9 @@ class PermissionUtils {
 
   static String getPermissionRequestSettingsTip(NECallType type) {
     if (NECallType.audio == type) {
-      return "${NECallKitUI.localizations.applyForMicrophonePermission}\n${NECallKitUI.localizations.needToAccessMicrophonePermission}";
+      return '${NECallKitUI.localizations.applyForMicrophonePermission}\n${NECallKitUI.localizations.needToAccessMicrophonePermission}';
     } else {
-      return "${NECallKitUI.localizations.applyForMicrophoneAndCameraPermissions}\n${NECallKitUI.localizations.needToAccessMicrophoneAndCameraPermissions}";
+      return '${NECallKitUI.localizations.applyForMicrophoneAndCameraPermissions}\n${NECallKitUI.localizations.needToAccessMicrophoneAndCameraPermissions}';
     }
   }
 }
@@ -64,14 +64,14 @@ class Permission {
 
   static String getPermissionRequestSettingsTip(NECallType type) {
     if (NECallType.audio == type) {
-      return "${NECallKitUI.localizations.applyForMicrophonePermission}\n${NECallKitUI.localizations.needToAccessMicrophonePermission}";
+      return '${NECallKitUI.localizations.applyForMicrophonePermission}\n${NECallKitUI.localizations.needToAccessMicrophonePermission}';
     } else {
-      return "${NECallKitUI.localizations.applyForMicrophoneAndCameraPermissions}\n${NECallKitUI.localizations.needToAccessMicrophoneAndCameraPermissions}";
+      return '${NECallKitUI.localizations.applyForMicrophoneAndCameraPermissions}\n${NECallKitUI.localizations.needToAccessMicrophoneAndCameraPermissions}';
     }
   }
 
   static Future<PermissionResult> request(NECallType type) async {
-    PermissionResult result = PermissionResult.denied;
+    var result = PermissionResult.denied;
     if (NECallType.video == type) {
       result = await NECallKitPlatform.instance.requestPermissions(
           permissions: [PermissionType.camera, PermissionType.microphone],

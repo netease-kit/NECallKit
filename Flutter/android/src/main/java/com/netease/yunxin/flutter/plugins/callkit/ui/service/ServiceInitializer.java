@@ -13,6 +13,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemClock;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.netease.yunxin.flutter.plugins.callkit.ui.event.EventManager;
@@ -20,6 +21,26 @@ import com.netease.yunxin.flutter.plugins.callkit.ui.utils.Constants;
 import java.util.List;
 
 public final class ServiceInitializer extends ContentProvider {
+  private static final long USER_LEAVE_HINT_VALID_MS = 3000L;
+  private static volatile long lastUserLeaveHintAtMs = -1L;
+
+  public static void markUserLeaveHint() {
+    lastUserLeaveHintAtMs = SystemClock.elapsedRealtime();
+  }
+
+  private static boolean consumeRecentUserLeaveHint() {
+    long lastHintAtMs = lastUserLeaveHintAtMs;
+    lastUserLeaveHintAtMs = -1L;
+    if (lastHintAtMs <= 0) {
+      return false;
+    }
+    return SystemClock.elapsedRealtime() - lastHintAtMs <= USER_LEAVE_HINT_VALID_MS;
+  }
+
+  private static void clearUserLeaveHint() {
+    lastUserLeaveHintAtMs = -1L;
+  }
+
   public static boolean isAppInForeground(Context context) {
     ActivityManager activityManager =
         (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
@@ -52,6 +73,9 @@ public final class ServiceInitializer extends ContentProvider {
                 @Override
                 public void onActivityStarted(Activity activity) {
                   foregroundActivities++;
+                  if (foregroundActivities == 1) {
+                    clearUserLeaveHint();
+                  }
                   if (foregroundActivities == 1 && !isChangingConfiguration) {
                     EventManager.getInstance()
                         .notifyEvent(
@@ -69,8 +93,10 @@ public final class ServiceInitializer extends ContentProvider {
                 @Override
                 public void onActivityStopped(Activity activity) {
                   isChangingConfiguration = activity.isChangingConfigurations();
-                  foregroundActivities--;
-                  if (foregroundActivities == 0 && !isChangingConfiguration) {
+                  foregroundActivities = Math.max(0, foregroundActivities - 1);
+                  if (foregroundActivities == 0
+                      && !isChangingConfiguration
+                      && consumeRecentUserLeaveHint()) {
                     EventManager.getInstance()
                         .notifyEvent(
                             Constants.KEY_CALLKIT_PLUGIN, Constants.SUB_KEY_ENTER_BACKGROUND, null);

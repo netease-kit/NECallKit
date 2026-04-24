@@ -7,9 +7,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:netease_callkit/netease_callkit.dart';
+
+import '../../common/video_renderer_cache.dart';
 import '../../group_call/group_call_member_ui.dart';
 import '../../ui/widget/common/loading_dots_animation.dart';
-import '../../common/video_renderer_cache.dart';
 
 /// 群呼成员视图组件
 ///

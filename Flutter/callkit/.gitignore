@@ -27,3 +27,10 @@ migrate_working_dir/
 **/doc/api/
 .dart_tool/
 build/
+macos/.desktop_build
+macos/Frameworks/*
+!macos/Frameworks/.gitkeep
+!macos/Frameworks/libne_callkit.dylib
+!windows/Frameworks/ne_callkit.dll
+macos/.local_desktop_artifact
+macos/.local_desktop_artifact.zip

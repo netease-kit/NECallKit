@@ -28,6 +28,9 @@ import com.netease.yunxin.kit.common.utils.SizeUtils;
 import java.util.Map;
 
 public class SingleCallFloatView extends CallFloatView implements EventManager.INotifyEvent {
+  private static final int REMOTE_SCALING_TYPE =
+      NERtcConstants.VideoScalingType.SCALE_ASPECT_FILL;
+
   private final Context mContext;
 
   private RelativeLayout mRelativeLayout;
@@ -49,10 +52,14 @@ public class SingleCallFloatView extends CallFloatView implements EventManager.I
     LayoutInflater.from(context).inflate(R.layout.callkit_floatwindow_singlecall_layout, this);
     mRelativeLayout = findViewById(R.id.ll_root);
     mVideoView = findViewById(R.id.video_view);
-    mVideoView.setScalingType(NERtcConstants.VideoScalingType.SCALE_ASPECT_BALANCED);
+    applyRemoteRenderConfig();
     mImageAvatar = findViewById(R.id.iv_avatar);
     mImageAudio = findViewById(R.id.iv_audio_icon);
     mTextStatus = findViewById(R.id.tv_call_status);
+  }
+
+  private void applyRemoteRenderConfig() {
+    mVideoView.setScalingType(REMOTE_SCALING_TYPE);
   }
 
   private void registerObserver() {
@@ -148,7 +155,9 @@ public class SingleCallFloatView extends CallFloatView implements EventManager.I
           }
           mVideoView.setVisibility(VISIBLE);
           mImageAvatar.setVisibility(GONE);
+          applyRemoteRenderConfig();
           NECallEngine.sharedInstance().setupRemoteView(mVideoView);
+          applyRemoteRenderConfig();
         } else {
           mVideoView.setVisibility(GONE);
           mImageAvatar.setVisibility(VISIBLE);

@@ -66,15 +66,18 @@ import 'call_ui_localizations_zh.dart';
 /// be consistent with the languages listed in the CallKitClientLocalizations.supportedLocales
 /// property.
 abstract class CallKitClientLocalizations {
-  CallKitClientLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  CallKitClientLocalizations(String locale)
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
   static CallKitClientLocalizations? of(BuildContext context) {
-    return Localizations.of<CallKitClientLocalizations>(context, CallKitClientLocalizations);
+    return Localizations.of<CallKitClientLocalizations>(
+        context, CallKitClientLocalizations);
   }
 
-  static const LocalizationsDelegate<CallKitClientLocalizations> delegate = _CallKitClientLocalizationsDelegate();
+  static const LocalizationsDelegate<CallKitClientLocalizations> delegate =
+      _CallKitClientLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -86,7 +89,8 @@ abstract class CallKitClientLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
     delegate,
     GlobalMaterialLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
@@ -128,12 +132,6 @@ abstract class CallKitClientLocalizations {
   /// In en, this message translates to:
   /// **'Start camera permission denied.'**
   String get startCameraPermissionDenied;
-
-  /// No description provided for @startMicrophonePermissionDenied.
-  ///
-  /// In en, this message translates to:
-  /// **'Start microphone permission denied.'**
-  String get startMicrophonePermissionDenied;
 
   /// No description provided for @applyForMicrophonePermission.
   ///
@@ -181,7 +179,8 @@ abstract class CallKitClientLocalizations {
   ///
   /// In en, this message translates to:
   /// **'display popUpWindow while running in the background and display popUpWindow permissions'**
-  String get displayPopUpWindowWhileRunningInTheBackgroundAndDisplayPopUpWindowPermissions;
+  String
+      get displayPopUpWindowWhileRunningInTheBackgroundAndDisplayPopUpWindowPermissions;
 
   /// No description provided for @needToAccessMicrophoneAndCameraPermissions.
   ///
@@ -254,6 +253,60 @@ abstract class CallKitClientLocalizations {
   /// In en, this message translates to:
   /// **'microphoneIsOff'**
   String get microphoneIsOff;
+
+  /// No description provided for @chooseMicrophone.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Microphone'**
+  String get chooseMicrophone;
+
+  /// No description provided for @chooseSpeaker.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Speaker'**
+  String get chooseSpeaker;
+
+  /// No description provided for @chooseCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Camera'**
+  String get chooseCamera;
+
+  /// No description provided for @openMicrophone.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn On Microphone'**
+  String get openMicrophone;
+
+  /// No description provided for @closeMicrophone.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn Off Microphone'**
+  String get closeMicrophone;
+
+  /// No description provided for @openSpeaker.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn On Speaker'**
+  String get openSpeaker;
+
+  /// No description provided for @closeSpeaker.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn Off Speaker'**
+  String get closeSpeaker;
+
+  /// No description provided for @openCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn On Camera'**
+  String get openCamera;
+
+  /// No description provided for @closeCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn Off Camera'**
+  String get closeCamera;
 
   /// No description provided for @blurBackground.
   ///
@@ -411,11 +464,41 @@ abstract class CallKitClientLocalizations {
   /// **'Speaker'**
   String get groupCallToggleSpeaker;
 
+  /// No description provided for @groupCallMicOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Mic On'**
   String get groupCallMicOn;
+
+  /// No description provided for @groupCallMicOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Mic Off'**
   String get groupCallMicOff;
+
+  /// No description provided for @groupCallSpeakerOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker On'**
   String get groupCallSpeakerOn;
+
+  /// No description provided for @groupCallSpeakerOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker Off'**
   String get groupCallSpeakerOff;
+
+  /// No description provided for @groupCallCameraOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera On'**
   String get groupCallCameraOn;
+
+  /// No description provided for @groupCallCameraOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera Off'**
+  String get groupCallCameraOff;
 
   /// No description provided for @groupCallSwitchCamera.
   ///
@@ -452,12 +535,6 @@ abstract class CallKitClientLocalizations {
   /// In en, this message translates to:
   /// **'Muted'**
   String get groupCallMuted;
-
-  /// No description provided for @groupCallCameraOff.
-  ///
-  /// In en, this message translates to:
-  /// **'Camera Off'**
-  String get groupCallCameraOff;
 
   /// No description provided for @groupCallInitFailed.
   ///
@@ -520,34 +597,36 @@ abstract class CallKitClientLocalizations {
   String groupCallOthersInCall(Object count);
 }
 
-class _CallKitClientLocalizationsDelegate extends LocalizationsDelegate<CallKitClientLocalizations> {
+class _CallKitClientLocalizationsDelegate
+    extends LocalizationsDelegate<CallKitClientLocalizations> {
   const _CallKitClientLocalizationsDelegate();
 
   @override
   Future<CallKitClientLocalizations> load(Locale locale) {
-    return SynchronousFuture<CallKitClientLocalizations>(lookupCallKitClientLocalizations(locale));
+    return SynchronousFuture<CallKitClientLocalizations>(
+        lookupCallKitClientLocalizations(locale));
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'zh'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'zh'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_CallKitClientLocalizationsDelegate old) => false;
 }
 
 CallKitClientLocalizations lookupCallKitClientLocalizations(Locale locale) {
-
-
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en': return CallKitClientLocalizationsEn();
-    case 'zh': return CallKitClientLocalizationsZh();
+    case 'en':
+      return CallKitClientLocalizationsEn();
+    case 'zh':
+      return CallKitClientLocalizationsZh();
   }
 
   throw FlutterError(
-    'CallKitClientLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-    'an issue with the localizations generation tool. Please file an issue '
-    'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
-  );
+      'CallKitClientLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
 }

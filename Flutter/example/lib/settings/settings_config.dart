@@ -19,6 +19,18 @@ class SettingsConfig {
 
   static int intRoomId = 0;
   static String strRoomId = "";
-  static int timeout = 30;
+  static const int defaultTimeoutSeconds = 30;
+  static const int maxTimeoutSeconds = 120;
+  static int timeout = defaultTimeoutSeconds;
   static String extendInfo = "";
+
+  static int normalizeTimeout(int value) {
+    if (value <= 0) {
+      return defaultTimeoutSeconds;
+    }
+    if (value > maxTimeoutSeconds) {
+      return maxTimeoutSeconds;
+    }
+    return value;
+  }
 }

@@ -3,9 +3,9 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
+import 'package:netease_callkit_ui/src/data/constants.dart';
 import 'package:netease_callkit_ui/src/event/event_notify.dart';
 import 'package:netease_callkit_ui/src/impl/call_state.dart';
-import 'package:netease_callkit_ui/src/data/constants.dart';
 
 class TimingWidget extends StatefulWidget {
   const TimingWidget({super.key});
@@ -43,14 +43,14 @@ class _TimingWidgetState extends State<TimingWidget> {
   }
 
   String _formatCallTime() {
-    int hour = CallState.instance.timeCount ~/ 3600;
-    String hourShow = hour <= 9 ? "0$hour" : "$hour";
-    int minute = (CallState.instance.timeCount % 3600) ~/ 60;
-    String minuteShow = minute <= 9 ? "0$minute" : "$minute";
-    int second = CallState.instance.timeCount % 60;
-    String secondShow = second <= 9 ? "0$second" : "$second";
+    var hour = CallState.instance.timeCount ~/ 3600;
+    var hourShow = hour <= 9 ? '0$hour' : '$hour';
+    var minute = (CallState.instance.timeCount % 3600) ~/ 60;
+    var minuteShow = minute <= 9 ? '0$minute' : '$minute';
+    var second = CallState.instance.timeCount % 60;
+    var secondShow = second <= 9 ? '0$second' : '$second';
     return hour > 0
-        ? "$hourShow:$minuteShow:$secondShow"
-        : "$minuteShow:$secondShow";
+        ? '$hourShow:$minuteShow:$secondShow'
+        : '$minuteShow:$secondShow';
   }
 }

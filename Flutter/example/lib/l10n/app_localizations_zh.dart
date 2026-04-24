@@ -2,6 +2,8 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
+
+
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
@@ -125,6 +127,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get enable_floating => '显示悬浮窗按钮';
+
+  @override
+  String get desktop_log_directory => '桌面端日志目录';
+
+  @override
+  String get open => '打开';
+
+  @override
+  String get open_log_directory_failed => '打开日志目录失败';
 
   @override
   String get call_custom_setiings => '通话自定义参数设置';

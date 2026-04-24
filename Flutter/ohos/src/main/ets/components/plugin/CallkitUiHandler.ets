@@ -153,6 +153,16 @@ export class CallkitUiHandler {
         state.startTime = startTimeArg as number;
       }
 
+      const enableFloatWindowArg: Any = call.argument('enableFloatWindow');
+      if (enableFloatWindowArg !== null && enableFloatWindowArg !== undefined) {
+        state.enableFloatWindow = enableFloatWindowArg as boolean;
+      }
+
+      const enableFloatWindowOutOfAppArg: Any = call.argument('enableFloatWindowOutOfApp');
+      if (enableFloatWindowOutOfAppArg !== null && enableFloatWindowOutOfAppArg !== undefined) {
+        state.enableFloatWindowOutOfApp = enableFloatWindowOutOfAppArg as boolean;
+      }
+
       // 检测通话结束（callStatus 从非 none 变为 none），停止画中画和悬浮窗
       // 这样在 logout 时，如果画中画或悬浮窗开着，会被正确关闭
       if (previousCallStatus !== 0 && state.selfUser.callStatus === 0) {

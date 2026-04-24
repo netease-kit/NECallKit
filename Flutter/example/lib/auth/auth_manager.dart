@@ -4,6 +4,7 @@
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:callkit_example/auth/login_page.dart';
 import 'package:callkit_example/config/app_config.dart';
 import 'package:callkit_example/settings/settings_config.dart';
@@ -13,7 +14,6 @@ import 'package:nim_core_v2/nim_core.dart';
 import '../utils/global_preferences.dart';
 import '../auth/auth_state.dart';
 import 'login_info.dart';
-import 'package:netease_callkit/netease_callkit.dart';
 import 'package:callkit_example/pages/group_call_page.dart';
 
 class AuthManager {
@@ -23,6 +23,7 @@ class AuthManager {
 
   static AuthManager? _instance;
   LoginInfo? _loginInfo;
+  StreamSubscription<dynamic>? _kickedOfflineSubscription;
 
   final StreamController<LoginInfo?> _authInfoChanged =
       StreamController.broadcast();
@@ -49,6 +50,7 @@ class AuthManager {
   String? get nickName => _loginInfo?.nickname;
   String? get accountToken => _loginInfo?.accountToken;
   String? get avatar => _loginInfo?.avatar;
+  bool get _supportsGroupCall => !(Platform.isMacOS || Platform.isWindows);
 
   Future<bool> autoLogin() async {
     if (_loginInfo == null || _loginInfo!.accountId.isEmpty) {
@@ -67,6 +69,7 @@ class AuthManager {
 
   Future<NEResult> loginCallKitWithToken(LoginInfo loginInfo) async {
     var completer = Completer<NEResult>();
+    _bindLoginStateObservers();
 
     // 创建证书配置
     final certificateConfig = NECertificateConfig(
@@ -81,12 +84,6 @@ class AuthManager {
       ),
     );
 
-    NimCore.instance.loginService.onKickedOffline.listen((event) {
-      // 被踢下线处理
-      print('$_tag: 用户被踢下线');
-      kickedOffline('账号在其他设备登录');
-    });
-
     SettingsConfig.showIncomingBanner =
         await GlobalPreferences().showIncomingBanner;
     SettingsConfig.enableFloatWindowOutOfApp =
@@ -96,28 +93,35 @@ class AuthManager {
         .enableFloatWindowOutOfApp(SettingsConfig.enableFloatWindowOutOfApp);
     NECallKitUI.instance
         .enableIncomingBanner(SettingsConfig.showIncomingBanner);
+    final groupConfigParam = _supportsGroupCall
+        ? NEGroupConfigParam(
+            appKey: AppConfig().appKey,
+            rtcSafeMode: NEGroupRtcSafeMode.MODE_SAFE,
+          )
+        : null;
     NECallKitUI.instance
         .login(AppConfig().appKey, loginInfo.accountId, loginInfo.accountToken,
-            certificateConfig: certificateConfig, extraConfig: extraConfig,
-            groupConfigParam: NEGroupConfigParam(
-              appKey: AppConfig().appKey,
-              rtcSafeMode: NEGroupRtcSafeMode.MODE_SAFE,
-              )
-            )
+            certificateConfig: certificateConfig,
+            extraConfig: extraConfig,
+            groupConfigParam: groupConfigParam)
         .then((value) {
       if (value.code == 0) {
         AuthStateManager().updateState(state: AuthState.authed);
         _syncAuthInfo(loginInfo);
+        print('$_tag: current call timeout = ${SettingsConfig.timeout}s');
 
-        // 注册全局群呼邀请回调，被叫接听后也能使用邀请功能
-        NECallKitUI.instance.setGroupInviteHandler((callId) {
-          final navigator = NECallKitNavigatorObserver.getInstance().navigator;
-          if (navigator != null) {
-            navigator.push(MaterialPageRoute(
-              builder: (context) => GroupCallInvitePage(callId: callId),
-            ));
-          }
-        });
+        if (_supportsGroupCall) {
+          // 注册全局群呼邀请回调，被叫接听后也能使用邀请功能
+          NECallKitUI.instance.setGroupInviteHandler((callId) {
+            final navigator =
+                NECallKitNavigatorObserver.getInstance().navigator;
+            if (navigator != null) {
+              navigator.push(MaterialPageRoute(
+                builder: (context) => GroupCallInvitePage(callId: callId),
+              ));
+            }
+          });
+        }
       }
       return completer
           .complete(NEResult(code: value.code, message: value.message ?? ''));
@@ -143,10 +147,15 @@ class AuthManager {
     return _authInfoChanged.stream;
   }
 
+  Stream<AuthStateSnapshot> authStateStream() {
+    return AuthStateManager().changes();
+  }
+
   void tokenIllegal(String errorTip) {
     logout();
     AuthStateManager()
         .updateState(state: AuthState.tokenIllegal, errorTip: errorTip);
+    _navigateToLoginRouteIfNeeded();
   }
 
   void kickedOffline(String reason) {
@@ -155,10 +164,7 @@ class AuthManager {
     logout();
     // 更新状态为被踢下线
     AuthStateManager().updateState(state: AuthState.kicked, errorTip: reason);
-    NECallKitUI.navigatorObserver.navigator?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (widget) {
-      return const LoginRoute();
-    }), (route) => false);
+    _navigateToLoginRouteIfNeeded();
   }
 
   bool isLogined() {
@@ -187,5 +193,33 @@ class AuthManager {
     _syncAuthInfo(updatedLoginInfo);
     print(
         '$_tag: updateUserInfo - nickname: ${updatedLoginInfo.nickname}, avatar: ${updatedLoginInfo.avatar}');
+  }
+
+  void _bindLoginStateObservers() {
+    _kickedOfflineSubscription ??=
+        NimCore.instance.loginService.onKickedOffline.listen((event) {
+      print('$_tag: 用户被踢下线 event = $event');
+      kickedOffline(_resolveKickedOfflineReason(event));
+    });
+  }
+
+  String _resolveKickedOfflineReason(dynamic event) {
+    if (event is String && event.isNotEmpty) {
+      return event;
+    }
+    return '账号在其他设备登录';
+  }
+
+  void _navigateToLoginRouteIfNeeded() {
+    final navigator = NECallKitUI.navigatorObserver.navigator;
+    if (navigator == null) {
+      return;
+    }
+    navigator.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (widget) {
+        return const LoginRoute();
+      }),
+      (route) => false,
+    );
   }
 }
