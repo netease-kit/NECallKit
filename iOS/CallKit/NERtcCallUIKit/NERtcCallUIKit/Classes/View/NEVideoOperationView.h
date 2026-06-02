@@ -28,6 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)setGroupStyle;
 
+- (void)setSingleToGroupStyle;
+
 - (void)removeMediaBtn;
 
 @end

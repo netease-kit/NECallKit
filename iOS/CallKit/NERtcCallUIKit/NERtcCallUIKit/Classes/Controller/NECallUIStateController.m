@@ -501,9 +501,8 @@ navigation
 }
 
 - (NSString *)getInviteText {
-  return (self.callParam.callType == NERtcCallTypeAudio
-              ? [NECallKitUtil localizableWithKey:@"invite_audio_call"]
-              : [NECallKitUtil localizableWithKey:@"invite_video_call"]);
+  return [NECallKitUtil incomingInviteTextWithCallType:self.callParam.callType
+                                      multiCallInvite:self.callParam.multiCallInvite];
 }
 
 - (void)refreshVideoView {

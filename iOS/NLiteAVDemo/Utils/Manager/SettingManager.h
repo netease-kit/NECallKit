@@ -44,6 +44,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, assign, readonly) BOOL useEnableLocalMute;
 
+@property(nonatomic, assign, readonly) BOOL enableSingleToGroupCall;
+
 + (id)shareInstance;
 
 - (void)setTimeoutWithSecond:(NSInteger)second;
@@ -61,6 +63,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (uint64_t)getCallKitUid;
 
 - (void)setEnableLocal:(BOOL)enable;
+
+- (void)setEnableSingleToGroupCall:(BOOL)enable;
 
 - (void)setIsGlobalInit:(BOOL)isGlobalInit
             withApnsCer:(NSString *)apnsCer

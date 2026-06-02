@@ -22,6 +22,10 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
 @property(nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *> *remoteAudioMuted;
 /// 通话开始时间
 @property(nonatomic, strong, nullable) NSDate *callStartTime;
+/// 通话开始时间是否来自接通回调
+@property(nonatomic, assign) BOOL callStartTimeFromConnectedEvent;
+/// NECallEngine 回调监听引用计数
+@property(nonatomic, assign) NSInteger observingCount;
 /// 代理集合（使用弱引用，支持多个代理）
 @property(nonatomic, strong) NSHashTable<id<NECallStateManagerDelegate>> *delegates;
 
@@ -98,14 +102,39 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
 }
 
 - (void)startObserving {
+  self.observingCount += 1;
+  if (self.observingCount > 1) {
+    NEXKitBaseLogInfo(@"[%@] startObserving refresh because already observing, count:%ld",
+                      kCallStateManagerTag, (long)self.observingCount);
+    [[NECallEngine sharedInstance] addCallDelegate:self];
+    [self syncCurrentState];
+    if (_callStatus == NERtcCallStatusInCall) {
+      [self ensureCallStartTime];
+    }
+    return;
+  }
   NEXKitBaseLogInfo(@"[%@] startObserving", kCallStateManagerTag);
   [[NECallEngine sharedInstance] addCallDelegate:self];
 
   // 同步当前状态
   [self syncCurrentState];
+  if (_callStatus == NERtcCallStatusInCall) {
+    [self ensureCallStartTime];
+  }
 }
 
 - (void)stopObserving {
+  if (self.observingCount <= 0) {
+    NEXKitBaseLogInfo(@"[%@] stopObserving skipped because not observing", kCallStateManagerTag);
+    [self resetState];
+    return;
+  }
+  self.observingCount -= 1;
+  if (self.observingCount > 0) {
+    NEXKitBaseLogInfo(@"[%@] stopObserving skipped because still referenced, count:%ld",
+                      kCallStateManagerTag, (long)self.observingCount);
+    return;
+  }
   NEXKitBaseLogInfo(@"[%@] stopObserving", kCallStateManagerTag);
   [[NECallEngine sharedInstance] removeCallDelegate:self];
 
@@ -121,10 +150,67 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
     _callInfo = info;
     _callType = info.callType;
   }
+  if (_callStatus == NERtcCallStatusInCall) {
+    [self ensureCallStartTime];
+  }
 }
 
 - (void)syncCallStatus {
   _callStatus = [[NECallEngine sharedInstance] callStatus];
+}
+
+- (void)ensureCallStartTime {
+  NSDate *inferredStartTime = [self inferredCallStartTimeFromCurrentMembers];
+  if (_callStartTime != nil) {
+    if (!_callStartTimeFromConnectedEvent &&
+        inferredStartTime != nil &&
+        [_callStartTime timeIntervalSinceDate:inferredStartTime] > 1) {
+      _callStartTime = inferredStartTime;
+      NEXKitBaseLogInfo(@"[%@] ensureCallStartTime: adjusted callStartTime from members",
+                        kCallStateManagerTag);
+    }
+    return;
+  }
+  _callStartTime = inferredStartTime ?: [NSDate date];
+  _callStartTimeFromConnectedEvent = NO;
+  NEXKitBaseLogInfo(@"[%@] ensureCallStartTime: recorded callStartTime source:%@",
+                    kCallStateManagerTag, inferredStartTime != nil ? @"members" : @"now");
+}
+
+- (void)recordCallStartTimeFromConnectedEvent {
+  if (_callStartTime != nil && _callStartTimeFromConnectedEvent) {
+    return;
+  }
+  _callStartTime = [NSDate date];
+  _callStartTimeFromConnectedEvent = YES;
+  NEXKitBaseLogInfo(@"[%@] onCallConnected: recorded callStartTime", kCallStateManagerTag);
+}
+
+- (NSDate *)inferredCallStartTimeFromCurrentMembers {
+  NSArray<NECallMemberInfo *> *members = [[NECallEngine sharedInstance] currentMembers];
+  if (members.count <= 0) {
+    return nil;
+  }
+  NSInteger joinedMemberCount = 0;
+  NSTimeInterval latestInitialJoinedAt = 0;
+  NSTimeInterval latestJoinedAt = 0;
+  for (NECallMemberInfo *member in members) {
+    if (member.state != NECallMemberStateJoined || member.joinedAt <= 0) {
+      continue;
+    }
+    joinedMemberCount += 1;
+    if (member.joinedAt > latestJoinedAt) {
+      latestJoinedAt = member.joinedAt;
+    }
+    if (member.inviterUserID.length <= 0 && member.joinedAt > latestInitialJoinedAt) {
+      latestInitialJoinedAt = member.joinedAt;
+    }
+  }
+  if (joinedMemberCount < 2) {
+    return nil;
+  }
+  NSTimeInterval joinedAt = latestInitialJoinedAt > 0 ? latestInitialJoinedAt : latestJoinedAt;
+  return joinedAt > 0 ? [NSDate dateWithTimeIntervalSince1970:joinedAt] : nil;
 }
 
 - (void)resetState {
@@ -136,6 +222,7 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
   _localVideoMuted = NO;
   _localAudioMuted = NO;
   _callStartTime = nil;
+  _callStartTimeFromConnectedEvent = NO;
   [_remoteVideoAvailable removeAllObjects];
   [_remoteVideoMuted removeAllObjects];
   [_remoteAudioMuted removeAllObjects];
@@ -179,13 +266,39 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
   [self syncCallStatus];
 
   // 记录通话开始时间
-  if (!_callStartTime) {
-    _callStartTime = [NSDate date];
-    NEXKitBaseLogInfo(@"[%@] onCallConnected: recorded callStartTime", kCallStateManagerTag);
-  }
+  [self recordCallStartTimeFromConnectedEvent];
 
   // 通知代理
   [self notifyDelegatesCallTypeChanged:info.callType];
+  if (oldStatus != _callStatus) {
+    [self notifyDelegatesCallStatusChanged:_callStatus];
+  }
+}
+
+- (void)onCallModeChanged:(NECallModeChangeInfo *)info {
+  NEXKitBaseLogInfo(@"[%@] onCallModeChanged, oldMode = %ld, newMode = %ld",
+                    kCallStateManagerTag, (long)info.oldMode, (long)info.newMode);
+  NERtcCallStatus oldStatus = _callStatus;
+  [self syncCurrentState];
+  if (_callStatus == NERtcCallStatusInCall) {
+    [self ensureCallStartTime];
+  }
+  [self notifyDelegatesCallTypeChanged:_callType];
+  if (oldStatus != _callStatus) {
+    [self notifyDelegatesCallStatusChanged:_callStatus];
+  }
+}
+
+- (void)onCallMembersChanged:(NECallMemberChangeInfo *)info {
+  NEXKitBaseLogInfo(@"[%@] onCallMembersChanged, memberCount = %lu, changeType = %ld",
+                    kCallStateManagerTag, (unsigned long)info.members.count,
+                    (long)info.changeType);
+  NERtcCallStatus oldStatus = _callStatus;
+  [self syncCurrentState];
+  if (_callStatus == NERtcCallStatusInCall) {
+    [self ensureCallStartTime];
+  }
+  [self notifyDelegatesCallTypeChanged:_callType];
   if (oldStatus != _callStatus) {
     [self notifyDelegatesCallStatusChanged:_callStatus];
   }

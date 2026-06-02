@@ -6,9 +6,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface NENavCustomView : UIView
-@property(strong, nonatomic) UIButton *userButton;
-@property(strong, nonatomic) UIButton *settingButton;
+@class NEGroupUser;
+
+@interface NESingleToGroupUserInCallCell : UICollectionViewCell
+
+- (void)configure:(NEGroupUser *)user;
+
+- (BOOL)isDisplayingUserID:(NSString *)userID;
 
 @end
 

@@ -140,6 +140,7 @@
   self.mediaBtn.selected = YES;
   if (self.enableVirtualBackground == YES) {
     [self.stack removeArrangedSubview:self.virtualBtn];
+    [self.virtualBtn removeFromSuperview];
   }
   self.virtualBtn.hidden = YES;
 }
@@ -164,6 +165,26 @@
 - (void)setGroupStyle {
   [self.stack removeArrangedSubview:self.mediaBtn];
   [self.mediaBtn removeFromSuperview];
+}
+
+- (void)setSingleToGroupStyle {
+  if (self.cameraBtn.superview == nil) {
+    NSInteger index = MIN((NSInteger)self.stack.arrangedSubviews.count, 1);
+    [self.stack insertArrangedSubview:self.cameraBtn atIndex:index];
+  }
+  if (self.mediaBtn.superview == nil) {
+    NSInteger index = MIN((NSInteger)self.stack.arrangedSubviews.count, 3);
+    [self.stack insertArrangedSubview:self.mediaBtn atIndex:index];
+  }
+  if (self.enableVirtualBackground == YES) {
+    if (![self.stack.arrangedSubviews containsObject:self.virtualBtn]) {
+      NSInteger index = MIN((NSInteger)self.stack.arrangedSubviews.count, 4);
+      [self.stack insertArrangedSubview:self.virtualBtn atIndex:index];
+    }
+    self.virtualBtn.hidden = NO;
+  }
+  self.mediaBtn.alpha = 0.35;
+  self.mediaBtn.enabled = YES;
 }
 
 - (void)removeMediaBtn {
