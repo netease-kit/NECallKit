@@ -138,6 +138,33 @@
   BOOL blurValue = [[[NERtcCallUIKit sharedInstance]
       valueForKeyPath:@"config.uiConfig.enableVirtualBackground"] boolValue];
   [blurSwitch setOn:blurValue];
+
+  // 来电横幅功能
+  UILabel *bannerLabel = [[UILabel alloc] init];
+  bannerLabel.translatesAutoresizingMaskIntoConstraints = NO;
+  bannerLabel.textColor = [UIColor whiteColor];
+  bannerLabel.text = @"开启来电横幅";
+  [self.view addSubview:bannerLabel];
+  [NSLayoutConstraint activateConstraints:@[
+    [bannerLabel.topAnchor constraintEqualToAnchor:blur.bottomAnchor constant:20],
+    [bannerLabel.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:20],
+    [bannerLabel.heightAnchor constraintEqualToConstant:30]
+  ]];
+
+  UISwitch *bannerSwitch = [[UISwitch alloc] init];
+  bannerSwitch.translatesAutoresizingMaskIntoConstraints = NO;
+  [bannerSwitch addTarget:self
+                   action:@selector(bannerSwitchAction:)
+         forControlEvents:UIControlEventValueChanged];
+  [self.view addSubview:bannerSwitch];
+  [NSLayoutConstraint activateConstraints:@[
+    [bannerSwitch.rightAnchor constraintEqualToAnchor:self.view.rightAnchor constant:-20],
+    [bannerSwitch.centerYAnchor constraintEqualToAnchor:bannerLabel.centerYAnchor],
+  ]];
+  // 初始值：读取 UserDefaults 中已持久化的值，并同步到 UIKit 实例
+  BOOL bannerValue = [[NSUserDefaults standardUserDefaults] boolForKey:@"kEnableIncomingBanner"];
+  [bannerSwitch setOn:bannerValue];
+  [[NERtcCallUIKit sharedInstance] enableIncomingBanner:bannerValue];
 }
 
 // 小窗开关的响应函数
@@ -170,6 +197,13 @@
   // 用于控制是否开启虚化
   [[NERtcCallUIKit sharedInstance] setValue:[NSNumber numberWithBool:sender.on]
                                  forKeyPath:@"config.uiConfig.enableVirtualBackground"];
+}
+
+// 来电横幅开关的响应函数
+- (void)bannerSwitchAction:(UISwitch *)sender {
+  [[NSUserDefaults standardUserDefaults] setBool:sender.isOn forKey:@"kEnableIncomingBanner"];
+  [[NSUserDefaults standardUserDefaults] synchronize];
+  [[NERtcCallUIKit sharedInstance] enableIncomingBanner:sender.isOn];
 }
 
 /*

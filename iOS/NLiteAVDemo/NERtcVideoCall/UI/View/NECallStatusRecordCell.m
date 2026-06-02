@@ -149,26 +149,26 @@
 
 - (NSString *)getCallTime:(NSDate *)date {
   NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
-  [formatter setDateFormat:@"HH:mm"];
+  [formatter setDateFormat:@"HH:mm:ss"];
   NSString *dateTime = [formatter stringFromDate:date];
   return dateTime;
 }
 
 - (NSString *)getCallDurationString:(NSInteger)duration {
-  NSString *time = @"0秒";
-  int seconds = duration % 60;
-  int minutes = (duration / 60) % 60;
-  int hours = (int)(duration / 3600);
+  if (duration <= 0) {
+    return @"00:00";
+  }
+  NSInteger seconds = duration % 60;
+  NSInteger minutes = (duration / 60) % 60;
+  NSInteger hours = duration / 3600;
   if (hours > 0) {
-    return [NSString stringWithFormat:@"%d小时%d分", hours, minutes];
+    if (hours > 99) {
+      return @"99:59:59";
+    }
+    return [NSString stringWithFormat:@"%02ld:%02ld:%02ld", (long)hours, (long)minutes,
+                                      (long)seconds];
   }
-  if (minutes > 0) {
-    return [NSString stringWithFormat:@"%d分%d秒", minutes, seconds];
-  }
-  if (seconds > 0) {
-    return [NSString stringWithFormat:@"%d秒", seconds];
-  }
-  return time;
+  return [NSString stringWithFormat:@"%02ld:%02ld", (long)minutes, (long)seconds];
 }
 
 @end

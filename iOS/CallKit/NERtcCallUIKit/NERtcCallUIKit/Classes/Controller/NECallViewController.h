@@ -21,6 +21,9 @@ extern NSString *const kCallKitDismissNoti;
 
 @property(nonatomic, assign) NERtcCallStatus status;
 
+/// 来电横幅点击主体跳全屏时设为 YES，通知 VC 铃声已在播放中，无需重新触发
+@property(nonatomic, assign) BOOL ringAlreadyPlaying;
+
 @property(nonatomic, strong) NSMutableDictionary<NSString *, Class> *uiConfigDic;
 
 @property(nonatomic, strong) NECallUIConfig *config;

@@ -20,6 +20,8 @@
 
 @property(nonatomic, assign) CGFloat bottomOffset;
 
+@property(nonatomic, assign) BOOL contentSizeObserverAdded;
+
 @end
 
 @implementation GroupUserController
@@ -38,16 +40,18 @@
   // Do any additional setup after loading the view.
   self.view.clipsToBounds = YES;
   self.space = 10.0;
-  [self.collection addObserver:self
-                    forKeyPath:@"contentSize"
-                       options:NSKeyValueObservingOptionNew
-                       context:nil];
+  UICollectionView *collection = self.collection;
+  [collection addObserver:self
+               forKeyPath:@"contentSize"
+                  options:NSKeyValueObservingOptionNew
+                  context:nil];
+  self.contentSizeObserverAdded = YES;
   self.view.backgroundColor = [UIColor clearColor];
   [self.view addSubview:self.sectionHeader];
   self.sectionHeader.hidden = YES;
-  [self.view addSubview:self.collection];
-  self.collection.frame = CGRectMake(20, SectionHeaderView.height + self.space,
-                                     self.view.frame.size.width - 40, self.view.frame.size.height);
+  [self.view addSubview:collection];
+  collection.frame = CGRectMake(20, SectionHeaderView.height + self.space,
+                                self.view.frame.size.width - 40, self.view.frame.size.height);
   self.bottomOffset = 120;
 }
 
@@ -110,25 +114,25 @@
                       ofObject:(id)object
                         change:(NSDictionary<NSKeyValueChangeKey, id> *)change
                        context:(void *)context {
-  if (object == self.collection) {
+  UICollectionView *collection = _collection;
+  if (object == collection) {
     if ([keyPath isEqualToString:@"contentSize"]) {
-      if (self.view.frame.size.height == self.collection.contentSize.height +
-                                             SectionHeaderView.height + self.space +
-                                             self.bottomOffset) {
+      if (self.view.frame.size.height == collection.contentSize.height + SectionHeaderView.height +
+                                             self.space + self.bottomOffset) {
         return;
       }
       if (self.disableCancelUser == YES) {
         self.view.frame = CGRectMake(0, self.view.frame.origin.y, self.view.frame.size.width,
-                                     self.collection.contentSize.height + SectionHeaderView.height +
+                                     collection.contentSize.height + SectionHeaderView.height +
                                          self.space + self.bottomOffset);
-        self.collection.frame =
+        collection.frame =
             CGRectMake(20, SectionHeaderView.height + self.space, self.view.frame.size.width - 40,
                        self.view.frame.size.height - SectionHeaderView.height);
       } else {
         self.view.frame = CGRectMake(0, 0, self.view.frame.size.width,
-                                     self.collection.contentSize.height + SectionHeaderView.height +
+                                     collection.contentSize.height + SectionHeaderView.height +
                                          self.space + self.bottomOffset);
-        self.collection.frame =
+        collection.frame =
             CGRectMake(20, SectionHeaderView.height + self.space, self.view.frame.size.width - 40,
                        self.view.frame.size.height - SectionHeaderView.height);
         self.weakTable.tableFooterView = self.view;
@@ -138,7 +142,11 @@
 }
 
 - (void)dealloc {
-  [self.collection removeObserver:self forKeyPath:@"contentSize"];
+  if (self.contentSizeObserverAdded && _collection != nil) {
+    [_collection removeObserver:self forKeyPath:@"contentSize"];
+  }
+  _collection.delegate = nil;
+  _collection.dataSource = nil;
 }
 
 /*

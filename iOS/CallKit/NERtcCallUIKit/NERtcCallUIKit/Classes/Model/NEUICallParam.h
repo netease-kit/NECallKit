@@ -26,6 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
 /// 是否是主叫 YES 表示主叫
 @property(nonatomic, assign) BOOL isCaller;
 
+/// 是否为多人通话邀请
+@property(nonatomic, assign) BOOL multiCallInvite;
+
 #pragma mark - 可选自定义参数
 
 /// 推送自定义配置

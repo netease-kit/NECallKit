@@ -8,20 +8,11 @@
     <string name="converged_call">Converged Voice Call</string>
     <string name="group_call">Group Video Call</string>
     <string name="login_btn_login">Login</string>
-    <string name="login_phone_number_cant_less_than_eleven">Phone number cannot be less than 11 digits</string>
     <string name="login_account_id_cant_null">Account ID cannot be empty</string>
     <string name="login_token_cant_null">Token cannot be empty</string>
     <string name="login_help_link">How to get NetEase account and Token</string>
-    <string name="login_sms_code_has_been_sent">Verification code has been sent to +86-</string>
-    <string name="login_please_input_sms_code">, please enter the verification code below</string>
-    <string name="login_please_input_correct_sms_code">Please enter the correct verification code</string>
-    <string name="sixty_second">60s</string>
-    <string name="login_resend">Resend</string>
-    <string name="login_second">s</string>
     <string name="login_success">Login successful</string>
     <string name="login_fail">Login failed</string>
-    <string name="login_sms_code_send_success">Verification code resent successfully</string>
-    <string name="login_sms_code_send_fail">Verification code resend failed</string>
     <string name="kickoff_tips">Account kicked offline</string>
     <string name="nertc_cant_find_this_user">User not found</string>
     <string name="nertc_no_network">Network not connected</string>
@@ -38,7 +29,6 @@
     <string name="user_to_group_call_with_user_count">Start Call (%1$d/%2$d)</string>
     <string name="user_join_group_call_with_user_count">%d more people joining the call</string>
     <string name="empty">Empty</string>
-    <string name="your_phone_number_is">Your phone number: %s</string>
     <string name="recently_search">Recent Search</string>
     <string name="call_record">Call History</string>
     <string name="search_result">Search Results</string>
@@ -46,7 +36,6 @@
     <string name="done">Done</string>
     <string name="start_call">Start Call</string>
     <string name="title_setting">Settings</string>
-    <string name="please_input_the_number_have_register">Enter phone number to search registered users</string>
     <string name="search">Search</string>
     <string name="call_type">Call Type</string>
     <string name="audio_call">Audio Call</string>
@@ -85,6 +74,7 @@
     <string name="token_label">Token</string>
     <string name="please_input_token">Please enter Token</string>
     <string name="login_button">Login</string>
+    <string name="settings_button">Settings</string>
     <string name="restart_tip">Current settings require app restart to take effect!</string>
     <string name="rtc_timeout_tip">Set RTC call timeout (seconds):\n Conversion time in converged call scenarios</string>
     <string name="enable_join_rtc_when_call">Enable join RTC when calling:</string>

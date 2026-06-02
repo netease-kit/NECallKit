@@ -16,6 +16,7 @@ import android.widget.Toast
 import com.netease.yunxin.kit.alog.ParameterMap
 import com.netease.yunxin.kit.call.p2p.NECallEngine
 import com.netease.yunxin.kit.call.p2p.model.NECallEngineDelegateAbs
+import com.netease.yunxin.kit.call.p2p.model.NECallType
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState
 import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.loadAvatarByAccId
@@ -33,6 +34,9 @@ class FloatingView(context: Context) : FrameLayout(context), IFloatingView {
     }
     private val delegate = object : NECallEngineDelegateAbs() {
         override fun onVideoAvailable(userId: String?, available: Boolean) {
+            if (!shouldHandleRemoteVideoState(userId)) {
+                return
+            }
             if (available) {
                 binding.videoViewSmall.visibility = View.VISIBLE
                 CallUIOperationsMgr.setupRemoteView(binding.videoViewSmall)
@@ -42,6 +46,9 @@ class FloatingView(context: Context) : FrameLayout(context), IFloatingView {
         }
 
         override fun onVideoMuted(userId: String?, mute: Boolean) {
+            if (!shouldHandleRemoteVideoState(userId)) {
+                return
+            }
             if (!mute) {
                 binding.videoViewSmall.visibility = View.VISIBLE
                 CallUIOperationsMgr.setupRemoteView(binding.videoViewSmall)
@@ -49,6 +56,17 @@ class FloatingView(context: Context) : FrameLayout(context), IFloatingView {
                 binding.videoViewSmall.visibility = View.GONE
             }
         }
+    }
+
+    private fun shouldHandleRemoteVideoState(userId: String?): Boolean {
+        val callInfo = NECallEngine.sharedInstance().callInfo
+        if (callInfo.callType != NECallType.VIDEO) {
+            return false
+        }
+        return FloatingWindowVideoPolicy.shouldHandleRemoteVideoState(
+            callInfo.otherUserInfo()?.accId,
+            userId
+        )
     }
 
     override fun toInit() {

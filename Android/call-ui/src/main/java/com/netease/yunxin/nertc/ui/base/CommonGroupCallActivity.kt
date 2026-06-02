@@ -189,6 +189,15 @@ abstract class CommonGroupCallActivity : AppCompatActivity() {
                 .append("intent", intent)
                 .toValue()
         )
+        // If the intent carries no call parameters, this is a "bring task to front" signal
+        // (e.g. user tapped the launcher icon while a call was in progress). Skip
+        // reinitialization to avoid corrupting the current call UI state.
+        val hasCallData = intent?.hasExtra(PARAM_KEY_GROUP_CALL) == true ||
+            intent?.hasExtra(PARAM_KEY_GROUP_CALL_ID) == true
+        if (!hasCallData) {
+            CallUILog.d(tag, "onNewIntent: no call data, skip reinitialization")
+            return
+        }
         intent?.run {
             prepareData(this)
         }
@@ -260,7 +269,9 @@ abstract class CommonGroupCallActivity : AppCompatActivity() {
         super.onDestroy()
         NEGroupCall.instance().removeGroupCallDelegate(callActionObserver)
         NERtcCallbackProxyMgr.getInstance().removeCallback(rtcCallback)
-        if (callInfo != null) {
+        // Activity 可能因系统回收/配置变更等非用户主动退出而触发销毁，
+        // 此时不应直接挂断群呼；仅在页面真正结束（isFinishing）时再挂断。
+        if (isFinishing && callInfo != null) {
             NEGroupCall.instance().groupHangup(GroupHangupParam(callInfo!!.callId), null)
         }
     }

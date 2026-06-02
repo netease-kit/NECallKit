@@ -7,5 +7,121 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/clRoot"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" />
+    android:layout_height="match_parent"
+    android:clipChildren="false">
 
+    <FrameLayout
+        android:id="@+id/p2pFragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <com.netease.yunxin.nertc.ui.view.GroupCallGridLayout
+        android:id="@+id/singleToGroupGridLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/ivInviteUsers"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="15dp"
+        android:src="@drawable/icon_call_group_invite"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/ivSingleToGroupSwitchCamera"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="top|start"
+        android:layout_margin="15dp"
+        android:src="@drawable/cam_switch"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvSingleToGroupCountdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="3dp"
+        android:background="#66000000"
+        android:paddingStart="10dp"
+        android:paddingTop="5dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="5dp"
+        android:text="00:00"
+        android:textColor="@color/colorWhite"
+        android:textSize="14dp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/llSingleToGroupOperation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="50dp"
+        android:background="@drawable/calling_control_bg"
+        android:minWidth="310dp"
+        android:orientation="horizontal"
+        android:paddingHorizontal="15dp"
+        android:paddingVertical="14dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/ivSingleToGroupMuteAudio"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginHorizontal="12dp"
+            android:layout_weight="1"
+            android:src="@drawable/voice_on" />
+
+        <ImageView
+            android:id="@+id/ivSingleToGroupMuteVideo"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginHorizontal="12dp"
+            android:layout_weight="1"
+            android:src="@drawable/cam_on" />
+
+        <ImageView
+            android:id="@+id/ivSingleToGroupSpeaker"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginHorizontal="12dp"
+            android:layout_weight="1"
+            android:src="@drawable/speaker_on" />
+
+        <ImageView
+            android:id="@+id/ivSingleToGroupSwitchType"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginHorizontal="12dp"
+            android:layout_weight="1"
+            android:alpha="0.35"
+            android:src="@drawable/video_to_audio" />
+
+        <ImageView
+            android:id="@+id/ivSingleToGroupVirtualBlur"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginHorizontal="12dp"
+            android:layout_weight="1"
+            android:src="@drawable/icon_call_virtual_blur_off"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/ivSingleToGroupHangup"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginHorizontal="12dp"
+            android:layout_weight="1"
+            android:src="@drawable/hangup" />
+    </LinearLayout>
+</FrameLayout>

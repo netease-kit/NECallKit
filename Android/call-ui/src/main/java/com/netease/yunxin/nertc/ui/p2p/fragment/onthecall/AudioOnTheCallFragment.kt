@@ -108,21 +108,22 @@ open class AudioOnTheCallFragment : BaseOnTheCallFragment() {
                 val action = Action@{
                     switchCallType(NECallType.VIDEO)
                 }
-                if (arePermissionsGranted(listOf(CAMERA))) {
+                if (arePermissionsGranted(listOf(RECORD_AUDIO, CAMERA))) {
                     action.invoke()
                     return@bindClick
                 }
-                requestPermission(
-                    listOf(CAMERA),
+                requestCallPermission(
+                    NECallType.VIDEO,
                     onGranted = {
                         action.invoke()
                     },
-                    onDenied = { _, _ ->
+                    onDenied = {
                         context?.run {
                             getString(R.string.tip_camera_permission_request_failed).toastShort(
                                 this
                             )
                         }
+                        bridge.doHangup()
                     }
                 )
             }

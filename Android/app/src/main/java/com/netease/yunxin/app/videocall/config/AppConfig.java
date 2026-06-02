@@ -5,7 +5,7 @@
 package com.netease.yunxin.app.videocall.config;
 
 public class AppConfig {
-  private final static String APP_KEY = "your appKey";
+  private static final String APP_KEY = "Here, please fill your appKey!!!";
 
   public static String getAppKey() {
     return APP_KEY;

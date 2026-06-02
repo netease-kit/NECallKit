@@ -40,6 +40,7 @@ public final class UserManager {
             if (v2NIMUsers != null) {
               for (V2NIMUser nimUser : v2NIMUsers) {
                 UserModel user = new UserModel();
+                user.setAccount(nimUser.getAccountId());
                 user.setMobile(nimUser.getMobile());
                 user.setName(nimUser.getName());
                 user.setAvatar(nimUser.getAvatar());

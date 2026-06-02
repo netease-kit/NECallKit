@@ -6,12 +6,12 @@ package com.netease.yunxin.app.videocall;
 
 import androidx.annotation.NonNull;
 import com.netease.yunxin.app.videocall.call.SettingActivity;
+import com.netease.yunxin.kit.alog.ALog;
 import com.netease.yunxin.kit.alog.ParameterMap;
 import com.netease.yunxin.nertc.ui.CallKitNotificationConfig;
 import com.netease.yunxin.nertc.ui.base.CallParam;
 import com.netease.yunxin.nertc.ui.p2p.P2PCallFragmentActivity;
 import com.netease.yunxin.nertc.ui.p2p.P2PUIConfig;
-import com.netease.yunxin.nertc.ui.utils.CallUILog;
 
 public class TestActivity extends P2PCallFragmentActivity {
   private static final String TAG = "TestActivity";
@@ -19,7 +19,7 @@ public class TestActivity extends P2PCallFragmentActivity {
   @NonNull
   @Override
   protected P2PUIConfig provideUIConfig(CallParam param) {
-    CallUILog.d(TAG, new ParameterMap("provideUIConfig").append("param", param).toValue());
+    ALog.d(TAG, new ParameterMap("provideUIConfig").append("param", param).toValue());
     return new P2PUIConfig.Builder()
         .closeVideoType(SettingActivity.CLOSE_VIDEO_TYPE)
         .closeVideoLocalUrl(SettingActivity.CLOSE_VIDEO_LOCAL_URL)

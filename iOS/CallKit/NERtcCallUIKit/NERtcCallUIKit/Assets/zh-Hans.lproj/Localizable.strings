@@ -16,14 +16,20 @@
 "other_client_reject"="其他端已经拒绝";
 
 "permission"="权限请求";
+"go_to_settings"="去设置";
+"microphone_permission_denied"="请在系统设置中允许应用访问麦克风，开启后才能发起或接听语音/视频通话。";
+"camera_permission_denied"="请在系统设置中允许应用访问摄像头，开启后才能发起或接听视频通话。";
+"call_permission_denied"="请在系统设置中允许应用访问麦克风和摄像头，开启后才能发起或接听音视频通话。";
 "reject"="拒绝";
 "agree"="同意";
 "audio_to_video"="对方请求将音频转为视频，需要打开您的摄像头。";
 "video_to_audio"="对方请求将视频转为音频，将直接关闭您的摄像头。";
 "reject_tip"="对方拒绝了您的请求";
+"switch_call_type_request_expired"="请求已过期";
 
 "invite_audio_call"="邀请您音频通话...";
 "invite_video_call"="邀请您视频通话...";
+"invite_single_to_group_call"="邀请您加入多人通话";
 
 "waitting_remote_response"="正在等待对方响应...";
 "call_cancel"="取消";
@@ -46,3 +52,19 @@
 "you_closed_camera"="你关闭了摄像头";
 "remote_closed_camera"="对方关闭了摄像头";
 
+"single_to_group_invite_title"="邀请成员";
+"single_to_group_invite_placeholder"="输入账号，支持逗号/空格分隔";
+"single_to_group_invite_send"="邀请";
+"single_to_group_invite_empty"="请输入有效账号";
+"single_to_group_invite_success"="邀请已发送";
+"single_to_group_invite_partial"="部分邀请已发送";
+"single_to_group_invite_failed"="邀请发送失败";
+"single_to_group_invite_rejected"="已拒绝";
+"single_to_group_invite_timeout"="邀请超时";
+"single_to_group_invite_busy"="忙线";
+"single_to_group_invite_canceled"="邀请已取消";
+"single_to_group_invite_unsupported"="您当前客户端不支持多人通话";
+"single_to_group_invite_peer_unsupported"="%@ 当前客户端不支持多人通话";
+"single_to_group_invite_already_added"="已添加";
+"single_to_group_invite_already_in_call"="已在通话中";
+"single_to_group_switch_call_type_unsupported"="多人通话中不支持切换通话模式";

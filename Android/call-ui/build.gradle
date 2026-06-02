@@ -12,6 +12,7 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     defaultConfig {
         minSdkVersion rootProject.ext.minSdkVersion
+        buildConfigField "String", "versionName", "\"4.7.0\""
     }
 
     buildFeatures {
@@ -45,5 +46,5 @@ dependencies {
     implementation libs.glide.transformations
     api libs.yunxin.common.ui
     implementation 'com.netease.yunxin:nertc-aidenoise:5.9.10'
-    api 'com.netease.yunxin.kit.call:call:4.1.0'
+    api 'com.netease.yunxin.kit.call:call:4.7.0'
 }

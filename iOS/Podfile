@@ -6,7 +6,7 @@ target 'NLiteAVDemo' do
   use_frameworks! 
   # 云信基础SDK
   pod 'NERtcSDK', '5.9.10'
-  pod 'NIMSDK_LITE', '10.9.53'
+  pod 'NIMSDK_LITE', '10.9.76'
   pod 'NECommonUIKit', '9.8.2'
 
   pod 'NECallKitPstn', :path => 'CallKit/NECallKitPstn/NECallKitPstn.podspec'
@@ -15,10 +15,10 @@ target 'NLiteAVDemo' do
   pod 'Masonry'
   
   #呼叫组件API组件
-  pod 'NERtcCallKit', '4.1.0'
+  pod 'NERtcCallKit', '4.7.0'
 
   #呼叫组件UI组件
-  pod 'NERtcCallUIKit', '4.1.0'
+  pod 'NERtcCallUIKit', '4.7.0'
 
   #如果需要查看呼叫组件UI组件源码请注释远端引用，打开下面本地引用
   #pod 'NERtcCallUIKit', :path => 'CallKit/NERtcCallUIKit/NERtcCallUIKit.podspec'

@@ -47,9 +47,11 @@ class CallKitUIOptions constructor(
     val video2Audio: Boolean = false,
     val enableGroup: Boolean = false,
     val enableInviteOthersWhenGroupCalling: Boolean = false,
+    val singleToGroupInviteMode: NECallSingleToGroupInviteMode = NECallSingleToGroupInviteMode.DISABLED,
     val language: NECallUILanguage = NECallUILanguage.AUTO,
     var framework: String? = null,
-    var channel: String? = null
+    var channel: String? = null,
+    var enableIncomingBanner: Boolean = false
 ) {
 
     class Builder {
@@ -74,6 +76,11 @@ class CallKitUIOptions constructor(
             (context: Context, groupId: String?, excludeUserList: List<String>?, observer: NEResultObserver<List<String>?>?) -> Unit
         )? =
             null
+
+        private var singleToGroupInviteMode: NECallSingleToGroupInviteMode =
+            NECallSingleToGroupInviteMode.DISABLED
+
+        private var inviteContactSelector: NECallInviteContactSelector? = null
 
         private var notificationConfigFetcher: ((NEInviteInfo) -> CallKitNotificationConfig)? = null
 
@@ -109,6 +116,8 @@ class CallKitUIOptions constructor(
         private var framework: String? = null
 
         private var channel: String? = null
+
+        private var enableIncomingBanner: Boolean = false
 
         fun rtcSdkOption(option: NERtcOption) = apply {
             this.rtcSdkOption = option
@@ -201,6 +210,14 @@ class CallKitUIOptions constructor(
             this.contactSelector = contactSelector
         }
 
+        fun singleToGroupInviteMode(mode: NECallSingleToGroupInviteMode) = apply {
+            this.singleToGroupInviteMode = mode
+        }
+
+        fun inviteContactSelector(selector: NECallInviteContactSelector?) = apply {
+            this.inviteContactSelector = selector
+        }
+
         fun rtcSafeMode(safeMode: Int) = apply {
             this.rtcSafeMode = safeMode
         }
@@ -233,12 +250,16 @@ class CallKitUIOptions constructor(
             this.channel = channel
         }
 
+        fun enableIncomingBanner(enable: Boolean) = apply {
+            this.enableIncomingBanner = enable
+        }
+
         fun build(): CallKitUIOptions {
             val rtcConfig =
                 CallKitUIRtcConfig(rtcAppKey, rtcSdkOption)
             val activityConfig =
                 CallKitUIActivityConfig(p2pAudioActivity, p2pVideoActivity, groupActivity)
-            val uiHelper = CallKitUIHelper(contactSelector)
+            val uiHelper = CallKitUIHelper(contactSelector, inviteContactSelector)
 
             return CallKitUIOptions(
                 currentUserRtcUId = currentUserRtcUId,
@@ -262,17 +283,41 @@ class CallKitUIOptions constructor(
                 video2Audio = video2Audio,
                 enableGroup = enableGroup,
                 enableInviteOthersWhenGroupCalling = enableInviteOthersWhenGroupCalling,
+                singleToGroupInviteMode = singleToGroupInviteMode,
                 language = language,
                 framework = framework,
-                channel = channel
+                channel = channel,
+                enableIncomingBanner = enableIncomingBanner
             )
         }
     }
 
     override fun toString(): String {
-        return "CallKitUIOptions(currentUserRtcUId=$currentUserRtcUId, timeOutMillisecond=$timeOutMillisecond, resumeBGInvitation=$resumeBGInvitation, rtcConfig=$rtcConfig, activityConfig=$activityConfig, uiHelper=$uiHelper, notificationConfigFetcher=$notificationConfigFetcher, notificationConfigFetcherForGroup=$notificationConfigFetcherForGroup, userInfoHelper=$userInfoHelper, incomingCallEx=$incomingCallEx, callKitUIBridgeService=$callKitUIBridgeService, callExtension=$callExtension, soundHelper=$soundHelper, enableOrder=$enableOrder, enableAutoJoinWhenCalled=$enableAutoJoinWhenCalled, initRtcMode=$initRtcMode, joinRtcWhenCall=$joinRtcWhenCall, audio2Video=$audio2Video, video2Audio=$video2Audio, enableGroup=$enableGroup, enableInviteOthersWhenGroupCalling=$enableInviteOthersWhenGroupCalling, language=$language, framework=$framework, channel=$channel)"
+        return "CallKitUIOptions(currentUserRtcUId=$currentUserRtcUId, timeOutMillisecond=$timeOutMillisecond, resumeBGInvitation=$resumeBGInvitation, rtcConfig=$rtcConfig, activityConfig=$activityConfig, uiHelper=$uiHelper, notificationConfigFetcher=$notificationConfigFetcher, notificationConfigFetcherForGroup=$notificationConfigFetcherForGroup, userInfoHelper=$userInfoHelper, incomingCallEx=$incomingCallEx, callKitUIBridgeService=$callKitUIBridgeService, callExtension=$callExtension, soundHelper=$soundHelper, enableOrder=$enableOrder, enableAutoJoinWhenCalled=$enableAutoJoinWhenCalled, initRtcMode=$initRtcMode, joinRtcWhenCall=$joinRtcWhenCall, audio2Video=$audio2Video, video2Audio=$video2Audio, enableGroup=$enableGroup, enableInviteOthersWhenGroupCalling=$enableInviteOthersWhenGroupCalling, singleToGroupInviteMode=$singleToGroupInviteMode, language=$language, framework=$framework, channel=$channel, enableIncomingBanner=$enableIncomingBanner)"
     }
 }
+
+enum class NECallSingleToGroupInviteMode {
+    DISABLED,
+    AFTER_1V1_CONNECTED
+}
+
+fun interface NECallInviteContactSelector {
+    fun onSelectInviteMembers(
+        context: Context,
+        inviteContext: NECallInviteUIContext,
+        observer: NEResultObserver<List<String>?>?
+    )
+}
+
+data class NECallInviteUIContext(
+    val callId: String,
+    val channelId: String?,
+    val currentUserAccId: String,
+    val inCallUserAccIds: List<String>,
+    val remainingCount: Int,
+    val maxMembers: Int
+)
 
 // rtcAppKey, rtcOption
 class CallKitUIRtcConfig(
@@ -302,10 +347,11 @@ class CallKitUIHelper(
             context: Context, groupId: String?, excludeUserList: List<String>?,
             observer: NEResultObserver<List<String>?>?
         ) -> Unit
-    )? = null
+    )? = null,
+    val inviteContactSelector: NECallInviteContactSelector? = null
 ) {
     override fun toString(): String {
-        return "CallKitUIHelper(contactSelector=$contactSelector)"
+        return "CallKitUIHelper(contactSelector=$contactSelector, inviteContactSelector=$inviteContactSelector)"
     }
 }
 

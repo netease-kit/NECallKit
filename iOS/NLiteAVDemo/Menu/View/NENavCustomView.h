@@ -8,6 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface NENavCustomView : UIView
 @property(strong, nonatomic) UIButton *userButton;
+@property(strong, nonatomic) UIButton *settingButton;
 
 @end
 

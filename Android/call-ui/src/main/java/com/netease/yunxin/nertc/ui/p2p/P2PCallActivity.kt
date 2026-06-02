@@ -32,13 +32,15 @@ import com.netease.yunxin.nertc.nertcvideocall.utils.NetworkUtils
 import com.netease.yunxin.nertc.ui.CallKitUI
 import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.CommonCallActivity
+import com.netease.yunxin.nertc.ui.base.consumeAutoAcceptFromIncomingBanner
 import com.netease.yunxin.nertc.ui.databinding.ActivityP2PcallBinding
+import com.netease.yunxin.nertc.ui.permission.CallMediaPermissionPolicy
+import com.netease.yunxin.nertc.ui.permission.PermissionCallback
+import com.netease.yunxin.nertc.ui.permission.PermissionRequest
 import com.netease.yunxin.nertc.ui.utils.CallUILog
 import com.netease.yunxin.nertc.ui.utils.CallUIUtils
-import com.netease.yunxin.nertc.ui.utils.PermissionTipDialog
 import com.netease.yunxin.nertc.ui.utils.formatSecondTime
 import com.netease.yunxin.nertc.ui.utils.isGranted
-import com.netease.yunxin.nertc.ui.utils.requestPermission
 import com.netease.yunxin.nertc.ui.utils.toastShort
 import com.netease.yunxin.nertc.ui.view.P2PVideoCallLayout
 
@@ -49,7 +51,18 @@ open class P2PCallActivity : CommonCallActivity() {
 
     private var callFinished = true
 
+    private var startCallFailed = false
+
     private var localIsSmallVideo = true
+
+    // 标记：P2PCallActivity 启动时权限未授权（被叫场景）。
+    // 若用户在 Activity 内点接受（正常流程），doAccept() 会清除此 flag；
+    // 若是横幅提前 accept() 再启动 Activity（权限缺失），flag 保持，
+    // onResume 检测到权限补授后补充开启本地采集。
+    private var mediaPermissionWasMissing = false
+
+    // 横幅接听 + 权限未授时，onCallConnected 推迟执行的对端 accId
+    private var pendingOnCallConnectedUserId: String? = null
 
     private lateinit var binding: ActivityP2PcallBinding
     private lateinit var p2PVideoCallLayout: P2PVideoCallLayout
@@ -117,8 +130,26 @@ open class P2PCallActivity : CommonCallActivity() {
         if (isFinishing) {
             return
         }
-        info.otherUserInfo()?.accId.run {
-            initForOnTheCall(this)
+        if (mediaPermissionWasMissing) {
+            pendingOnCallConnectedUserId = info.otherUserInfo()?.accId
+            if (hasCallPermission(callParam.callType)) {
+                // 权限已在 onCallConnected 之前授予（onResume 先于 onCallConnected 触发，
+                // 但当时 callStatus 尚未变为 STATE_DIALOG 导致 onResume 补偿未执行）。
+                // 此处直接补偿，否则 enableLocalVideo 永远不会被调用，本端无画面。
+                CallUILog.i(tag, "onCallConnected: permission already granted, run compensation now")
+                mediaPermissionWasMissing = false
+                p2PVideoCallLayout.renderForOnTheCall(callParam.callType, pendingOnCallConnectedUserId)
+                initForOnTheCall(pendingOnCallConnectedUserId)
+                if (callParam.callType == NECallType.VIDEO && !isLocalMuteVideo) {
+                    callEngine.enableLocalVideo(true)
+                }
+                NERtcEx.getInstance().enableLocalAudio(!isLocalMuteAudio)
+            }
+            // 权限仍未授予：等待 onResume 权限补授后再调用 initForOnTheCall。
+        } else {
+            info.otherUserInfo()?.accId.run {
+                initForOnTheCall(this)
+            }
         }
 
         configTimeTick(
@@ -189,59 +220,102 @@ open class P2PCallActivity : CommonCallActivity() {
         p2PVideoCallLayout = binding.singleVideoCallLayout
         CallUILog.d(tag, callParam.toString())
         initForLaunchUI()
-        val dialog: PermissionTipDialog?
-        if (!isGranted(
-                Manifest.permission.CAMERA,
-                Manifest.permission.RECORD_AUDIO
-            )
-        ) {
-            dialog = showPermissionDialog {
-                getString(R.string.tip_permission_request_failed).toastShort(this)
-                releaseAndFinish(true)
+        if (!hasCallPermission(callParam.callType)) {
+            if (callParam.isCalled) {
+                mediaPermissionWasMissing = true
             }
+            requestCallPermission(
+                onGranted = {
+                    if (callParam.isCalled && callEngine.callInfo.callStatus == CallState.STATE_IDLE) {
+                        releaseAndFinish(false)
+                        return@requestCallPermission
+                    }
+                    if (tryAutoAcceptFromIncomingBanner()) {
+                        return@requestCallPermission
+                    }
+                    initForLaunchAction()
+                },
+                onDenied = {
+                    getString(R.string.tip_permission_request_failed).toastShort(this@P2PCallActivity)
+                    releaseAndFinish(true)
+                }
+            )
         } else {
             if (callParam.isCalled && callEngine.callInfo.callStatus == CallState.STATE_IDLE) {
                 releaseAndFinish(false)
                 return
             }
+            if (tryAutoAcceptFromIncomingBanner()) {
+                return
+            }
             initForLaunchAction()
             return
         }
-        requestPermission({ granted ->
-            if (isFinishing || isDestroyed) {
-                return@requestPermission
-            }
-            granted.forEach {
-                CallUILog.i(tag, "granted:$it")
-            }
-            if (granted.containsAll(
-                    listOf(
-                        Manifest.permission.CAMERA,
-                        Manifest.permission.RECORD_AUDIO
-                    )
-                )
-            ) {
-                dialog.dismiss()
-                if (callParam.isCalled && callEngine.callInfo.callStatus == CallState.STATE_IDLE) {
-                    releaseAndFinish(false)
-                    return@requestPermission
+    }
+
+    private fun tryAutoAcceptFromIncomingBanner(): Boolean {
+        if (!callParam.isCalled || callEngine.callInfo.callStatus != CallState.STATE_INVITED) {
+            return false
+        }
+        if (!callParam.consumeAutoAcceptFromIncomingBanner()) {
+            return false
+        }
+        CallUILog.i(tag, "autoAcceptFromIncomingBanner: permission granted, call accept()")
+        doAccept()
+        return true
+    }
+
+    private fun requestCallPermission(
+        callType: Int = CallMediaPermissionPolicy.permissionRequestCallType(
+            callParam.callType,
+            callParam.multiCallInvite
+        ),
+        onGranted: () -> Unit,
+        onDenied: () -> Unit
+    ) {
+        PermissionRequest.requestPermissions(
+            this,
+            callType,
+            object : PermissionCallback() {
+                override fun onGranted() {
+                    if (isFinishing || isDestroyed) {
+                        return
+                    }
+                    CallUILog.i(tag, "requestCallPermission granted callType:$callType")
+                    onGranted()
+                    CallUILog.i(tag, "extra info is ${callParam.callExtraInfo}")
                 }
-                initForLaunchAction()
+
+                override fun onRequesting() {
+                    if (isFinishing || isDestroyed) {
+                        return
+                    }
+                    CallUILog.i(tag, "requestCallPermission requesting settings")
+                    onDenied()
+                }
+
+                override fun onDenied() {
+                    if (isFinishing || isDestroyed) {
+                        return
+                    }
+                    CallUILog.i(tag, "requestCallPermission denied callType:$callType")
+                    onDenied()
+                }
             }
-            CallUILog.i(tag, "extra info is ${callParam.callExtraInfo}")
-        }, { deniedForever, denied ->
-            denied.forEach {
-                CallUILog.i(tag, "denied:$it")
-            }
-            deniedForever.forEach {
-                CallUILog.i(tag, "deniedForever:$it")
-            }
-            if (deniedForever.isNotEmpty() || denied.isNotEmpty()) {
-                getString(R.string.tip_permission_request_failed).toastShort(this@P2PCallActivity)
-                dialog.dismiss()
-                releaseAndFinish(true)
-            }
-        }, Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+        )
+    }
+
+    private fun hasCallPermission(callType: Int): Boolean {
+        return if (
+            CallMediaPermissionPolicy.requiresCameraPermission(
+                    callType,
+                    callParam.multiCallInvite
+                )
+        ) {
+            isGranted(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+        } else {
+            isGranted(Manifest.permission.RECORD_AUDIO)
+        }
     }
 
     override fun provideLayoutView(): View? {
@@ -258,6 +332,29 @@ open class P2PCallActivity : CommonCallActivity() {
 
         if (finishCall) {
             doHangup(null)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 横幅接听场景补偿：accept() 时权限未授，SDK 无法开启本地采集，且 onCallConnected
+        // 被推迟未执行通话页初始化。权限弹框关闭后 onResume 触发，此时补充：
+        // 1. 执行推迟的 initForOnTheCall（启动通话 Fragment）
+        // 2. 开启本地音视频采集
+        if (mediaPermissionWasMissing
+            && hasCallPermission(callParam.callType)
+            && callParam.isCalled
+            && callEngine.callInfo.callStatus == CallState.STATE_DIALOG
+        ) {
+            mediaPermissionWasMissing = false
+            CallUILog.i(tag, "onResume: permission granted for banner accept, init call UI and media")
+            // 补调 P2PVideoCallLayout 的通话中渲染（onCallConnected 时因权限未授被跳过）
+            p2PVideoCallLayout.renderForOnTheCall(callParam.callType, pendingOnCallConnectedUserId)
+            initForOnTheCall(pendingOnCallConnectedUserId)
+            if (callParam.callType == NECallType.VIDEO && !isLocalMuteVideo) {
+                callEngine.enableLocalVideo(true)
+            }
+            NERtcEx.getInstance().enableLocalAudio(!isLocalMuteAudio)
         }
     }
 
@@ -306,6 +403,9 @@ open class P2PCallActivity : CommonCallActivity() {
             return
         }
         doCall()
+        if (startCallFailed) {
+            return
+        }
         if (callParam.callType == NECallType.VIDEO) {
             if (CallKitUI.options?.initRtcMode != NECallInitRtcMode.GLOBAL) {
                 CallUIOperationsMgr.setupLocalView(p2PVideoCallLayout.binding.videoViewPreview)
@@ -329,16 +429,33 @@ open class P2PCallActivity : CommonCallActivity() {
 
     private fun doCall() {
         callFinished = false
+        startCallFailed = false
 
         doCall { result ->
             callFinished = true
-            if (result?.isSuccessful != true && result.code != ResponseCode.RES_PEER_NIM_OFFLINE.toInt() && result.code != ResponseCode.RES_PEER_PUSH_OFFLINE.toInt()) {
+            if (!shouldKeepCallerPage(result)) {
                 getString(R.string.tip_start_call_failed).toastShort(this@P2PCallActivity)
+                releaseCallerPageAfterStartFailure()
             }
         }
     }
 
+    private fun shouldKeepCallerPage(result: CommonResult<NECallInfo>?): Boolean {
+        return result?.isSuccessful == true ||
+            result?.code == ResponseCode.RES_PEER_NIM_OFFLINE.toInt() ||
+            result?.code == ResponseCode.RES_PEER_PUSH_OFFLINE.toInt()
+    }
+
+    private fun releaseCallerPageAfterStartFailure() {
+        startCallFailed = true
+        releaseAndFinish(false)
+        CallUIOperationsMgr.releaseCallInfoAndUIState(force = true)
+    }
+
     private fun doAccept() {
+        // 用户在 Activity 内主动点击接受（非横幅流程），SDK 在 accept() 时会自行开启采集，
+        // 不需要 onResume 补偿，清除 flag。
+        mediaPermissionWasMissing = false
         if (binding.tvConnectingTip.tag != true) {
             binding.tvConnectingTip.tag = true
             binding.tvConnectingTip.visibility = View.VISIBLE
@@ -392,6 +509,20 @@ open class P2PCallActivity : CommonCallActivity() {
             NECallType.AUDIO
         } else {
             NECallType.VIDEO
+        }
+
+        if (toCallType == NECallType.VIDEO && !hasCallPermission(toCallType)) {
+            requestCallPermission(
+                callType = toCallType,
+                onGranted = {
+                    doSwitchCallType(switchCallState)
+                },
+                onDenied = {
+                    getString(R.string.tip_camera_permission_request_failed).toastShort(this)
+                    releaseAndFinish(true)
+                }
+            )
+            return
         }
 
         doSwitchCallType(

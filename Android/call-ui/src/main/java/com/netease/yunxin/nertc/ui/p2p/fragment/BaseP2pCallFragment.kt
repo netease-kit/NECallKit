@@ -27,12 +27,11 @@ import com.netease.yunxin.nertc.nertcvideocall.model.impl.NERtcCallbackProxyMgr
 import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.CallParam
 import com.netease.yunxin.nertc.ui.p2p.P2PUIConfig
+import com.netease.yunxin.nertc.ui.permission.PermissionCallback
+import com.netease.yunxin.nertc.ui.permission.PermissionRequest
 import com.netease.yunxin.nertc.ui.p2p.fragment.P2PUIUpdateType.INIT
 import com.netease.yunxin.nertc.ui.utils.CallUILog
-import com.netease.yunxin.nertc.ui.utils.PermissionRequester
-import com.netease.yunxin.nertc.ui.utils.PermissionTipDialog
 import com.netease.yunxin.nertc.ui.utils.isGranted
-import com.netease.yunxin.nertc.ui.utils.registerPermissionRequesterEx
 import com.netease.yunxin.nertc.ui.utils.toastShort
 
 /**
@@ -218,16 +217,6 @@ open class BaseP2pCallFragment : Fragment(), NECallEngineDelegate {
         private set
 
     /**
-     * 申请权限工具
-     */
-    protected var permissionRequester: PermissionRequester? = null
-
-    /**
-     * 权限提示弹窗
-     */
-    protected var permissionTipDialog: PermissionTipDialog? = null
-
-    /**
      * 日志标签
      */
     private val logTag = "BaseP2pCallFragment"
@@ -285,9 +274,11 @@ open class BaseP2pCallFragment : Fragment(), NECallEngineDelegate {
     open fun toUpdateUIState(type: Int) {
     }
 
+    open fun onEnterSingleToGroupMode() {
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        registerPermissionRequester()
     }
 
     final override fun onCreateView(
@@ -312,47 +303,34 @@ open class BaseP2pCallFragment : Fragment(), NECallEngineDelegate {
     override fun onDestroyView() {
         super.onDestroyView()
         NERtcCallbackProxyMgr.getInstance().removeCallback(rtcDelegate)
-        permissionTipDialog?.dismiss()
         viewBindMap.clear()
         logApiInvoke("onDestroyAction")
     }
 
-    protected open fun registerPermissionRequester() {
-        val permissionList = permissionList()
-        if (permissionList.isNotEmpty()) {
-            permissionRequester = registerPermissionRequesterEx()
-        }
-    }
-
     protected open fun arePermissionsGranted(permissionList: List<String> = permissionList()): Boolean {
-        return context?.isGranted(*permissionList().toTypedArray()) == true
+        return context?.isGranted(*permissionList.toTypedArray()) == true
     }
 
     protected open fun onPermissionRequest() {
-        permissionTipDialog = if (arePermissionsGranted()) {
+        if (arePermissionsGranted()) {
             actionForPermissionGranted()
             logApiInvoke("actionForPermissionGranted")
+            bridge.tryAutoAcceptFromIncomingBanner()
             return
-        } else {
-            bridge.showPermissionDialog {
-                activity?.finish()
-            }
         }
         val permissionList = permissionList()
-        permissionRequester?.request(
+        requestCallPermission(
+            bridge.callParam.callType,
             onGranted = {
-                if (it.containsAll(permissionList)) {
-                    permissionTipDialog?.dismiss()
-                    actionForPermissionGranted()
-                    logApiInvoke("actionForPermissionGranted")
-                }
+                actionForPermissionGranted()
+                logApiInvoke("actionForPermissionGranted")
+                bridge.tryAutoAcceptFromIncomingBanner()
             },
-            onDenied = { deniedForeverList, deniedList ->
-                permissionTipDialog?.dismiss()
-                actionForPermissionDenied(deniedForeverList, deniedList)
+            onDenied = {
+                actionForPermissionDenied(permissionList)
                 logApiInvoke("actionForPermissionDenied")
+                bridge.doHangup()
             },
-            permissionList = permissionList
         )
     }
 
@@ -361,14 +339,51 @@ open class BaseP2pCallFragment : Fragment(), NECallEngineDelegate {
         onGranted: ((List<String>) -> Unit)? = null,
         onDenied: ((List<String>, List<String>) -> Unit)? = null
     ) {
-        permissionRequester?.request(
+        requestCallPermission(
+            callType = if (permissionList.contains(CAMERA)) bridge.callParam.callType else NECallType.AUDIO,
             onGranted = {
-                onGranted?.invoke(it)
+                onGranted?.invoke(permissionList)
             },
-            onDenied = { deniedForeverList, deniedList ->
-                onDenied?.invoke(deniedForeverList, deniedList)
-            },
-            permissionList = permissionList
+            onDenied = {
+                onDenied?.invoke(emptyList(), permissionList)
+            }
+        )
+    }
+
+    protected open fun requestCallPermission(
+        callType: Int,
+        onGranted: () -> Unit,
+        onDenied: () -> Unit
+    ) {
+        val context = context ?: return
+        PermissionRequest.requestPermissions(
+            context,
+            callType,
+            object : PermissionCallback() {
+                override fun onGranted() {
+                    if (activity?.isFinishing == true || activity?.isDestroyed == true) {
+                        return
+                    }
+                    CallUILog.i(logTag, "requestCallPermission granted callType:$callType")
+                    onGranted()
+                }
+
+                override fun onRequesting() {
+                    if (activity?.isFinishing == true || activity?.isDestroyed == true) {
+                        return
+                    }
+                    CallUILog.i(logTag, "requestCallPermission requesting settings")
+                    onDenied()
+                }
+
+                override fun onDenied() {
+                    if (activity?.isFinishing == true || activity?.isDestroyed == true) {
+                        return
+                    }
+                    CallUILog.i(logTag, "requestCallPermission denied callType:$callType")
+                    onDenied()
+                }
+            }
         )
     }
 
@@ -383,11 +398,11 @@ open class BaseP2pCallFragment : Fragment(), NECallEngineDelegate {
     protected open fun actionForPermissionGranted() {
     }
 
-    protected open fun actionForPermissionDenied(deniedForeverList: List<String>, deniedList: List<String>) {
+    protected open fun actionForPermissionDenied(deniedList: List<String>) {
         context?.run {
-            if ((deniedForeverList + deniedList).contains(RECORD_AUDIO)) {
+            if (deniedList.contains(RECORD_AUDIO)) {
                 getString(R.string.tip_microphone_permission_request_failed).toastShort(this)
-            } else if ((deniedForeverList + deniedList).contains(CAMERA)) {
+            } else if (deniedList.contains(CAMERA)) {
                 getString(R.string.tip_camera_permission_request_failed).toastShort(this)
             } else {
                 getString(R.string.tip_permission_request_failed).toastShort(this)

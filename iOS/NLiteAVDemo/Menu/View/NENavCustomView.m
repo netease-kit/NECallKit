@@ -36,6 +36,16 @@
     make.width.mas_equalTo(44);
   }];
   self.userButton = button;
+
+  UIButton *settingButton = [UIButton buttonWithType:UIButtonTypeCustom];
+  [settingButton setImage:[UIImage imageNamed:@"setting"] forState:UIControlStateNormal];
+  [bgView addSubview:settingButton];
+  [settingButton mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.right.equalTo(button.mas_left);
+    make.top.bottom.mas_equalTo(0);
+    make.width.mas_equalTo(44);
+  }];
+  self.settingButton = settingButton;
 }
 
 @end

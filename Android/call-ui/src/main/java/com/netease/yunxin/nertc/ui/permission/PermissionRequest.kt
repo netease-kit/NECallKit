@@ -36,6 +36,10 @@ object PermissionRequest {
                 callback?.onGranted()
             }
 
+            override fun onRequesting() {
+                callback?.onRequesting()
+            }
+
             override fun onDenied() {
                 super.onDenied()
                 callback?.onDenied()
@@ -62,6 +66,10 @@ object PermissionRequest {
         val permissionCallback: PermissionCallback = object : PermissionCallback() {
             override fun onGranted() {
                 callback?.onGranted()
+            }
+
+            override fun onRequesting() {
+                callback?.onRequesting()
             }
 
             override fun onDenied() {

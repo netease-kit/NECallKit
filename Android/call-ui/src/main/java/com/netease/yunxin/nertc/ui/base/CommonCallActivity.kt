@@ -27,6 +27,7 @@ import com.netease.yunxin.kit.call.p2p.model.NEInviteInfo
 import com.netease.yunxin.nertc.nertcvideocall.bean.CommonResult
 import com.netease.yunxin.nertc.nertcvideocall.model.SwitchCallState
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState
+import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.floating.FloatingPermission
 import com.netease.yunxin.nertc.ui.p2p.CallUIFloatingWindowMgr
 import com.netease.yunxin.nertc.ui.p2p.CallUIOperationsMgr
@@ -35,7 +36,20 @@ import com.netease.yunxin.nertc.ui.utils.AppForegroundWatcherHelper
 import com.netease.yunxin.nertc.ui.utils.CallUILog
 import com.netease.yunxin.nertc.ui.utils.PermissionTipDialog
 import com.netease.yunxin.nertc.ui.utils.SwitchCallTypeConfirmDialog
+import com.netease.yunxin.nertc.ui.utils.toastShort
 import com.netease.yunxin.nertc.ui.view.OverLayPermissionDialog
+
+internal fun selectLaunchCallParam(
+    isFromFloatingWindow: Boolean,
+    intentCallParam: CallParam?,
+    currentCallParam: () -> CallParam
+): CallParam {
+    return if (isFromFloatingWindow) {
+        currentCallParam()
+    } else {
+        intentCallParam ?: currentCallParam()
+    }
+}
 
 abstract class CommonCallActivity : AppCompatActivity(), NECallEngineDelegate {
     private val tag = "CommonCallActivity"
@@ -105,15 +119,30 @@ abstract class CommonCallActivity : AppCompatActivity(), NECallEngineDelegate {
         configWindow()
         // 取消呼叫来电通知
         CallUIOperationsMgr.cancelCallNotification(this)
-        // 初始化呼叫信息
-        channelId = callParam.getChannelId()
-        uiConfig = provideUIConfig(callParam)?.apply {
+        // 初始化呼叫信息。非小窗启动必须优先使用本次 Intent 中的 CallParam，避免读取上一通通话
+        // 残留在 CallUIOperationsMgr 里的参数，导致横幅接听/权限回调链路拿错 channel。
+        val isFromFloat = isFromFloatingWindow
+        val launchCallParam = if (isFromFloat) {
+            callParam
+        } else {
+            selectLaunchCallParam(
+                isFromFloatingWindow = false,
+                intentCallParam = initIntentForCallParam(),
+                currentCallParam = { callParam }
+            )
+        }
+        CallUILog.i(
+            tag,
+            "onCreate launchCallParam is $launchCallParam, isFromFloatingWindow=$isFromFloat"
+        )
+        channelId = launchCallParam.getChannelId()
+        uiConfig = provideUIConfig(launchCallParam)?.apply {
             CallUILog.d(tag, "current P2PUIConfig is $this.")
         }
-        if (!isFromFloatingWindow) {
+        if (!isFromFloat) {
             CallUIOperationsMgr.initCallInfoAndUIState(
                 CallUIOperationsMgr.CallInfoWithUIState(
-                    callParam = initIntentForCallParam()
+                    callParam = launchCallParam
                 ),
                 foregroundServiceConfig = if (uiConfig?.enableForegroundService == true) {
                     CallUIOperationsMgr.CallForegroundServiceConfig(
@@ -207,8 +236,7 @@ abstract class CommonCallActivity : AppCompatActivity(), NECallEngineDelegate {
         AppForegroundWatcherHelper.removeWatcher(watcher)
         permissionTipDialog?.dismiss()
         permissionTipDialog = null
-        switchConfirmDialog?.dismiss()
-        switchConfirmDialog = null
+        dismissSwitchCallTypeConfirmDialog()
     }
 
     override fun onBackPressed() {
@@ -357,14 +385,32 @@ abstract class CommonCallActivity : AppCompatActivity(), NECallEngineDelegate {
         if (dialog?.isShowing == true) {
             return dialog
         }
+        val revision = CallUIOperationsMgr.currentSwitchCallTypeInviteRevision()
         return SwitchCallTypeConfirmDialog(this, {
-            doSwitchCallType(it, SwitchCallState.ACCEPT)
+            doSwitchCallTypeIfInviteValid(it, SwitchCallState.ACCEPT, revision)
         }, {
-            doSwitchCallType(it, SwitchCallState.REJECT)
+            doSwitchCallTypeIfInviteValid(it, SwitchCallState.REJECT, revision)
         }).apply {
             this@CommonCallActivity.switchConfirmDialog = this
             show(callType)
         }
+    }
+
+    internal fun dismissSwitchCallTypeConfirmDialog() {
+        switchConfirmDialog?.dismiss()
+        switchConfirmDialog = null
+    }
+
+    private fun doSwitchCallTypeIfInviteValid(
+        callType: Int,
+        switchCallState: Int,
+        revision: Int
+    ) {
+        if (!CallUIOperationsMgr.isCurrentSwitchCallTypeInvite(callType, revision)) {
+            getString(R.string.ui_switch_call_type_request_expired).toastShort(this)
+            return
+        }
+        doSwitchCallType(callType, switchCallState)
     }
 
     protected open fun showOverlayPermissionDialog(clickListener: View.OnClickListener): OverLayPermissionDialog {

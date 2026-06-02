@@ -11,6 +11,7 @@
 #import "NENavigator.h"
 #import "NEPSTNViewController.h"
 #import "NERtcContactsViewController.h"
+#import "NERtcSettingViewController.h"
 #import "NEUser.h"
 #import "NSArray+NTES.h"
 
@@ -39,7 +40,6 @@ static NSString *cellID = @"menuCellID";
 }
 #pragma mark - private
 - (void)setupUI {
-  [NetManager shareInstance];
   [self.view addSubview:self.bgImageView];
   [self.bgImageView mas_makeConstraints:^(MASConstraintMaker *make) {
     make.edges.mas_equalTo(UIEdgeInsetsZero);
@@ -51,6 +51,9 @@ static NSString *cellID = @"menuCellID";
   [customView.userButton addTarget:self
                             action:@selector(userButtonClick:)
                   forControlEvents:UIControlEventTouchUpInside];
+  [customView.settingButton addTarget:self
+                                action:@selector(settingButtonClick:)
+                      forControlEvents:UIControlEventTouchUpInside];
 
   CGFloat statusHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
   [customView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -203,6 +206,11 @@ static NSString *cellID = @"menuCellID";
   }
 }
 
+- (void)settingButtonClick:(UIButton *)button {
+  NERtcSettingViewController *setting = [[NERtcSettingViewController alloc] init];
+  [self.navigationController pushViewController:setting animated:YES];
+}
+
 #pragma mark - NERtcVideoCallDelegate
 
 - (void)onInvited:(NSString *)invitor
@@ -308,7 +316,7 @@ static NSString *cellID = @"menuCellID";
 
 - (void)onSendMessage:(V2NIMMessage *)message {
   if (message.sendingState == V2NIM_MESSAGE_SENDING_STATE_SENDING) {
-    [self assmebleRecordWithV2Message:message withCaller:YES];
+    [self assmebleRecordWithV2Message:message withCaller:YES source:@"onSendMessage"];
   }
 }
 
@@ -317,10 +325,10 @@ static NSString *cellID = @"menuCellID";
   NSLog(@"onRecvMessages current account : %@", [NIMSDK.sharedSDK.v2LoginService getLoginUser]);
   for (V2NIMMessage *message in messages) {
     if ([message.senderId isEqualToString:[NEAccount shared].userModel.imAccid]) {
-      [self assmebleRecordWithV2Message:message withCaller:YES];
+      [self assmebleRecordWithV2Message:message withCaller:YES source:@"onReceiveMessages"];
       return;
     }
-    [self assmebleRecordWithV2Message:message withCaller:NO];
+    [self assmebleRecordWithV2Message:message withCaller:NO source:@"onReceiveMessages"];
   }
 }
 
@@ -463,12 +471,18 @@ static NSString *cellID = @"menuCellID";
   }
 }
 
-- (void)assmebleRecordWithV2Message:(V2NIMMessage *)message withCaller:(BOOL)isCaller {
+- (void)assmebleRecordWithV2Message:(V2NIMMessage *)message
+                          withCaller:(BOOL)isCaller
+                              source:(NSString *)source {
   if (message.messageType == V2NIM_MESSAGE_TYPE_CALL) {
     NECallStatusRecordModel *record = [[NECallStatusRecordModel alloc] init];
 
     if ([message.attachment isKindOfClass:[V2NIMMessageCallAttachment class]]) {
       V2NIMMessageCallAttachment *recordObject = (V2NIMMessageCallAttachment *)message.attachment;
+      [self logCallRecordMessage:message
+                       attachment:recordObject
+                           source:source
+                         isCaller:isCaller];
       NSTimeInterval startTime = message.createTime;
       record.isCaller = isCaller;
       record.status = recordObject.status;
@@ -519,6 +533,52 @@ static NSString *cellID = @"menuCellID";
           }
         }];
   }
+}
+
+- (void)logCallRecordMessage:(V2NIMMessage *)message
+                  attachment:(V2NIMMessageCallAttachment *)attachment
+                      source:(NSString *)source
+                    isCaller:(BOOL)isCaller {
+  NSLog(@"CallRecordCompare source:%@, isSelf:%d, isCaller:%d, sender:%@, receiver:%@, "
+        @"conversationId:%@, messageClientId:%@, messageServerId:%@, createTime:%f, "
+        @"sendingState:%ld, messageType:%ld, serverExtension:%@, callbackExtension:%@, "
+        @"callType:%ld, channelId:%@, status:%ld, durations:%@",
+        source,
+        message.isSelf,
+        isCaller,
+        message.senderId,
+        message.receiverId,
+        message.conversationId,
+        message.messageClientId,
+        message.messageServerId,
+        message.createTime,
+        (long)message.sendingState,
+        (long)message.messageType,
+        message.serverExtension,
+        message.callbackExtension,
+        (long)attachment.type,
+        attachment.channelId,
+        (long)attachment.status,
+        [self callRecordDurationsDescription:attachment.durations]);
+}
+
+- (NSString *)callRecordDurationsDescription:
+    (NSArray<V2NIMMessageCallDuration *> *)durations {
+  if (durations.count == 0) {
+    return @"[]";
+  }
+
+  NSMutableArray<NSString *> *items = [NSMutableArray arrayWithCapacity:durations.count];
+  for (V2NIMMessageCallDuration *duration in durations) {
+    if (![duration isKindOfClass:[V2NIMMessageCallDuration class]]) {
+      [items addObject:@"null"];
+      continue;
+    }
+    [items addObject:[NSString stringWithFormat:@"{accountId:%@, duration:%ld}",
+                                                duration.accountId,
+                                                (long)duration.duration]];
+  }
+  return [NSString stringWithFormat:@"[%@]", [items componentsJoinedByString:@", "]];
 }
 
 @end

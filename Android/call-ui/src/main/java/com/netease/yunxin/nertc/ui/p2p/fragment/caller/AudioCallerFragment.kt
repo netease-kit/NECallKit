@@ -16,6 +16,8 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.netease.nimlib.sdk.ResponseCode
 import com.netease.yunxin.kit.call.p2p.model.NECallType
+import com.netease.yunxin.kit.call.p2p.model.NECallInfo
+import com.netease.yunxin.nertc.nertcvideocall.bean.CommonResult
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState
 import com.netease.yunxin.nertc.nertcvideocall.utils.NetworkUtils
 import com.netease.yunxin.nertc.ui.CallKitUI
@@ -38,6 +40,8 @@ open class AudioCallerFragment : BaseP2pCallFragment() {
     protected val logTag = "AudioCallerFragment"
 
     protected lateinit var binding: FragmentP2pAudioCallerBinding
+
+    private var startCallFailed = false
 
     override fun toCreateRootView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -113,16 +117,17 @@ open class AudioCallerFragment : BaseP2pCallFragment() {
                 val action = Action@{
                     switchCallType(NECallType.VIDEO)
                 }
-                if (arePermissionsGranted(listOf(CAMERA))) {
+                if (arePermissionsGranted(listOf(RECORD_AUDIO, CAMERA))) {
                     action.invoke()
                     return@bindClick
                 }
-                requestPermission(listOf(CAMERA), {
+                requestCallPermission(NECallType.VIDEO, {
                     action.invoke()
-                }, { _, _ ->
+                }, {
                     context?.run {
                         getString(R.string.tip_camera_permission_request_failed).toastShort(this)
                     }
+                    bridge.doHangup()
                 })
             }
         }
@@ -167,18 +172,32 @@ open class AudioCallerFragment : BaseP2pCallFragment() {
     }
 
     override fun actionForPermissionGranted() {
+        startCallFailed = false
         if (bridge.currentCallState() != CallState.STATE_IDLE) {
             return
         }
         bridge.doCall { result ->
-            if (result?.isSuccessful != true &&
-                result.code != ResponseCode.RES_PEER_NIM_OFFLINE.toInt() &&
-                result.code != ResponseCode.RES_PEER_PUSH_OFFLINE.toInt()
-            ) {
+            if (!shouldKeepCallerPage(result)) {
                 context?.run { getString(R.string.tip_start_call_failed).toastShort(this) }
+                releaseCallerPageAfterStartFailure()
+                return@doCall
             }
         }
-        CallUIOperationsMgr.startService()
+        if (!startCallFailed) {
+            CallUIOperationsMgr.startService()
+        }
+    }
+
+    private fun shouldKeepCallerPage(result: CommonResult<NECallInfo>?): Boolean {
+        return result?.isSuccessful == true ||
+            result?.code == ResponseCode.RES_PEER_NIM_OFFLINE.toInt() ||
+            result?.code == ResponseCode.RES_PEER_PUSH_OFFLINE.toInt()
+    }
+
+    private fun releaseCallerPageAfterStartFailure() {
+        startCallFailed = true
+        activity?.finish()
+        CallUIOperationsMgr.releaseCallInfoAndUIState(force = true)
     }
 
     override fun toUpdateUIState(type: Int) {

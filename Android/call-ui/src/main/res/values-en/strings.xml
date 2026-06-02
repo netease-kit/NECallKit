@@ -37,6 +37,7 @@
     <string name="tip_switch_to_audio">Switch to Voice</string>
     <string name="tip_invite_to_audio_call">invite you to voice call…</string>
     <string name="tip_invite_to_video_call">invite you to video call…</string>
+    <string name="tip_invite_to_single_to_group_call">invites you to join a multi-party call</string>
     <string name="tip_on_the_call">On a call…</string>
     <string name="tip_call_was_finished">Call ended</string>
     <string name="tip_other_client_other_accept">The other client has answered the call</string>
@@ -56,6 +57,7 @@
     <string name="ui_floating_window_audio_call">Calling</string>
     <string name="ui_floating_window_audio_invited">Ringing</string>
     <string name="ui_switch_call_type_request_tip">Awaiting response…</string>
+    <string name="ui_switch_call_type_request_expired">The request has expired.</string>
     <string name="ui_switch_call_type_reject_tip">The invitation was rejected.</string>
     <string name="ui_switch_to_audio">Switch to Voice</string>
     <string name="ui_switch_to_video">Switch to Video</string>
@@ -74,6 +76,22 @@
     <string name="ui_group_call_title">Video call</string>
     <string name="tip_group_wait_to_accept">Ringing</string>
     <string name="user_join_group_call_with_user_count">There are %d people participating in the call.</string>
+    <string name="single_to_group_invite_title">Invite members</string>
+    <string name="single_to_group_invite_placeholder">Enter accounts, separated by comma or space</string>
+    <string name="single_to_group_invite_send">Invite</string>
+    <string name="single_to_group_invite_empty">Enter at least one account</string>
+    <string name="single_to_group_invite_success">Invitation sent</string>
+    <string name="single_to_group_invite_partial">Some invitations were sent</string>
+    <string name="single_to_group_invite_failed">Failed to send invitation</string>
+    <string name="single_to_group_invite_unsupported">Your current client does not support multi-party calls</string>
+    <string name="single_to_group_invite_peer_unsupported">The current client of %1$s does not support multi-party calls</string>
+    <string name="single_to_group_invite_already_added">Already added</string>
+    <string name="single_to_group_invite_already_in_call">Already in the call</string>
+    <string name="single_to_group_switch_call_type_unsupported">Switching call mode is not supported in multi-party calls</string>
+    <string name="tip_incoming_banner_audio_call">invites you to an audio call</string>
+    <string name="tip_incoming_banner_video_call">invites you to a video call</string>
+    <string name="tip_incoming_banner_group_call">invites you to join a group call</string>
+    <string name="tip_incoming_banner_single_to_group_call">invites you to join a multi-party call</string>
     <string name="ui_member_exceed_limit">currently supports call with up to 10 people</string>
 
     <string name="ui_permission_dialog_title">Permission Request</string>
@@ -86,9 +104,9 @@
     <string name="ui_permission_bluetooth">Bluetooth</string>
     <string name="ui_permission_separator">,</string>
     <string name="ui_permission_tips">Please turn on the %s permission first</string>
-    <string name="ui_permission_title">%s applies for access to the %s</string>
+    <string name="ui_permission_title">%1$s applies for access to the %2$s</string>
     <string name="ui_permission_mic_reason">Needs access to your microphone, and it can be used for functions such as Audio/Video Call, Group Audio/Video Call etc.</string>
-    <string name="ui_permission_camera_reason">Needs access to your camera, and it can be used for functions such as Video Call, Group Video Call etc. For beauty filters to work, we will collect the facial information captured by your camera in real time to detect your facial features.</string>
+    <string name="ui_permission_camera_reason">Needs access to your camera, and it can be used for functions such as Video Call, Group Video Call etc.</string>
 
     <string name="ui_channel_description">Running</string>
     <string name="ui_channel_name">Video Call Foreground Service</string>

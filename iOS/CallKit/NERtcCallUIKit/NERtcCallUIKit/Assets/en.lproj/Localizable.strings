@@ -17,14 +17,20 @@
 "other_client_reject"="The other client has rejected the call";
 
 "permission"="Permission Require";
+"go_to_settings"="Go to Settings";
+"microphone_permission_denied"="Please allow microphone access in system settings before starting or answering audio/video calls.";
+"camera_permission_denied"="Please allow camera access in system settings before starting or answering video calls.";
+"call_permission_denied"="Please allow microphone and camera access in system settings before starting or answering audio/video calls.";
 "reject"="Reject";
 "agree"="Agree";
 "audio_to_video"="A request to convert video to audio will turn off your camera directly";
 "The other party requests to convert audio to video, which requires turning on your camera";
 "reject_tip"="The invitation was rejected.";
+"switch_call_type_request_expired"="The request has expired.";
 
 "invite_audio_call"="Invite you to voice call...";
 "invite_video_call"="Invite you to video call...";
+"invite_single_to_group_call"="Invite you to join a multi-party call";
 
 "waitting_remote_response"="Awaiting response...";
 "call_cancel"="Cancel";
@@ -46,3 +52,20 @@
 
 "you_closed_camera"="You closed the camera";
 "remote_closed_camera"="Remote closed the camera";
+
+"single_to_group_invite_title"="Invite members";
+"single_to_group_invite_placeholder"="Enter accounts, separated by comma/space";
+"single_to_group_invite_send"="Invite";
+"single_to_group_invite_empty"="Enter a valid account";
+"single_to_group_invite_success"="Invitation sent";
+"single_to_group_invite_partial"="Some invitations sent";
+"single_to_group_invite_failed"="Failed to send invitation";
+"single_to_group_invite_rejected"="rejected";
+"single_to_group_invite_timeout"="invite timed out";
+"single_to_group_invite_busy"="busy";
+"single_to_group_invite_canceled"="invitation canceled";
+"single_to_group_invite_unsupported"="Your current client does not support multi-party calls";
+"single_to_group_invite_peer_unsupported"="The current client of %@ does not support multi-party calls";
+"single_to_group_invite_already_added"="Already added";
+"single_to_group_invite_already_in_call"="Already in the call";
+"single_to_group_switch_call_type_unsupported"="Switching call mode is not supported in multi-party calls";
