@@ -47,6 +47,7 @@ public class PermissionActivity extends Activity {
 
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    PermissionRequester.notifyPermissionActivityCreated(getPermissionRequestSequence());
     this.mRequestData = this.getPermissionRequest();
     if (this.mRequestData != null && !this.mRequestData.isPermissionsExistEmpty()) {
       CallUILog.i(TAG, "onCreate : " + this.mRequestData.toString());
@@ -152,6 +153,13 @@ public class PermissionActivity extends Activity {
     return intent == null
         ? null
         : (PermissionRequester.RequestData) intent.getParcelableExtra("PERMISSION_REQUEST_KEY");
+  }
+
+  private int getPermissionRequestSequence() {
+    Intent intent = this.getIntent();
+    return intent == null
+        ? -1
+        : intent.getIntExtra(PermissionRequester.PERMISSION_REQUEST_SEQUENCE_KEY, -1);
   }
 
   @SuppressLint({"NewApi"})

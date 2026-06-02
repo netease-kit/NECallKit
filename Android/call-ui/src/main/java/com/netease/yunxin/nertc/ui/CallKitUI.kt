@@ -192,6 +192,7 @@ object CallKitUI {
                 .rtcCallExtension(extension)
                 .enableAutoJoinSignalChannel(enableAutoJoinWhenCalled)
                 .enableJoinRtcWhenCall(joinRtcWhenCall)
+                .enableSingleToGroupCall(singleToGroupInviteMode != NECallSingleToGroupInviteMode.DISABLED)
                 .rtcOption(rtcConfig.rtcSdkOption)
                 .framework(framework)
                 .channel(channel)
@@ -278,6 +279,18 @@ object CallKitUI {
             }
         }
         context.startActivity(intent)
+    }
+
+    /**
+     * 开启或关闭来电横幅模式。默认 false。
+     * 可动态调用，下次来电时生效。
+     * MUST NOT 通过 CallKitUIOptions.Builder 初始化参数传递。
+     */
+    @JvmStatic
+    @MainThread
+    fun enableIncomingBanner(enable: Boolean) {
+        CallUILog.dApi(TAG, ParameterMap("enableIncomingBanner").append("enable", enable))
+        options?.enableIncomingBanner = enable
     }
 
     @JvmStatic

@@ -32,12 +32,14 @@ import com.netease.yunxin.kit.call.p2p.param.NEHangupParam
 import com.netease.yunxin.kit.call.p2p.param.NESwitchParam
 import com.netease.yunxin.nertc.nertcvideocall.bean.CommonResult
 import com.netease.yunxin.nertc.nertcvideocall.model.CallLocalAction
+import com.netease.yunxin.nertc.nertcvideocall.model.CallErrorCode
 import com.netease.yunxin.nertc.nertcvideocall.model.SwitchCallState
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.NERtcCallbackExTemp
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.NERtcCallbackProxyMgr
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState
 import com.netease.yunxin.nertc.ui.CallKitNotificationConfig
 import com.netease.yunxin.nertc.ui.CallKitUI
+import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.CallParam
 import com.netease.yunxin.nertc.ui.base.channelId
 import com.netease.yunxin.nertc.ui.base.getChannelId
@@ -66,7 +68,7 @@ object CallUIOperationsMgr {
             if (info.state == SwitchCallState.ACCEPT) {
                 callInfoWithUIState.callParam.callType = info.callType
             }
-            toSwitchCallTypeInfo = info
+            switchCallTypeRequestTracker.record(info)
         }
 
         override fun onVideoAvailable(userId: String?, available: Boolean) {
@@ -117,7 +119,7 @@ object CallUIOperationsMgr {
                 extraInfo is NECallTypeChangeInfo &&
                 extraInfo.state != SwitchCallState.INVITE
             ) {
-                toSwitchCallTypeInfo = extraInfo
+                switchCallTypeRequestTracker.record(extraInfo)
             }
         }
 
@@ -132,7 +134,7 @@ object CallUIOperationsMgr {
 
     private lateinit var context: Context
 
-    private var toSwitchCallTypeInfo: NECallTypeChangeInfo? = null
+    private val switchCallTypeRequestTracker = SwitchCallTypeRequestTracker()
 
     private var foregroundServiceConfig: CallForegroundServiceConfig? = null
 
@@ -157,7 +159,7 @@ object CallUIOperationsMgr {
         )
         this.callInfoWithUIState = callInfoWithUIState
         this.foregroundServiceConfig = foregroundServiceConfig
-        this.toSwitchCallTypeInfo = null
+        this.switchCallTypeRequestTracker.reset()
         return this.callInfoWithUIState.callParam.getChannelId()
     }
 
@@ -193,7 +195,7 @@ object CallUIOperationsMgr {
         }
         stopService()
         this.foregroundServiceConfig = null
-        this.toSwitchCallTypeInfo = null
+        this.switchCallTypeRequestTracker.reset()
         this.callInfoWithUIState = CallInfoWithUIState()
         this.timer?.cancel()
         this.timer = null
@@ -206,6 +208,10 @@ object CallUIOperationsMgr {
     fun configTimeTick(config: TimeTickConfig?) {
         CallUILog.dApi(TAG, ParameterMap("configTimeTick").append("config", config))
         this.timeTickConfig = config
+        val currentSeconds = timer?.currentSeconds ?: return
+        if (currentSeconds > 0) {
+            config?.onTimeTick?.invoke(currentSeconds)
+        }
     }
 
     /**
@@ -324,6 +330,21 @@ object CallUIOperationsMgr {
         switchCallState: Int,
         observer: NEResultObserver<CommonResult<Void>>?
     ) {
+        if (switchCallState != SwitchCallState.INVITE &&
+            !switchCallTypeRequestTracker.hasCurrentInvite(callType)
+        ) {
+            val msg = context.getString(R.string.ui_switch_call_type_request_expired)
+            CallUILog.i(
+                TAG,
+                ParameterMap("doSwitchCallTypeExpired")
+                    .append("callType", callType)
+                    .append("switchCallState", switchCallState)
+                    .append("msg", msg)
+                    .toValue()
+            )
+            observer?.onResult(CommonResult(CallErrorCode.ERROR_CURRENT_WRONG_STATE, msg))
+            return
+        }
         CallUILog.dApi(
             TAG,
             ParameterMap("doSwitchCallType")
@@ -586,7 +607,20 @@ object CallUIOperationsMgr {
     /**
      * 获取当前音视频切换事件
      */
-    fun currentSwitchTypeCallInfo(): NECallTypeChangeInfo? = toSwitchCallTypeInfo
+    fun currentSwitchTypeCallInfo(): NECallTypeChangeInfo? =
+        switchCallTypeRequestTracker.currentInfo()
+
+    fun currentSwitchCallTypeInviteRevision(): Int =
+        switchCallTypeRequestTracker.currentInviteRevision()
+
+    fun isCurrentSwitchCallTypeInvite(callType: Int, revision: Int): Boolean =
+        switchCallTypeRequestTracker.isCurrentInvite(callType, revision)
+
+    fun expireSwitchCallTypeInvite(reason: String) {
+        switchCallTypeRequestTracker.expireInvite(reason) { message ->
+            CallUILog.i(TAG, message)
+        }
+    }
 
     internal fun load(context: Context) {
         CallUILog.dApi(TAG, ParameterMap("load"))

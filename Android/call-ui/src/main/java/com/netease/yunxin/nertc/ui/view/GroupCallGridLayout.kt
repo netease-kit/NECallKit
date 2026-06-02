@@ -34,6 +34,8 @@ open class GroupCallGridLayout(context: Context, attrs: AttributeSet?) : Constra
     private var isAnimating = false
     private var pendingVideoUpdates = mutableMapOf<Int, Boolean>()
     private var onAnimationStateChangeListener: ((Boolean) -> Unit)? = null
+    private var singleChildFullWidthSquareEnabled = false
+    private var expandedDefaultGridHeightEnabled = false
 
     init {
         setViewWidth()
@@ -100,6 +102,22 @@ open class GroupCallGridLayout(context: Context, attrs: AttributeSet?) : Constra
      */
     fun setOnAnimationStateChangeListener(listener: ((Boolean) -> Unit)?) {
         this.onAnimationStateChangeListener = listener
+    }
+
+    fun setSingleChildFullWidthSquareEnabled(enabled: Boolean) {
+        if (singleChildFullWidthSquareEnabled == enabled) {
+            return
+        }
+        singleChildFullWidthSquareEnabled = enabled
+        requestLayout()
+    }
+
+    fun setExpandedDefaultGridHeightEnabled(enabled: Boolean) {
+        if (expandedDefaultGridHeightEnabled == enabled) {
+            return
+        }
+        expandedDefaultGridHeightEnabled = enabled
+        requestLayout()
     }
 
     /**
@@ -213,21 +231,17 @@ open class GroupCallGridLayout(context: Context, attrs: AttributeSet?) : Constra
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.makeMeasureSpec(screenWidth, MeasureSpec.EXACTLY)
-        var height = MeasureSpec.makeMeasureSpec(
-            measureWidth + measureWidth / 3,
+        val height = MeasureSpec.makeMeasureSpec(
+            resolveMeasuredHeight(
+                measureWidth,
+                childCount,
+                showLargeViewIndex,
+                singleChildFullWidthSquareEnabled,
+                expandedDefaultGridHeightEnabled,
+                getTopMargin(childCount)
+            ),
             MeasureSpec.EXACTLY
         )
-
-        if (showLargeViewIndex < 0) {
-            height = if (childCount <= 2) {
-                MeasureSpec.makeMeasureSpec(
-                    measureWidth / 2 + getTopMargin(childCount),
-                    MeasureSpec.EXACTLY
-                )
-            } else {
-                MeasureSpec.makeMeasureSpec(measureWidth, MeasureSpec.EXACTLY)
-            }
-        }
         setMeasuredDimension(width, height)
 
         for (i in 0 until childCount) {
@@ -305,6 +319,9 @@ open class GroupCallGridLayout(context: Context, attrs: AttributeSet?) : Constra
     }
 
     private fun getTopMargin(count: Int): Int {
+        if (count == 1 && singleChildFullWidthSquareEnabled) {
+            return 0
+        }
         return if (count <= 2 && showLargeViewIndex < 0 && screenWidth < screenHeight) {
             measureWidth / 4
         } else {
@@ -502,5 +519,24 @@ open class GroupCallGridLayout(context: Context, attrs: AttributeSet?) : Constra
 
     companion object {
         const val DEFAULT_INDEX: Int = -99
+
+        internal fun resolveMeasuredHeight(
+            measureWidth: Int,
+            childCount: Int,
+            showLargeViewIndex: Int,
+            singleChildFullWidthSquareEnabled: Boolean,
+            expandedDefaultGridHeightEnabled: Boolean,
+            compactTopMargin: Int = 0
+        ): Int {
+            if (showLargeViewIndex >= 0) {
+                return measureWidth + measureWidth / 3
+            }
+            return when {
+                childCount == 1 && singleChildFullWidthSquareEnabled -> measureWidth
+                childCount <= 2 -> measureWidth / 2 + compactTopMargin
+                expandedDefaultGridHeightEnabled && childCount > 9 -> measureWidth + measureWidth / 3
+                else -> measureWidth
+            }
+        }
     }
 }

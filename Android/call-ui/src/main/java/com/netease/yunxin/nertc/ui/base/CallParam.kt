@@ -24,7 +24,8 @@ class CallParam @JvmOverloads constructor(
     val globalExtraCopy: String? = null,
     val rtcChannelName: String? = null,
     val pushConfig: NECallPushConfig? = null,
-    var extras: MutableMap<String?, Any?>? = null
+    var extras: MutableMap<String?, Any?>? = null,
+    val multiCallInvite: Boolean = false
 ) : Parcelable {
 
     val currentAccId: String? = NIMClient.getCurrentAccount()
@@ -40,7 +41,8 @@ class CallParam @JvmOverloads constructor(
         globalExtraCopy: String? = null,
         rtcChannelName: String? = null,
         pushConfig: NECallPushConfig? = null,
-        extras: MutableMap<String?, Any?>?
+        extras: MutableMap<String?, Any?>?,
+        multiCallInvite: Boolean = false
     ) : this(
         false,
         callType,
@@ -50,7 +52,8 @@ class CallParam @JvmOverloads constructor(
         globalExtraCopy = globalExtraCopy,
         rtcChannelName = rtcChannelName,
         pushConfig = pushConfig,
-        extras = extras
+        extras = extras,
+        multiCallInvite = multiCallInvite
     )
 
     constructor(parcel: Parcel) : this(
@@ -64,7 +67,8 @@ class CallParam @JvmOverloads constructor(
         parcel.readParcelable(NECallPushConfig::class.java.classLoader),
         HashMap<String?, Any?>().apply {
             parcel.readMap(this, javaClass.classLoader)
-        }
+        },
+        if (parcel.dataAvail() > 0) parcel.readByte() != 0.toByte() else false
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -77,6 +81,7 @@ class CallParam @JvmOverloads constructor(
         parcel.writeString(rtcChannelName)
         parcel.writeParcelable(pushConfig, 0)
         parcel.writeMap(extras)
+        parcel.writeByte(if (multiCallInvite) 1 else 0)
     }
 
     override fun describeContents(): Int {
@@ -84,7 +89,7 @@ class CallParam @JvmOverloads constructor(
     }
 
     override fun toString(): String {
-        return "CallParam(isCalled=$isCalled, callType=$callType, callerAccId=$callerAccId, calledAccId=$calledAccId, callExtraInfo=$callExtraInfo, globalExtraCopy=$globalExtraCopy, rtcChannelName=$rtcChannelName, pushConfig=$pushConfig, extras=$extras, currentAccId=$currentAccId, otherAccId=$otherAccId)"
+        return "CallParam(isCalled=$isCalled, callType=$callType, callerAccId=$callerAccId, calledAccId=$calledAccId, callExtraInfo=$callExtraInfo, globalExtraCopy=$globalExtraCopy, rtcChannelName=$rtcChannelName, pushConfig=$pushConfig, extras=$extras, multiCallInvite=$multiCallInvite, currentAccId=$currentAccId, otherAccId=$otherAccId)"
     }
 
     override fun equals(other: Any?): Boolean {
@@ -102,6 +107,7 @@ class CallParam @JvmOverloads constructor(
         if (rtcChannelName != other.rtcChannelName) return false
         if (pushConfig != other.pushConfig) return false
         if (extras != other.extras) return false
+        if (multiCallInvite != other.multiCallInvite) return false
 
         return true
     }
@@ -116,6 +122,7 @@ class CallParam @JvmOverloads constructor(
         result = 31 * result + (rtcChannelName?.hashCode() ?: 0)
         result = 31 * result + (pushConfig?.hashCode() ?: 0)
         result = 31 * result + (extras?.hashCode() ?: 0)
+        result = 31 * result + multiCallInvite.hashCode()
         return result
     }
 
@@ -139,6 +146,7 @@ class CallParam @JvmOverloads constructor(
         private var rtcChannelName: String? = null
         private var pushConfig: NECallPushConfig? = null
         private val extras: MutableMap<String?, Any?> = mutableMapOf()
+        private var multiCallInvite: Boolean = false
 
         fun callType(type: Int) = apply { this.callType = type }
 
@@ -168,6 +176,10 @@ class CallParam @JvmOverloads constructor(
             extras[key] = value
         }
 
+        fun multiCallInvite(multiCallInvite: Boolean) = apply {
+            this.multiCallInvite = multiCallInvite
+        }
+
         fun build(): CallParam {
             return CallParam(
                 isCalled,
@@ -178,7 +190,8 @@ class CallParam @JvmOverloads constructor(
                 globalExtraCopy,
                 rtcChannelName,
                 pushConfig,
-                extras
+                extras,
+                multiCallInvite
             )
         }
     }

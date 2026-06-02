@@ -39,13 +39,16 @@ import com.netease.yunxin.nertc.nertcvideocall.model.CallLocalAction
 import com.netease.yunxin.nertc.nertcvideocall.model.SwitchCallState
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState
 import com.netease.yunxin.nertc.ui.R
+import com.netease.yunxin.nertc.ui.base.IncomingCallTextResolver
 import com.netease.yunxin.nertc.ui.base.fetchNickname
 import com.netease.yunxin.nertc.ui.base.loadAvatarByAccId
 import com.netease.yunxin.nertc.ui.databinding.ViewP2pVideoCallBinding
 import com.netease.yunxin.nertc.ui.manager.CallManager
+import com.netease.yunxin.nertc.ui.p2p.CallUIOperationsMgr
 import com.netease.yunxin.nertc.ui.utils.CallUILog
 import com.netease.yunxin.nertc.ui.utils.CallUIUtils
 import com.netease.yunxin.nertc.ui.utils.dip2Px
+import com.netease.yunxin.nertc.ui.utils.isGranted
 
 open class P2PVideoCallLayout @JvmOverloads constructor(
     context: Context,
@@ -76,6 +79,13 @@ open class P2PVideoCallLayout @JvmOverloads constructor(
 
         override fun onCallConnected(info: NECallInfo?) {
             CallUILog.i(logTag, "onCallConnected info: $info")
+            // 若权限尚未授权（横幅接听首次授权场景），跳过 renderForOnTheCall 避免
+            // Fragment 同时发起权限请求与 Activity 的权限请求产生冲突。
+            // Activity 的 onResume 会在权限授权后补调 initForOnTheCall。
+            if (!context.isGranted(android.Manifest.permission.CAMERA, android.Manifest.permission.RECORD_AUDIO)) {
+                CallUILog.i(logTag, "onCallConnected: skip renderForOnTheCall, permissions not granted yet")
+                return
+            }
             info?.otherUserInfo()?.accId.let {
                 renderForOnTheCall(info?.callType, it)
             }
@@ -217,20 +227,25 @@ open class P2PVideoCallLayout @JvmOverloads constructor(
      * 渲染被叫状态
      */
     fun renderForCalled(callType: Int, callerAccId: String) {
+        val callParam = CallUIOperationsMgr.callInfoWithUIState.callParam
         forUserInfoUI(callType, callerAccId)
         if (callType == NECallType.VIDEO) {
             binding.videoViewPreview.visibility = View.VISIBLE
             binding.videoViewBig.visibility = View.GONE
             binding.videoViewSmall.visibility = View.GONE
             binding.ivBg.visibility = View.GONE
-            binding.tvOtherCallTip.setText(R.string.tip_invite_to_video_call)
+            binding.tvOtherCallTip.setText(
+                IncomingCallTextResolver.incomingTipRes(callType, callParam.multiCallInvite)
+            )
             CallManager.instance.setupLocalView(binding.videoViewPreview)
         } else {
             binding.videoViewPreview.visibility = View.GONE
             binding.videoViewBig.visibility = View.GONE
             binding.videoViewSmall.visibility = View.GONE
             binding.ivBg.visibility = View.VISIBLE
-            binding.tvOtherCallTip.setText(R.string.tip_invite_to_audio_call)
+            binding.tvOtherCallTip.setText(
+                IncomingCallTextResolver.incomingTipRes(callType, callParam.multiCallInvite)
+            )
         }
     }
 

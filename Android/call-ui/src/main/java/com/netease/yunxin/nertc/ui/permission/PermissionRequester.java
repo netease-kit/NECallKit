@@ -13,6 +13,8 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build.VERSION;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.Process;
@@ -36,6 +38,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PermissionRequester {
   private static final String TAG = "PermissionRequester";
@@ -43,8 +46,12 @@ public class PermissionRequester {
   public static final String PERMISSION_NOTIFY_EVENT_SUB_KEY = "PERMISSION_NOTIFY_EVENT_SUB_KEY";
   public static final String PERMISSION_RESULT = "PERMISSION_RESULT";
   public static final String PERMISSION_REQUEST_KEY = "PERMISSION_REQUEST_KEY";
+  public static final String PERMISSION_REQUEST_SEQUENCE_KEY = "PERMISSION_REQUEST_SEQUENCE_KEY";
+  private static final long PERMISSION_ACTIVITY_START_TIMEOUT_MS = 5000L;
   private static final Object sLock = new Object();
   private static AtomicBoolean sIsRequesting = new AtomicBoolean(false);
+  private static AtomicBoolean sPermissionActivityCreated = new AtomicBoolean(false);
+  private static AtomicInteger sRequestSequence = new AtomicInteger(0);
   private PermissionCallback mPermissionCallback;
   private String[] mPermissions;
   private String mTitle;
@@ -196,6 +203,7 @@ public class PermissionRequester {
             "PERMISSION_NOTIFY_EVENT_SUB_KEY",
             this.mPermissionNotification);
     sIsRequesting.set(false);
+    sPermissionActivityCreated.set(false);
     if (this.mPermissionCallback != null) {
       if (Result.Granted.equals(result)) {
         this.mPermissionCallback.onGranted();
@@ -233,11 +241,45 @@ public class PermissionRequester {
   @RequiresApi(api = 23)
   private void startPermissionActivity(RequestData request) {
     Context context = XKit.Companion.instance().getApplicationContext();
-    if (context != null) {
+    if (context == null) {
+      CallUILog.e("PermissionRequester", "startPermissionActivity failed, context is null");
+      this.notifyPermissionRequestResult(Result.Denied);
+      return;
+    }
+    try {
       Intent intent = new Intent(context, PermissionActivity.class);
       intent.putExtra("PERMISSION_REQUEST_KEY", request);
       intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      sPermissionActivityCreated.set(false);
+      int requestSequence = sRequestSequence.incrementAndGet();
+      intent.putExtra(PERMISSION_REQUEST_SEQUENCE_KEY, requestSequence);
       context.startActivity(intent);
+      new Handler(Looper.getMainLooper())
+          .postDelayed(
+              () -> {
+                if (sRequestSequence.get() == requestSequence
+                    && sIsRequesting.get()
+                    && !sPermissionActivityCreated.get()) {
+                  CallUILog.e(
+                      "PermissionRequester",
+                      "startPermissionActivity timeout, permission activity not created");
+                  this.notifyPermissionRequestResult(Result.Denied);
+                }
+              },
+              PERMISSION_ACTIVITY_START_TIMEOUT_MS);
+    } catch (Exception e) {
+      CallUILog.e("PermissionRequester", "startPermissionActivity failed", e);
+      this.notifyPermissionRequestResult(Result.Denied);
+    }
+  }
+
+  static void notifyPermissionActivityCreated(int requestSequence) {
+    if (sRequestSequence.get() == requestSequence) {
+      sPermissionActivityCreated.set(true);
+    } else {
+      CallUILog.w(
+          "PermissionRequester",
+          "ignore stale PermissionActivity created callback, requestSequence=" + requestSequence);
     }
   }
 

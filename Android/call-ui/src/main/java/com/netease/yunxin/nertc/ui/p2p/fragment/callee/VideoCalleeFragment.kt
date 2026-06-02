@@ -22,6 +22,7 @@ import com.netease.yunxin.nertc.nertcvideocall.utils.NetworkUtils
 import com.netease.yunxin.nertc.ui.CallKitUI
 import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.CallParam
+import com.netease.yunxin.nertc.ui.base.IncomingCallTextResolver
 import com.netease.yunxin.nertc.ui.base.fetchNickname
 import com.netease.yunxin.nertc.ui.base.loadAvatarByAccId
 import com.netease.yunxin.nertc.ui.databinding.FragmentP2pVideoCalleeBinding
@@ -72,8 +73,11 @@ open class VideoCalleeFragment : BaseP2pCallFragment() {
     }
 
     override fun toRenderView(callParam: CallParam, uiConfig: P2PUIConfig?) {
+        getView<TextView>(viewKeyTextOtherCallTip)?.setText(
+            IncomingCallTextResolver.incomingTipRes(callParam.callType, callParam.multiCallInvite)
+        )
         renderUserInfo(callParam.otherAccId, uiConfig)
-        renderOperations(uiConfig)
+        renderOperations(callParam, uiConfig)
     }
 
     protected open fun renderUserInfo(userAccId: String?, uiConfig: P2PUIConfig?) {
@@ -93,17 +97,18 @@ open class VideoCalleeFragment : BaseP2pCallFragment() {
         }
     }
 
-    protected open fun renderOperations(uiConfig: P2PUIConfig?) {
+    protected open fun renderOperations(callParam: CallParam, uiConfig: P2PUIConfig?) {
         getView<NERtcVideoView>(viewKeyVideoViewPreview)?.run {
             visibility = if (isEnableVideoCalleePreview()) View.VISIBLE else View.GONE
         }
 
-        val enableAutoJoinWhenCalled = CallKitUI.options?.enableAutoJoinWhenCalled == true
+        val enableCallTypeSwitch =
+            CallKitUI.options?.enableAutoJoinWhenCalled == true && !callParam.multiCallInvite
         getView<View>(viewKeySwitchTypeTipGroup)?.run {
             visibility = View.GONE
         }
         getView<View>(viewKeyImageSwitchType)?.run {
-            visibility = if (enableAutoJoinWhenCalled) View.VISIBLE else View.GONE
+            visibility = if (enableCallTypeSwitch) View.VISIBLE else View.GONE
             bindClick(viewKeyImageSwitchType) {
                 if (!NetworkUtils.isConnected()) {
                     context?.run { getString(R.string.tip_network_error).toastShort(this) }
@@ -113,7 +118,7 @@ open class VideoCalleeFragment : BaseP2pCallFragment() {
             }
         }
         getView<View>(viewKeyTextSwitchTypeDesc)?.visibility =
-            if (enableAutoJoinWhenCalled) View.VISIBLE else View.GONE
+            if (enableCallTypeSwitch) View.VISIBLE else View.GONE
 
         getView<ImageView>(viewKeyImageReject)?.run {
             bindClick(viewKeyImageReject) {

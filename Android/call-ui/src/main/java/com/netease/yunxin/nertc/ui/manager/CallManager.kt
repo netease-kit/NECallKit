@@ -210,6 +210,10 @@ class CallManager {
                 override fun onDenied() {
                     callback?.onError(-1, "Permission denied")
                 }
+
+                override fun onRequesting() {
+                    callback?.onError(-1, "Permission denied")
+                }
             }
         )
     }

@@ -17,7 +17,9 @@ import android.widget.TextView
 import com.netease.lava.nertc.sdk.video.NERtcVideoView
 import com.netease.nimlib.sdk.ResponseCode
 import com.netease.yunxin.kit.call.p2p.model.NECallEndInfo
+import com.netease.yunxin.kit.call.p2p.model.NECallInfo
 import com.netease.yunxin.kit.call.p2p.model.NECallType
+import com.netease.yunxin.nertc.nertcvideocall.bean.CommonResult
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState
 import com.netease.yunxin.nertc.nertcvideocall.utils.NetworkUtils
 import com.netease.yunxin.nertc.ui.CallKitUI
@@ -38,6 +40,8 @@ open class VideoCallerFragment : BaseP2pCallFragment() {
     protected val logTag = "VideoCallerFragment"
 
     protected lateinit var binding: FragmentP2pVideoCallerBinding
+
+    private var startCallFailed = false
 
     override fun toCreateRootView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -131,21 +135,37 @@ open class VideoCallerFragment : BaseP2pCallFragment() {
     }
 
     override fun actionForPermissionGranted() {
+        startCallFailed = false
         if (bridge.currentCallState() == CallState.STATE_IDLE) {
             bridge.doCall { result ->
-                if (result?.isSuccessful != true &&
-                    result.code != ResponseCode.RES_PEER_NIM_OFFLINE.toInt() &&
-                    result.code != ResponseCode.RES_PEER_PUSH_OFFLINE.toInt()
-                ) {
+                if (!shouldKeepCallerPage(result)) {
                     context?.run { getString(R.string.tip_start_call_failed).toastShort(this) }
+                    releaseCallerPageAfterStartFailure()
+                    return@doCall
                 }
             }
+        }
+        if (startCallFailed) {
+            return
         }
         getView<NERtcVideoView>(viewKeyVideoViewPreview)?.run {
             bridge.setupLocalView(this)
         }
         bridge.startVideoPreview()
         CallUIOperationsMgr.startService()
+    }
+
+    private fun shouldKeepCallerPage(result: CommonResult<NECallInfo>?): Boolean {
+        return result?.isSuccessful == true ||
+            result?.code == ResponseCode.RES_PEER_NIM_OFFLINE.toInt() ||
+            result?.code == ResponseCode.RES_PEER_PUSH_OFFLINE.toInt()
+    }
+
+    private fun releaseCallerPageAfterStartFailure() {
+        startCallFailed = true
+        bridge.stopVideoPreview()
+        activity?.finish()
+        CallUIOperationsMgr.releaseCallInfoAndUIState(force = true)
     }
 
     override fun toUpdateUIState(type: Int) {

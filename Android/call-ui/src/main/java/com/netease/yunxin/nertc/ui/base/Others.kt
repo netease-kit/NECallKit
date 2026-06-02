@@ -36,6 +36,10 @@ fun CallParam.channelId(channelId: String?) {
 }
 
 fun NEInviteInfo.toCallParam(): CallParam {
+    return toCallParam(autoAcceptFromIncomingBanner = false)
+}
+
+internal fun NEInviteInfo.toCallParam(autoAcceptFromIncomingBanner: Boolean): CallParam {
     return CallParam(
         true,
         callType,
@@ -44,13 +48,23 @@ fun NEInviteInfo.toCallParam(): CallParam {
         callExtraInfo = extraInfo,
         globalExtraCopy = NECallEngine.sharedInstance().callInfo.signalInfo.globalExtraCopy,
         rtcChannelName = NECallEngine.sharedInstance().callInfo.rtcInfo.channelName,
-        extras = mutableMapOf(
-            CallParams.INVENT_CHANNEL_ID to channelId
-        )
-    )
+        extras = mutableMapOf(CallParams.INVENT_CHANNEL_ID to channelId),
+        multiCallInvite = multiCallInvite
+    ).apply {
+        if (autoAcceptFromIncomingBanner) {
+            markAutoAcceptFromIncomingBanner()
+        }
+    }
 }
 
 fun NEInviteInfo.toCallIntent(context: Context): Intent {
+    return toCallIntent(context, autoAcceptFromIncomingBanner = false)
+}
+
+internal fun NEInviteInfo.toCallIntent(
+    context: Context,
+    autoAcceptFromIncomingBanner: Boolean
+): Intent {
     return Intent().apply {
         when (callType) {
             NECallType.AUDIO -> setClass(
@@ -64,7 +78,7 @@ fun NEInviteInfo.toCallIntent(context: Context): Intent {
             )
         }
     }.apply {
-        putExtra(Constants.PARAM_KEY_CALL, toCallParam())
+        putExtra(Constants.PARAM_KEY_CALL, toCallParam(autoAcceptFromIncomingBanner))
         flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
     }
 }

@@ -19,12 +19,14 @@ import com.netease.yunxin.nertc.nertcvideocall.utils.NetworkUtils
 import com.netease.yunxin.nertc.ui.CallKitUI
 import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.CallParam
+import com.netease.yunxin.nertc.ui.base.IncomingCallTextResolver
 import com.netease.yunxin.nertc.ui.base.fetchNickname
 import com.netease.yunxin.nertc.ui.base.loadAvatarByAccId
 import com.netease.yunxin.nertc.ui.databinding.FragmentP2pAudioCalleeBinding
 import com.netease.yunxin.nertc.ui.p2p.CallUIOperationsMgr
 import com.netease.yunxin.nertc.ui.p2p.P2PUIConfig
 import com.netease.yunxin.nertc.ui.p2p.fragment.BaseP2pCallFragment
+import com.netease.yunxin.nertc.ui.permission.CallMediaPermissionPolicy
 import com.netease.yunxin.nertc.ui.utils.toastShort
 
 /**
@@ -67,8 +69,11 @@ open class AudioCalleeFragment : BaseP2pCallFragment() {
     }
 
     override fun toRenderView(callParam: CallParam, uiConfig: P2PUIConfig?) {
+        getView<TextView>(viewKeyTextOtherCallTip)?.setText(
+            IncomingCallTextResolver.incomingTipRes(callParam.callType, callParam.multiCallInvite)
+        )
         renderUserInfo(callParam.otherAccId, uiConfig)
-        renderOperations(uiConfig)
+        renderOperations(callParam, uiConfig)
     }
 
     protected open fun renderUserInfo(userAccId: String?, uiConfig: P2PUIConfig?) {
@@ -92,13 +97,14 @@ open class AudioCalleeFragment : BaseP2pCallFragment() {
         CallUIOperationsMgr.startService()
     }
 
-    protected open fun renderOperations(uiConfig: P2PUIConfig?) {
-        val enableAutoJoinWhenCalled = CallKitUI.options?.enableAutoJoinWhenCalled == true
+    protected open fun renderOperations(callParam: CallParam, uiConfig: P2PUIConfig?) {
+        val enableCallTypeSwitch =
+            CallKitUI.options?.enableAutoJoinWhenCalled == true && !callParam.multiCallInvite
         getView<View>(viewKeySwitchTypeTipGroup)?.run {
             visibility = View.GONE
         }
         getView<View>(viewKeyImageSwitchType)?.run {
-            visibility = if (enableAutoJoinWhenCalled) View.VISIBLE else View.GONE
+            visibility = if (enableCallTypeSwitch) View.VISIBLE else View.GONE
             bindClick(viewKeyImageSwitchType) {
                 if (!NetworkUtils.isConnected()) {
                     context?.run { getString(R.string.tip_network_error).toastShort(this) }
@@ -107,27 +113,28 @@ open class AudioCalleeFragment : BaseP2pCallFragment() {
                 val action = Action@{
                     switchCallType(NECallType.VIDEO)
                 }
-                if (arePermissionsGranted(listOf(CAMERA))) {
+                if (arePermissionsGranted(listOf(RECORD_AUDIO, CAMERA))) {
                     action.invoke()
                     return@bindClick
                 }
-                requestPermission(
-                    listOf(CAMERA),
+                requestCallPermission(
+                    NECallType.VIDEO,
                     {
                         action.invoke()
                     },
-                    { _, _ ->
+                    {
                         context?.run {
                             getString(R.string.tip_camera_permission_request_failed).toastShort(
                                 this
                             )
                         }
+                        bridge.doHangup()
                     }
                 )
             }
         }
         getView<View>(viewKeyTextSwitchTypeDesc)?.visibility =
-            if (enableAutoJoinWhenCalled) View.VISIBLE else View.GONE
+            if (enableCallTypeSwitch) View.VISIBLE else View.GONE
 
         getView<ImageView>(viewKeyImageReject)?.run {
             bindClick(viewKeyImageReject) {
@@ -156,7 +163,25 @@ open class AudioCalleeFragment : BaseP2pCallFragment() {
     }
 
     override fun permissionList(): List<String> {
-        return listOf(RECORD_AUDIO)
+        return CallMediaPermissionPolicy.requiredPermissions(
+            bridge.callParam.callType,
+            bridge.callParam.multiCallInvite
+        )
+    }
+
+    override fun requestCallPermission(
+        callType: Int,
+        onGranted: () -> Unit,
+        onDenied: () -> Unit
+    ) {
+        super.requestCallPermission(
+            CallMediaPermissionPolicy.permissionRequestCallType(
+                callType,
+                bridge.callParam.multiCallInvite
+            ),
+            onGranted,
+            onDenied
+        )
     }
 
     override fun toUpdateUIState(type: Int) {
