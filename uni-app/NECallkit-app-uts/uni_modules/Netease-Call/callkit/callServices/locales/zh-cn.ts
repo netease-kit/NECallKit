@@ -12,6 +12,8 @@ export const zh = {
 	'reject': '拒接',
 	'accept': '接听',
 	'switch camera': '翻转',
+	'switch audio': '转音频',
+	'switch video': '转视频',
 	'virtual-background': '模糊背景',
 	// 通话结果
 	'other side reject call': '对方已拒绝',

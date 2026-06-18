@@ -1,5 +1,9 @@
 import Context from 'android.content.Context';
 import Intent from "android.content.Intent";
+import Activity from 'android.app.Activity';
+import PictureInPictureParams from 'android.app.PictureInPictureParams';
+import Build from 'android.os.Build';
+import Rational from 'android.util.Rational';
 
 import NECallBridge from 'com.netease.yunxin.nertc.ui.hybird.CallKitBridge';
 import NECallEngine from 'com.netease.yunxin.kit.call.p2p.NECallEngine';
@@ -14,6 +18,8 @@ import NERecordProvider from 'com.netease.yunxin.kit.call.p2p.model.NERecordProv
 import CallUIFloatingWindowMgr from 'com.netease.yunxin.nertc.ui.p2p.CallUIFloatingWindowMgr';
 import PermissionRequester from 'com.netease.yunxin.nertc.ui.permission.PermissionRequester';
 import FloatWindowManager from 'com.netease.yunxin.nertc.ui.hybird.FloatingWindowManager';
+import IncomingCallBannerManager from 'com.netease.yunxin.nertc.ui.banner.IncomingCallBannerManager';
+import CallerInfo from 'com.netease.yunxin.nertc.ui.banner.CallerInfo';
 
 import {
   InitParams,
@@ -47,6 +53,7 @@ export class CallEngine {
   callBridge: NECallBridge;
   callObserver: NECallEngineDelegate;
   floatWindowObserver: CallFloatWindowObserver;
+  bannerEnabledFlag: boolean = false;
 
   constructor() {
     console.log(`${NAME.PREFIX} constructor.start`);
@@ -73,6 +80,8 @@ export class CallEngine {
       }
     }
     this.callBridge.init(UTSAndroid.getAppContext() as Context, param.appKey, "UniApp-uts", "dcloud", currentUserRtcUid);
+    FloatWindowManager.setSwitchCallTypeConfirmDialogEnabled(false);
+    this.setIncomingBannerEnabled(param.enableIncomingBanner ?? false);
     
     let errorRes = new UTSJSONObject();
     errorRes.set("code", 200);
@@ -182,7 +191,11 @@ export class CallEngine {
    * 视频通话中转为音频通话
    */
   public switchCallType(param: SwitchCallTypeParams): void {
-    console.log(`${NAME.PREFIX} switchCallType.start, callType: ${param.callType}`);
+    const currentConfig = this.callBridge.getCallConfig();
+    console.log(
+      `${NAME.PREFIX} switchCallType.start, callType: ${param.callType}, state: ${param.state}, ` +
+        `config: ${currentConfig}`
+    );
     const switchParam = new NESwitchParam(param.callType as Int, param.state as Int);
 
     const cb: ICallback = {
@@ -193,7 +206,8 @@ export class CallEngine {
       },
       fail: (errCode: number, errMsg: string) => {
         console.error(`${NAME.PREFIX} switchCallType fail, code: ${errCode}, msg: ${errMsg}`);
-        param?.fail?.(errCode, errMsg);
+        const message = errMsg === "signal control." ? "网络异常" : errMsg;
+        param?.fail?.(errCode, message);
       },
     };
     this.callBridge.switchCallType(switchParam, new CallbackVoid(cb));
@@ -225,6 +239,39 @@ export class CallEngine {
     }
     FloatWindowManager.addFloatWindowObserver(this.floatWindowObserver);
   }
+
+  public startPictureInPicture(options: CallbackParams) {
+    console.log(`${NAME.PREFIX} startPictureInPicture`);
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+      console.error(`${NAME.PREFIX} startPictureInPicture fail, unsupported sdk`);
+      options?.fail?.(-1, "picture in picture unsupported");
+      return;
+    }
+
+    const activity = UTSAndroid.getUniActivity() as Activity;
+    if (activity == null) {
+      console.error(`${NAME.PREFIX} startPictureInPicture fail, activity is null`);
+      options?.fail?.(-1, "activity is null");
+      return;
+    }
+
+    try {
+      const params = new PictureInPictureParams.Builder()
+        .setAspectRatio(new Rational(9, 16))
+        .build();
+      const entered = activity.enterPictureInPictureMode(params);
+      if (entered) {
+        console.log(`${NAME.PREFIX} startPictureInPicture.success`);
+        options?.success?.();
+      } else {
+        console.error(`${NAME.PREFIX} startPictureInPicture fail, enter returned false`);
+        options?.fail?.(-1, "enter picture in picture failed");
+      }
+    } catch (error) {
+      console.error(`${NAME.PREFIX} startPictureInPicture fail, error: ${error}`);
+      options?.fail?.(-1, `${error}`);
+    }
+  }
   
   /**
    * 开始悬浮窗
@@ -232,6 +279,50 @@ export class CallEngine {
   public stopFloatWindow() {
     console.log(`${NAME.PREFIX} stopFloatWindow`);
     this.callBridge.stopFloatWindow();
+  }
+
+  public isFloatWindowVisible(): boolean {
+    const isFloating = FloatWindowManager.isFloating();
+    console.log(`${NAME.PREFIX} isFloatWindowVisible, isFloating: ${isFloating}`);
+    return isFloating;
+  }
+
+  public setIncomingBannerEnabled(enable: boolean): boolean {
+    console.log(`${NAME.PREFIX} setIncomingBannerEnabled, enable: ${enable}`);
+    this.bannerEnabledFlag = enable;
+    if (enable) {
+      const activity = UTSAndroid.getUniActivity();
+      if (activity != null && !IncomingCallBannerManager.hasOverlayPermission(activity as Context)) {
+        this.bannerEnabledFlag = false;
+        IncomingCallBannerManager.requestOverlayPermission(activity);
+        return false;
+      }
+    } else {
+      this.cancelIncomingBanner();
+    }
+    return true;
+  }
+
+  public showIncomingBanner(caller: string, mediaType: number): void {
+    console.log(`${NAME.PREFIX} showIncomingBanner, caller: ${caller}, mediaType: ${mediaType}`);
+    if (!this.bannerEnabledFlag) {
+      console.log(`${NAME.PREFIX} showIncomingBanner skipped, disabled`);
+      return;
+    }
+    const appContext = UTSAndroid.getAppContext() as Context;
+    const callerInfo = new CallerInfo(caller, caller, null, mediaType as Int);
+    IncomingCallBannerManager.show(appContext, callerInfo, () => {
+      IncomingCallBannerManager.setNavigatedToCallPage();
+      this.bringAppToForeground();
+      listenerMap.get("onIncomingBannerClick")?.forEach((cb) => {
+        cb({});
+      });
+    });
+  }
+
+  public cancelIncomingBanner(): void {
+    console.log(`${NAME.PREFIX} cancelIncomingBanner`);
+    IncomingCallBannerManager.dismiss();
   }
 
   /**
@@ -247,6 +338,10 @@ export class CallEngine {
    */
   public muteLocalVideo(mute: boolean): number {
     console.log(`${NAME.PREFIX} muteLocalVideo, mute: ${mute}`);
+    if (!mute) {
+      console.log(`${NAME.PREFIX} muteLocalVideo enableLocalVideo before unmute`);
+      this.callBridge.enableLocalVideo(true);
+    }
     return Number.from(this.callBridge.muteLocalVideo(mute));
   }
 
@@ -298,6 +393,26 @@ export class CallEngine {
   public setCallConfig(config: NECallConfig): void {
     console.log(`${NAME.PREFIX} setCallConfig`);
     this.callBridge.setCallConfig(config);
+  }
+
+  public setSwitchCallTypeConfirm(audioToVideoConfirm: boolean, videoToAudioConfirm: boolean): void {
+    const currentConfig = this.callBridge.getCallConfig();
+    const enableOffline = currentConfig?.enableOffline ?? true;
+    const nextConfig = new NECallConfig(
+      enableOffline,
+      audioToVideoConfirm,
+      videoToAudioConfirm
+    );
+    console.log(
+      `${NAME.PREFIX} setSwitchCallTypeConfirm, audioToVideoConfirm: ${audioToVideoConfirm}, ` +
+        `videoToAudioConfirm: ${videoToAudioConfirm}, enableOffline: ${enableOffline}, ` +
+        `currentConfig: ${currentConfig}, nextConfig: ${nextConfig}`
+    );
+    NECallEngine.sharedInstance().setCallConfig(nextConfig);
+  }
+
+  public setAutoFloatingWindowWhenHomeEnabled(enable: boolean): void {
+    console.log(`${NAME.PREFIX} setAutoFloatingWindowWhenHomeEnabled, enable: ${enable}`);
   }
 
   /**
@@ -398,11 +513,7 @@ export class CallEngine {
     if (listenerMap.size === 0) {
       NECallEngine.sharedInstance().addCallDelegate(this.callObserver);
     }
-    const listeners: Array<(res: any) => void> = [listener];
-    listenerMap.get(eventName)?.forEach((item) => {
-      listeners.push(item);
-    });
-    listenerMap.set(eventName, listeners);
+    listenerMap.set(eventName, [listener]);
   }
 
   public off(eventName: string): void {

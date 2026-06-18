@@ -1,0 +1,25 @@
+{
+    "version" : "1.0",
+    "configurations" : [
+        {
+            "customPlaygroundType" : "local",
+            "localRepoPath" : "/Users/minga/code/NECallKit/uni-app/NECallKit-app-uts",
+            "packageName" : "com.netease.yunxin.app.videocall",
+            "playground" : "custom",
+            "type" : "uni-app:app-android"
+        },
+        {
+            "bundleId" : "com.netease.yunxin.app.party",
+            "certificateFile" : "/Users/minga/Downloads/zhengshu/party.p12",
+            "certificateProfileFile" : "/Users/minga/Downloads/zhengshu/NEParty.mobileprovision",
+            "customPlaygroundType" : "local",
+            "playground" : "custom",
+            "runSignStatus" : 1,
+            "type" : "uni-app:app-ios"
+        },
+        {
+            "playground" : "standard",
+            "type" : "uni-app:app-ios_simulator"
+        }
+    ]
+}

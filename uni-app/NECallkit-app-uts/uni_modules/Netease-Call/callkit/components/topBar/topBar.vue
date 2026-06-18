@@ -8,7 +8,7 @@
         <float-window />
       </view> -->
       <view class="button-group-row" v-if="callStatus === CallStatus.CONNECTED">
-        <float-window></float-window>
+        <float-window v-if="enableFloatingWindow"></float-window>
         <switch-camera v-if="mediaType === MediaType.VIDEO" />
       </view>
     </template>
@@ -21,6 +21,7 @@
 </template>
 
 <script setup lang="ts">
+  import { onMounted, ref } from "vue";
   import {
     MediaType,
     CallStatus,
@@ -47,6 +48,12 @@
       type: Boolean,
       default: false,
     },
+  });
+
+  const enableFloatingWindow = ref<boolean>(true);
+
+  onMounted(() => {
+    enableFloatingWindow.value = getApp().globalData?.enableFloatingWindow !== false;
   });
 </script>
 

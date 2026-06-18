@@ -26,6 +26,7 @@
 
 <script setup>
 import NIM from "nim-web-sdk-ng/dist/v2/NIM_UNIAPP_SDK";
+import { onBackPress } from "@dcloudio/uni-app";
 import { useUserStore } from "@/stores/user";
 
 const user = useUserStore();
@@ -56,6 +57,18 @@ const handleEntry = (e) => {
   const url = entryInfos[e.currentTarget.id].navigateTo;
   uni.navigateTo({ url });
 };
+
+onBackPress((options) => {
+  const isInIncomingBanner = uni.$NEStore?.getData?.("call", "isInIncomingBanner");
+  console.log(
+    `[UTS_INDEX_BACK] onBackPress, from=${options?.from}, isInIncomingBanner=${isInIncomingBanner}`
+  );
+  if (isInIncomingBanner) {
+    uni.$NECallKit.cancelIncomingBanner();
+    return true;
+  }
+  return false;
+});
 </script>
 
 <style scoped>

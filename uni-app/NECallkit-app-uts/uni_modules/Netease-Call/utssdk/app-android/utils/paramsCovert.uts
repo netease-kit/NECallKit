@@ -1,5 +1,6 @@
 import NECallParam from 'com.netease.yunxin.kit.call.p2p.param.NECallParam';
 import NECallParamBuilder from 'com.netease.yunxin.kit.call.p2p.param.NECallParam.Builder';
+import NECallPushConfig from 'com.netease.yunxin.kit.call.p2p.model.NECallPushConfig';
 
 import { NAME } from "./const.uts";
 
@@ -18,6 +19,60 @@ export class ParamsCovert {
     if (options?.getString('rtcChannelName') != null) {
       builder.rtcChannelName(options.getString('rtcChannelName'));
     }
+    if (options?.getString('extraInfo') != null) {
+      builder.extraInfo(options.getString('extraInfo'));
+    }
+    if (options?.getString('globalExtraCopy') != null) {
+      builder.globalExtraCopy(options.getString('globalExtraCopy'));
+    }
+
+    let pushOptions = ParamsCovert.getPushOptions(options);
+    if (pushOptions != null) {
+      const needPush = ParamsCovert.getBoolean(pushOptions, 'needPush', true);
+      const pushTitle = pushOptions.getString('pushTitle');
+      const pushContent = pushOptions.getString('pushContent');
+      const pushPayload = ParamsCovert.getPayloadString(pushOptions, 'pushPayload');
+      const needBadge = ParamsCovert.getBoolean(pushOptions, 'needBadge', true);
+      builder.pushConfig(new NECallPushConfig(needPush, pushTitle, pushContent, pushPayload, needBadge));
+    }
     return builder.build();
+  }
+
+  private static getPushOptions(options: UTSJSONObject | null): UTSJSONObject | null {
+    if (options == null) {
+      return null;
+    }
+
+    let pushOptions = options.getJSON('pushConfig');
+    if (pushOptions != null) {
+      return pushOptions;
+    }
+
+    if (
+      options.contains('needPush') ||
+      options.contains('pushTitle') ||
+      options.contains('pushContent') ||
+      options.contains('pushPayload') ||
+      options.contains('needBadge')
+    ) {
+      return options;
+    }
+    return null;
+  }
+
+  private static getBoolean(options: UTSJSONObject, key: string, defaultValue: boolean): boolean {
+    const value = options.getBoolean(key);
+    return value == null ? defaultValue : value;
+  }
+
+  private static getPayloadString(options: UTSJSONObject, key: string): string | null {
+    const value = options.getAny(key);
+    if (value == null) {
+      return null;
+    }
+    if (typeof value == 'string') {
+      return value as string;
+    }
+    return JSON.stringify(value);
   }
 }

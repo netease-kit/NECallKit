@@ -122,6 +122,28 @@ const isCalling = () => {
   return uni.$NEStore.getData(StoreName.CALL, NAME.CALL_STATUS) != CallStatus.IDLE;
 }
 
+const buildCallParams = () => {
+  const globalData = getApp().globalData;
+  const params = {
+    rtcChannelName: globalData.channelName,
+  };
+  if (globalData.pushPayload) {
+    params.extraInfo = globalData.pushPayload;
+  }
+
+  if (globalData.pushEnabled) {
+    params.pushConfig = {
+      needPush: true,
+      pushTitle: globalData.pushTitle,
+      pushContent: globalData.pushContent,
+      pushPayload: globalData.pushPayload,
+      needBadge: globalData.needBadge,
+    };
+  }
+
+  return params;
+};
+
 const call = () => {
   if (isCalling()) {
     uni.showToast({
@@ -148,9 +170,7 @@ const call = () => {
     uni.$NECallKit.call({
       accountId: invitee.value.trim(),
       callType: callType.value,
-      params: {
-        rtcChannelName: getApp().globalData.channelName,
-      },
+      params: buildCallParams(),
     });
   } catch (error) {
     console.error("call error: ", error);
@@ -170,9 +190,7 @@ const quickCall = (e) => {
     uni.$NECallKit.call({
       accountId: item.isSelf ? item.receiverId : item.senderId,
       callType: item.attachment.type,
-      params: {
-        rtcChannelName: getApp().globalData.channelName,
-      },
+      params: buildCallParams(),
     });
   } catch (error) {
     console.error("call error: ", error);

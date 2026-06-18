@@ -10,6 +10,8 @@ export const en = {
   reject: "Decline",
   accept: "Accept",
   "switch camera": "Switch",
+  "switch audio": "Audio",
+  "switch video": "Video",
   "virtual-background": "Blur",
   // 通话结果
   "other side reject call": "other side reject call",

@@ -31,13 +31,14 @@
   </view>
 </template>
 <script setup>
-import { ref } from "vue";
-import { useUserStore } from "@/stores/user";
+import { onMounted, ref } from "vue";
+import { getLoginCache, useUserStore } from "@/stores/user";
 
 const user = useUserStore();
 
 const userID = ref("");
 const token = ref("");
+const autoLoginStarted = ref(false);
 
 const login = () => {
   if (!userID.value) {
@@ -56,6 +57,20 @@ const login = () => {
   }
   user.login(userID.value, token.value);
 };
+
+onMounted(() => {
+  const loginCache = getLoginCache();
+  if (!loginCache?.userID || !loginCache?.token) {
+    return;
+  }
+  userID.value = loginCache.userID;
+  token.value = loginCache.token;
+  if (autoLoginStarted.value || user.loading) {
+    return;
+  }
+  autoLoginStarted.value = true;
+  user.login(loginCache.userID, loginCache.token);
+});
 </script>
 
 <style scoped>

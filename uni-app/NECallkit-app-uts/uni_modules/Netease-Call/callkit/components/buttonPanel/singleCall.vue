@@ -10,6 +10,7 @@
         <view class="button-group-audio">
           <ne-microphone />
           <ne-handsfree />
+          <switch-video v-if="supportAudioToVideo" />
           <hangup :size="32" :is-show-text="false" />
         </view>
       </view>
@@ -30,6 +31,7 @@
           <ne-microphone />
           <ne-camera />
           <ne-handsfree />
+          <switch-audio v-if="supportVideoToAudio" />
           <!-- <blur /> -->
           <hangup :size="32" :is-show-text="false" />
         </view>
@@ -59,6 +61,8 @@
   import blur from "../button/blur.vue";
   import neCamera from "../button/neCamera.vue";
   import switchCamera from "../button/switchCamera.vue";
+  import switchAudio from "../button/switchAudio.vue";
+  import switchVideo from "../button/switchVideo.vue";
 
   const props = defineProps({
     callStatus: {
@@ -77,10 +81,15 @@
 
   const viewWidth = ref<number>(360);
   const viewHeight = ref<number>(700);
+  const supportAudioToVideo = ref<boolean>(true);
+  const supportVideoToAudio = ref<boolean>(true);
 
   onMounted(() => {
     viewWidth.value = uni.getWindowInfo().windowWidth;
     viewHeight.value = uni.getWindowInfo().windowHeight;
+    const globalData = getApp().globalData;
+    supportAudioToVideo.value = globalData?.supportAudioToVideo !== false;
+    supportVideoToAudio.value = globalData?.supportVideoToAudio !== false;
   });
 </script>
 

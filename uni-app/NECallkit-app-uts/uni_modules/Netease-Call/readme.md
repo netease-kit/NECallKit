@@ -78,6 +78,50 @@
 
 2. 自定义调试基座成功后，**使用自定义基座运行**项目。
 
+## iOS 本地运行（内部开发）
+
+如果需要在 uni-app UTS iOS 工程中验证本仓库 iOS 源码改动，可将 `NERtcCallKit` / `NERtcCallUIKit` 切换为本地依赖：
+
+```bash
+cd /Users/admin/Documents/WorkPro/NetEase/SourceCode/NECallKit
+python3 .agents/skills/switch-uniapp-uts-ios-callkit-deps/scripts/switch_callkit_ios_deps.py local
+```
+
+本地模式会执行以下操作：
+
+- 从 `iOS/` 源码构建并复制 `NERtcCallKit.xcframework`、`NERtcCallUIKit.xcframework` 到 `utssdk/app-ios/Frameworks`。
+- 构建时传入 `--delete NERtcCallKit`，避免 Swift interface 中出现 `NERtcCallKit.NECallInfo` 等错误前缀。
+- `NERtcCallKit` / `NERtcCallUIKit` 的子依赖不放入 `Frameworks`，改为写入 `utssdk/app-ios/config.json` 的 `dependencies-pods`。
+
+当前本地模式的 Pod 依赖包括：
+
+```json
+[
+  { "name": "NERtcSDK", "version": "5.9.10" },
+  { "name": "NIMSDK_LITE", "version": "10.9.76" },
+  { "name": "Masonry", "version": "1.1.0" },
+  { "name": "NECommonKit", "version": "9.7.5" },
+  { "name": "NECommonUIKit", "version": "9.8.2" },
+  { "name": "NECoreKit", "version": "9.8.0" },
+  { "name": "NEXKitBase", "version": "1.1.0" },
+  { "name": "SDWebImage", "version": "5.21.0" }
+]
+```
+
+切换后可检查状态：
+
+```bash
+python3 .agents/skills/switch-uniapp-uts-ios-callkit-deps/scripts/switch_callkit_ios_deps.py status
+```
+
+需要恢复线上 Pod 依赖时执行：
+
+```bash
+python3 .agents/skills/switch-uniapp-uts-ios-callkit-deps/scripts/switch_callkit_ios_deps.py online
+```
+
+> 注意：首次切换本地模式时脚本会保存当前线上 `config.json` 和 `Frameworks` 基线到 `utssdk/app-ios/.callkit-deps-state/`，用于后续恢复线上状态。
+
 
 ## 步骤四：拨打第一通电话
 

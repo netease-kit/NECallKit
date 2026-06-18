@@ -10,22 +10,20 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onMounted, ref, onUnmounted, watch } from 'vue';
-  import { onShow, onHide } from '@dcloudio/uni-app';
+  import { computed, onMounted, ref, onUnmounted } from 'vue';
   import { CallRole, CallStatus, MediaType, NAME, StoreName } from './callServices/const';
   import topBar from './components/topBar/topBar.vue';
   import callTip from './components/callTip/callTip.vue';
   import buttonPanel from './components/buttonPanel/buttonPanel.vue';
 
-  const viewWidth = ref<number>(360);
-  const viewHeight = ref<number>(700);
+  const windowInfo = uni.getWindowInfo();
+  const viewWidth = ref<number>(windowInfo.screenWidth);
+  const viewHeight = ref<number>(windowInfo.screenHeight);
   const callStatus = ref<CallStatus>(uni.$NEStore.getData(StoreName.CALL, NAME.CALL_STATUS));
   const callRole = ref<CallRole>(uni.$NEStore.getData(StoreName.CALL, NAME.CALL_ROLE));
   const mediaType = ref<MediaType>(uni.$NEStore.getData(StoreName.CALL, NAME.MEDIA_TYPE));
   const isGroupCall = ref<Boolean>(uni.$NEStore.getData(StoreName.CALL, NAME.IS_GROUP_CALL));
   const callTips = ref<string>(uni.$NEStore.getData(StoreName.CALL, NAME.CALL_TIPS));
-
-  const innerAudioContext = ref(null);
 
   const watchOptions = {
     [NAME.CALL_STATUS]: (res : CallStatus) => {
@@ -48,48 +46,12 @@
       callTips.value = res;
     },
   }
-  
-  watch(callStatus, (newCallStatus, oldCallStatus) => {
-    if (newCallStatus != CallStatus.CALLING) {
-      stopAudio();
-    }
-  })
-
-  const initAudio = () => {
-    innerAudioContext.value = uni.createInnerAudioContext();
-    innerAudioContext.value.loop = true;
-    
-    if (callRole.value == CallRole.CALLER) {
-      innerAudioContext.value.src = '/static/audio/avchat_connecting.mp3';
-    } else {
-      innerAudioContext.value.src = '/static/audio/avchat_ring.mp3';
-    }
-    
-    innerAudioContext.value.play();
-  }
-
-  const stopAudio = () => {
-    if (innerAudioContext.value) {
-      innerAudioContext.value.stop();
-    }
-  }
 
   onMounted(() => {
-    viewWidth.value = uni.getWindowInfo().windowWidth;
-    viewHeight.value = uni.getWindowInfo().windowHeight;
+    const windowInfo = uni.getWindowInfo();
+    viewWidth.value = windowInfo.screenWidth;
+    viewHeight.value = windowInfo.screenHeight;
     uni.$NEStore.watch(StoreName.CALL, watchOptions);
-  })
-  
-  onShow(() => {
-    if (callStatus.value == CallStatus.CALLING) {
-      initAudio();
-    }
-  })
-  
-  onHide(() => {
-    if (innerAudioContext.value) {
-      innerAudioContext.value.destroy();
-    }
   })
 
   const callViewStyle = computed(() => {
@@ -119,10 +81,6 @@
       !enableFloatWindow && uni.$NECallKit.handleExceptionExit();
     }
     uni.$NEStore.unwatch(StoreName.CALL, watchOptions);
-    
-    if (innerAudioContext.value) {
-      innerAudioContext.value.destroy();
-    }
   })
 </script>
 

@@ -2,10 +2,37 @@ import { defineStore } from "pinia";
 import { useMessageStore } from "./message";
 import { APP_CONFIG } from "@/config";
 
+const LOGIN_CACHE_KEY = "NECallKit_UTS_Login_Cache";
+
 const onReceiveMessages = (msgs) => {
   const filterMsgs = msgs.filter((msg) => msg.messageType == 12);
   const messageStore = useMessageStore();
   messageStore.addMessages(filterMsgs);
+}
+
+export const getLoginCache = () => {
+  try {
+    return uni.getStorageSync(LOGIN_CACHE_KEY) || null;
+  } catch (error) {
+    console.error("读取登录缓存失败", error);
+    return null;
+  }
+}
+
+const setLoginCache = (userID, token) => {
+  try {
+    uni.setStorageSync(LOGIN_CACHE_KEY, { userID, token });
+  } catch (error) {
+    console.error("保存登录缓存失败", error);
+  }
+}
+
+const clearLoginCache = () => {
+  try {
+    uni.removeStorageSync(LOGIN_CACHE_KEY);
+  } catch (error) {
+    console.error("清理登录缓存失败", error);
+  }
 }
 
 export const useUserStore = defineStore("user", {
@@ -19,6 +46,8 @@ export const useUserStore = defineStore("user", {
         uni.$NECallKit.init({
           appKey: APP_CONFIG.appKey,
           params: { currentUserRtcUid: getApp().globalData.rtcUid },
+          enableIncomingBanner: getApp().globalData.enableIncomingBanner,
+          enableAutoFloatingWindowWhenHome: getApp().globalData.enableAutoFloatingWindowWhenHome,
         });
     
         uni.$NECallKit.login({
@@ -27,6 +56,7 @@ export const useUserStore = defineStore("user", {
           success: () => {
             console.log("login success");
             this.userID = userID;
+            setLoginCache(userID, token);
     
             uni.$UIKitNIM.V2NIMMessageService.on("onReceiveMessages", onReceiveMessages);
     
@@ -59,6 +89,8 @@ export const useUserStore = defineStore("user", {
               
               const messageStore = useMessageStore();
               messageStore.clearMessages();
+              this.userID = "";
+              clearLoginCache();
               uni.redirectTo({
                 url: "/pages/login/login",
               });

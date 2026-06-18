@@ -12,12 +12,15 @@ export interface ICallStore {
   localUserInfo: string;
   remoteUserInfoList: Array<string>;
   callerUserInfo: string;
+  callExtraInfo: string;
   callDuration: string; 
   callTips: string;
   language: string;
   chatGroupID: string;
   translate: Function;
   enableFloatWindow: boolean;
+  enableIncomingBanner: boolean;
+  isInIncomingBanner: boolean;
   isGroupCall: boolean;
   isLocalMicOpen: boolean;
   isLocalCameraOpen: boolean;

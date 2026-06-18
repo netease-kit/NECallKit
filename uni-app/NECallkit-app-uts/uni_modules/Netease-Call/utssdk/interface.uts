@@ -124,6 +124,16 @@ export type InitParams = {
   params?: UTSJSONObject;
   success?: () => void;
   fail?: (errCode: number, errMsg: string) => void;
+  /**
+   * 开启来电横幅模式。默认 false。
+   * 仅对 app-android 和 app-ios 平台生效，
+   * 分别转发给 Android CallKitUIOptions 和 iOS NECallUIConfig。
+   */
+  enableIncomingBanner?: boolean;
+  /**
+   * App 退后台时自动展示系统级或系统外浮窗。默认 false。
+   */
+  enableAutoFloatingWindowWhenHome?: boolean;
 };
 
 export type LoginParams = {
@@ -136,6 +146,12 @@ export type LoginParams = {
 export type CallParams = {
   accountId: string;
   callType: number;
+  /**
+   * 单次呼叫扩展参数。支持：
+   * - rtcChannelName / extraInfo / globalExtraCopy
+   * - pushConfig: { needPush, pushTitle, pushContent, pushPayload, needBadge }
+   * 兼容旧 uni-app 插件扁平字段：needPush / pushTitle / pushContent / pushPayload / needBadge。
+   */
   params?: UTSJSONObject;
   success?: () => void;
   fail?: (errCode: number, errMsg: string) => void;
