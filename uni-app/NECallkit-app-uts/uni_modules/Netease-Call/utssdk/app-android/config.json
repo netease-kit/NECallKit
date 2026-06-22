@@ -2,7 +2,7 @@
   "minSdkVersion": "21",
   "dependencies": [
 	"androidx.constraintlayout:constraintlayout:1.1.3",
-    "com.netease.yunxin.kit.call:call-ui:4.0.0"
+    "com.netease.yunxin.kit.call:call-ui:4.7.5"
   ],
   "project": {
     "repositories": [

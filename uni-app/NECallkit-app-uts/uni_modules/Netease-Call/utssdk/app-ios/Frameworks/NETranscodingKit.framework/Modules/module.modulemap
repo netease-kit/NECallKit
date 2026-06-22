@@ -1,0 +1,6 @@
+framework module NETranscodingKit {
+  umbrella header "NETranscodingKit-umbrella.h"
+
+  export *
+  module * { export * }
+}

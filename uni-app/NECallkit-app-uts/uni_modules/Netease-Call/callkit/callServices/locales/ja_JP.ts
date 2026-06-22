@@ -10,6 +10,8 @@ export const ja_JP = {
   reject: "拒否",
   accept: "応答",
   "switch camera": "切り替え",
+  "switch audio": "音声",
+  "switch video": "ビデオ",
   "virtual-background": "ボケ背景",
   // 通话结果
   "other side reject call": "通話が拒否されました",
