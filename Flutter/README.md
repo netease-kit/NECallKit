@@ -29,13 +29,13 @@ Here we take the integration with UI (i.e., NECallKit) as an example, which is a
 **Switch to Harmony version:**
 
 ```bash
-sh Flutter/callkit_ui/example/deploy/switch_nim_sdk_options_factory.sh ohos
+sh Flutter/example/script/switch_nim_sdk_options_factory.sh ohos
 ```
 
 **Switch back to Android/iOS version:**
 
 ```bash
-sh Flutter/callkit_ui/example/deploy/switch_nim_sdk_options_factory.sh android
+sh Flutter/example/script/switch_nim_sdk_options_factory.sh android/ios
 ```
 
 You can also pass `ios` when switching back to the non-OHOS version.
