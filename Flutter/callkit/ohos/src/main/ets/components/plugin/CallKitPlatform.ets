@@ -543,11 +543,19 @@ export class CallKitPlatform extends CallKitApi {
           return; // 不转发到 Flutter 层，避免响铃和显示UI
         }
         
-        // 【多端登录占线检测】检查当前通话状态
+        // 【多端登录占线检测】按通话引擎状态精确判断：
+        // IDLE(0) 和当前这通来电对应的 INVITED(2) 都应放行，
+        // 只有 CALL_OUT(1) / DIALOG(3) 才表示当前设备确实忙线。
         try {
           const currentCallInfo = await NECallEngine.getInstance().getCallInfo();
-          if (currentCallInfo && currentCallInfo.callStatus !== 0) { // 0=IDLE
-            console.warn(`[${TAG}] onReceiveInvited: user is busy, current callStatus=${currentCallInfo.callStatus}, rejecting incoming call`);
+          const currentStatus = currentCallInfo?.callStatus;
+          const isBusy =
+            currentStatus === 1 || // STATE_CALL_OUT
+            currentStatus === 3;   // STATE_DIALOG
+          if (currentCallInfo && isBusy) {
+            console.warn(
+              `[${TAG}] onReceiveInvited: user is busy, current callStatus=${currentStatus}, rejecting incoming call`
+            );
             // 自动拒绝来电（占线）
             await NECallEngine.getInstance().hangup(info.callId ?? "", "");
             return; // 不转发到 Flutter 层，避免响铃和显示UI

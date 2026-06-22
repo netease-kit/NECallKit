@@ -2,8 +2,6 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-
-
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'call_ui_localizations.dart';
@@ -30,9 +28,6 @@ class CallKitClientLocalizationsZh extends CallKitClientLocalizations {
   String get startCameraPermissionDenied => '启动摄像头权限被拒绝';
 
   @override
-  String get startMicrophonePermissionDenied => '启动麦克风权限被拒绝';
-
-  @override
   String get applyForMicrophonePermission => '申请麦克风权限';
 
   @override
@@ -42,10 +37,12 @@ class CallKitClientLocalizationsZh extends CallKitClientLocalizations {
   String get applyForMicrophoneAndCameraPermissions => '申请麦克风、摄像头权限';
 
   @override
-  String get needToAccessMicrophonePermission => '需要访问您的麦克风权限，开启后用于语音通话、视频通话等功能。请点击“前往设置”按钮进入权限相关页面，进行设置。';
+  String get needToAccessMicrophonePermission =>
+      '需要访问您的麦克风权限，开启后用于语音通话、视频通话等功能。请点击“前往设置”按钮进入权限相关页面，进行设置。';
 
   @override
-  String get needToAccessCameraPermission => '需要访问您的摄像头权限，开启后用于视频通话等功能。请点击“前往设置”按钮进入权限相关页面，进行设置。';
+  String get needToAccessCameraPermission =>
+      '需要访问您的摄像头权限，开启后用于视频通话等功能。请点击“前往设置”按钮进入权限相关页面，进行设置。';
 
   @override
   String get errorInPeerBlacklist => '发起通话失败，用户在黑名单中，禁止发起！';
@@ -54,10 +51,13 @@ class CallKitClientLocalizationsZh extends CallKitClientLocalizations {
   String get insufficientPermissions => '新通话呼入，但因权限不足，无法接听。请确认摄像头/麦克风权限已开启。';
 
   @override
-  String get displayPopUpWindowWhileRunningInTheBackgroundAndDisplayPopUpWindowPermissions => '请同时打开后台弹出界面和显示悬浮窗权限';
+  String
+      get displayPopUpWindowWhileRunningInTheBackgroundAndDisplayPopUpWindowPermissions =>
+          '请同时打开后台弹出界面和显示悬浮窗权限';
 
   @override
-  String get needToAccessMicrophoneAndCameraPermissions => '需要访问您的麦克风和摄像头权限，开启后用于语音通话、视频通话等功能。请点击“前往设置”按钮进入权限相关页面，进行设置';
+  String get needToAccessMicrophoneAndCameraPermissions =>
+      '需要访问您的麦克风和摄像头权限，开启后用于语音通话、视频通话等功能。请点击“前往设置”按钮进入权限相关页面，进行设置';
 
   @override
   String get noFloatWindowPermission => '浮窗权限未获取';
@@ -69,7 +69,8 @@ class CallKitClientLocalizationsZh extends CallKitClientLocalizations {
   String get noBackgroundStartPermission => '后台弹出界面权限未获取';
 
   @override
-  String get needBackgroundStartPermission => '你的手机没有授权应用获得后台弹出界面的权限，通话最小化不能正常使用';
+  String get needBackgroundStartPermission =>
+      '你的手机没有授权应用获得后台弹出界面的权限，通话最小化不能正常使用';
 
   @override
   String get accept => '接听';
@@ -91,6 +92,33 @@ class CallKitClientLocalizationsZh extends CallKitClientLocalizations {
 
   @override
   String get microphoneIsOff => '麦克风已关闭';
+
+  @override
+  String get chooseMicrophone => '选择麦克风';
+
+  @override
+  String get chooseSpeaker => '选择扬声器';
+
+  @override
+  String get chooseCamera => '选择摄像头';
+
+  @override
+  String get openMicrophone => '打开麦克风';
+
+  @override
+  String get closeMicrophone => '关闭麦克风';
+
+  @override
+  String get openSpeaker => '打开扬声器';
+
+  @override
+  String get closeSpeaker => '关闭扬声器';
+
+  @override
+  String get openCamera => '打开摄像头';
+
+  @override
+  String get closeCamera => '关闭摄像头';
 
   @override
   String get blurBackground => '模糊背景';

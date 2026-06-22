@@ -12,7 +12,7 @@ class NEValueCallback {
 }
 
 class NECallDefine {
-  static const String version = "0.0.0.0";
+  static const String version = '0.0.0.0';
 }
 
 /// Indicates the role in the calls.
@@ -103,7 +103,7 @@ class NECertificateConfig {
   });
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
+    final data = <String, dynamic>{};
     data['apnsCername'] = apnsCername;
     data['pkCername'] = pkCername;
     return data;
@@ -119,7 +119,7 @@ class NEExtraConfig {
   });
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
+    final data = <String, dynamic>{};
     if (lckConfig != null) {
       data['lckConfig'] = {
         'enableLiveCommunicationKit': lckConfig!.enableLiveCommunicationKit,
@@ -157,7 +157,7 @@ class NECallParams {
   NECallParams();
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
+    final data = <String, dynamic>{};
     if (pushConfig != null) {
       data['pushConfig'] = {
         'pushTitle': pushConfig!.pushTitle,
@@ -190,7 +190,7 @@ class NECallRecentCallsFilter {
   NECallResultType resultType = NECallResultType.unknown;
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
+    final data = <String, dynamic>{};
     data['begin'] = begin;
     data['end'] = end;
     data['resultType'] = resultType.index;
@@ -200,14 +200,14 @@ class NECallRecentCallsFilter {
 
 class CallObserverExtraInfo {
   NECallRole role = NECallRole.none;
-  String userData = "";
-  String chatGroupId = "";
+  String userData = '';
+  String chatGroupId = '';
 
   static CallObserverExtraInfo fromJson(Map data) {
-    CallObserverExtraInfo info = CallObserverExtraInfo();
+    var info = CallObserverExtraInfo();
     info.role = NECallRole.values[(data['role'] as int?) ?? 0];
-    info.userData = (data['userData'] as String?) ?? "";
-    info.chatGroupId = (data['chatGroupId'] as String?) ?? "";
+    info.userData = (data['userData'] as String?) ?? '';
+    info.chatGroupId = (data['chatGroupId'] as String?) ?? '';
     return info;
   }
 

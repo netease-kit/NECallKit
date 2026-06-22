@@ -17,6 +17,14 @@ typedef NS_ENUM(NSInteger, NECallUILanguage) {
   NECallUILanguageEn,
 };
 
+/// 单呼转多人邀请模式
+typedef NS_ENUM(NSInteger, NECallSingleToGroupInviteMode) {
+  /// 默认模式：1v1 通话中不能邀请成员。
+  NECallSingleToGroupInviteModeDisabled = 0,
+  /// 初始 1v1 成功接通后可以邀请成员。
+  NECallSingleToGroupInviteModeAfter1V1Connected = 1,
+};
+
 @interface NECallUIConfig : NSObject
 
 /// 是否禁止音频通话转视频通话，默认YES，支持转换
@@ -57,6 +65,9 @@ typedef NS_ENUM(NSInteger, NECallUILanguage) {
 
 /// 是否开启群组通话邀请其他人功能，默认NO，不开启
 @property(nonatomic, assign) BOOL enableGroupCallInviteOthersWhenCalling;
+
+/// 单呼转多人邀请模式，默认 NECallSingleToGroupInviteModeDisabled。
+@property(nonatomic, assign) NECallSingleToGroupInviteMode singleToGroupInviteMode;
 
 @end
 

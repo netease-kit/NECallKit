@@ -616,9 +616,6 @@ export class PipManager {
 
     this.isPipActive = false;
 
-    // 保存当前的手动启动标志，用于判断是否需要重新创建控制器
-    const wasManuallyStarted = this.isManuallyStarted;
-    
     // 重置手动启动标志，以便下次退后台时可以自动启动画中画
     this.isManuallyStarted = false;
     CallUILog.i(TAG, 'isManuallyStarted reset to false in cleanupPipState');
@@ -636,13 +633,25 @@ export class PipManager {
       this.channel.invokeMethod('onPipStopped', {});
     }
 
-    // 只有在非手动启动的情况下才重新创建画中画控制器
-    // 如果是手动启动（点击悬浮窗按钮），说明用户主动关闭了画中画，不应该重新创建
-    if (!wasManuallyStarted) {
-      CallUILog.i(TAG, 'cleanupPipState: recreating PiP controller for auto-start');
+    // 根据用户设置决定是否重新创建画中画控制器：
+    // 仅当启用了应用外悬浮窗时，才重新创建以支持退后台自动启动
+    const state = CallState.getInstance();
+    const shouldRecreate = state.enableFloatWindow && state.enableFloatWindowOutOfApp;
+    if (shouldRecreate) {
+      CallUILog.i(
+        TAG,
+        `cleanupPipState: recreating PiP controller by user setting ` +
+          `(enableFloatWindow=${state.enableFloatWindow}, ` +
+          `enableFloatWindowOutOfApp=${state.enableFloatWindowOutOfApp})`
+      );
       this.recreatePipController();
     } else {
-      CallUILog.i(TAG, 'cleanupPipState: skip recreating PiP controller (was manually started)');
+      CallUILog.i(
+        TAG,
+        `cleanupPipState: skip recreating PiP controller by user setting ` +
+          `(enableFloatWindow=${state.enableFloatWindow}, ` +
+          `enableFloatWindowOutOfApp=${state.enableFloatWindowOutOfApp})`
+      );
     }
   }
 

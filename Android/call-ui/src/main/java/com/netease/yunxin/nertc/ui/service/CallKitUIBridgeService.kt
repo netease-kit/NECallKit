@@ -251,6 +251,8 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
         } else if (canStopAudioPlay && callerAccId != null &&
             actionId != CallLocalAction.ACTION_BEFORE_RESET &&
             actionId != CallLocalAction.ACTION_SWITCH &&
+            actionId != CallLocalAction.ACTION_MUTE_AUDIO &&
+            actionId != CallLocalAction.ACTION_UNMUTE_AUDIO &&
             (resultCode == CallErrorCode.SUCCESS || resultCode == ResponseCode.RES_SUCCESS.toInt())
         ) {
             AVChatSoundPlayer.stop(context)
@@ -299,7 +301,7 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
     open fun onCallTypeChange(info: NECallTypeChangeInfo) {
         if (info.state == SwitchCallState.ACCEPT && bgInvitedInfo != null) {
             bgInvitedInfo = bgInvitedInfo?.run {
-                NEInviteInfo(callerAccId, info.callType, extraInfo, channelId)
+                NEInviteInfo(callerAccId, info.callType, extraInfo, channelId, multiCallInvite)
             }
         }
     }

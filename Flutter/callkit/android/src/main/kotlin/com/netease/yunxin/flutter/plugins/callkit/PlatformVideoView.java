@@ -18,6 +18,10 @@ import io.flutter.plugin.platform.PlatformView;
 
 public class PlatformVideoView implements PlatformView, MethodChannel.MethodCallHandler {
   private static final String TAG = "PlatformVideoView";
+  // Align Flutter Android single-call rendering with iOS:
+  // both local preview and remote video use aspect-fill.
+  private static final int DEFAULT_SCALING_TYPE =
+      NERtcConstants.VideoScalingType.SCALE_ASPECT_FILL;
 
   private NERtcTextureView mVideoView;
   private Context mContext;
@@ -31,13 +35,21 @@ public class PlatformVideoView implements PlatformView, MethodChannel.MethodCall
     mViewId = id;
     mMessenger = messenger;
     mVideoView = new NERtcTextureView(context);
-    mVideoView.setScalingType(NERtcConstants.VideoScalingType.SCALE_ASPECT_BALANCED);
+    applyLocalRenderConfig();
     // 确保视图可见且可以接收触摸事件
     mVideoView.setVisibility(View.VISIBLE);
     mVideoView.setClickable(false);
     mVideoView.setFocusable(false);
     mChannel = new MethodChannel(mMessenger, "ne_call_kit/video_view_" + mViewId);
     mChannel.setMethodCallHandler(this);
+  }
+
+  public void applyLocalRenderConfig() {
+    mVideoView.setScalingType(DEFAULT_SCALING_TYPE);
+  }
+
+  public void applyRemoteRenderConfig() {
+    mVideoView.setScalingType(DEFAULT_SCALING_TYPE);
   }
 
   /** 获取视频视图，供 CallKitPlatforms 使用 */

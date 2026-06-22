@@ -4,7 +4,7 @@
 
 import 'dart:io' show Platform;
 
-part of 'package:netease_callkit/netease_callkit.dart';
+part of netease_callkit;
 
 /// Platform view widget used to render CallKit video.
 ///

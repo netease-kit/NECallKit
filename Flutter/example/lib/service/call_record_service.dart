@@ -64,6 +64,60 @@ class CallRecord {
   }
 }
 
+/// Demo-side provider callback payload.
+///
+/// The example intentionally keeps the contract aligned with the public
+/// `NERecordConfig` minimal field set:
+/// - `accId`
+/// - `callType`
+/// - `callState`
+///
+/// `receivedAt` is demo-local metadata used only for UI display and logs.
+class DemoRecordProviderPayload {
+  DemoRecordProviderPayload({
+    required this.accId,
+    required this.callType,
+    required this.callState,
+    required this.receivedAt,
+  });
+
+  factory DemoRecordProviderPayload.fromRecordConfig(
+    NERecordConfig config, {
+    DateTime? receivedAt,
+  }) {
+    return DemoRecordProviderPayload(
+      accId: config.accId,
+      callType: config.callType,
+      callState: config.callState,
+      receivedAt: receivedAt ?? DateTime.now(),
+    );
+  }
+
+  final String accId;
+  final NECallType callType;
+  final NIMCallStatus callState;
+  final DateTime receivedAt;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'accId': accId,
+      'callType': callType.index,
+      'callState': callState.index,
+      'receivedAt': receivedAt.millisecondsSinceEpoch,
+    };
+  }
+
+  factory DemoRecordProviderPayload.fromJson(Map<String, dynamic> json) {
+    return DemoRecordProviderPayload(
+      accId: json['accId'] as String,
+      callType: NECallType.values[json['callType'] as int],
+      callState: NIMCallStatus.values[json['callState'] as int],
+      receivedAt:
+          DateTime.fromMillisecondsSinceEpoch(json['receivedAt'] as int),
+    );
+  }
+}
+
 /// 通话记录存储配置
 class CallRecordStorageConfig {
   /// 存储键前缀
@@ -149,6 +203,9 @@ class CallRecordStorage {
   Future<bool> addCallRecord(String accountId, CallRecord record) async {
     try {
       final records = await loadCallRecords(accountId);
+      if (records.contains(record)) {
+        return true;
+      }
       records.insert(0, record);
 
       // 限制记录数量
@@ -169,7 +226,9 @@ class CallRecordStorage {
       String accountId, List<CallRecord> newRecords) async {
     try {
       final records = await loadCallRecords(accountId);
-      records.insertAll(0, newRecords);
+      final uniqueRecords =
+          newRecords.where((record) => !records.contains(record));
+      records.insertAll(0, uniqueRecords);
 
       // 限制记录数量
       if (records.length > CallRecordStorageConfig.maxRecordCount) {
@@ -346,6 +405,16 @@ class CallRecordStorage {
 /// 通话记录服务类 - 提供高级功能
 abstract class CallRecordService {
   final CallRecordStorage _storage = CallRecordStorage();
+
+  bool get isRecordProviderEnabled;
+  DemoRecordProviderPayload? get lastRecordProviderPayload;
+  Stream<bool> recordProviderEnabledStream();
+  Stream<DemoRecordProviderPayload?> recordProviderPayloadStream();
+  Future<void> configureRecordProviderFromPreferences();
+  Future<void> setRecordProviderEnabled(bool enabled);
+  Future<DemoRecordProviderPayload> sendRecordWithProvider(
+    NERecordConfig config,
+  );
 
   /// 获取当前登录账号ID的抽象方法
   /// 子类需要实现此方法来获取实际的账号ID

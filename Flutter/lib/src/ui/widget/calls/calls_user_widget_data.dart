@@ -78,7 +78,7 @@ class CallsMultiUserWidgetData {
   }
 
   static bool hasBiggerSquare() {
-    bool has = false;
+    var has = false;
     blockBigger.forEach((key, value) {
       if (value == true) {
         has = true;
@@ -97,8 +97,8 @@ class CallsMultiUserWidgetData {
       [true, true, true]
     ];
 
-    bool has = false;
-    int biggerSquareIndex = 0;
+    var has = false;
+    var biggerSquareIndex = 0;
     blockBigger.forEach((key, value) {
       if (value == true) {
         has = true;
@@ -117,8 +117,8 @@ class CallsMultiUserWidgetData {
       ];
       return;
     }
-    int i = (biggerSquareIndex - 1) ~/ 3;
-    int j = (biggerSquareIndex - 1) % 3;
+    var i = (biggerSquareIndex - 1) ~/ 3;
+    var j = (biggerSquareIndex - 1) % 3;
 
     j = (j > 1) ? 1 : j;
 

@@ -26,6 +26,8 @@ export class CallState {
   startTime: number = 0;
   resourceMap: Map<string, string> = new Map();
   incomingBannerEnabled: boolean = true;
+  enableFloatWindow: boolean = false;
+  enableFloatWindowOutOfApp: boolean = false;
 
   private listeners: Set<CallStateListener> = new Set();
 

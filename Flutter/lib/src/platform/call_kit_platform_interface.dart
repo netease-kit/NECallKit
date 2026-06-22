@@ -3,9 +3,9 @@
 // found in the LICENSE file.
 
 import 'package:netease_callkit/netease_callkit.dart';
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:netease_callkit_ui/src/platform/call_kit_method_channel.dart';
 import 'package:netease_callkit_ui/src/utils/permission.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 abstract class NECallKitPlatform extends PlatformInterface {
   NECallKitPlatform() : super(token: _token);
@@ -84,9 +84,9 @@ abstract class NECallKitPlatform extends PlatformInterface {
 
   Future<PermissionResult> requestPermissions(
       {required List<PermissionType> permissions,
-      String title = "",
-      String description = "",
-      String settingsTip = ""}) async {
+      String title = '',
+      String description = '',
+      String settingsTip = ''}) async {
     return await instance.requestPermissions(
         permissions: permissions,
         title: title,

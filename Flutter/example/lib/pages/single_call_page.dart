@@ -3,13 +3,13 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:callkit_example/settings/settings_widget.dart';
 import 'package:callkit_example/utils/record_utils.dart';
 import 'package:callkit_example/utils/toast_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:callkit_example/l10n/app_localizations.dart';
-import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 import 'package:nim_core_v2/nim_core.dart';
 import 'package:callkit_example/service/call_record_service_impl.dart';
@@ -33,8 +33,11 @@ class _SingleCallWidgetState extends State<SingleCallWidget> {
   // 通话记录列表
   List<CallRecord> _callRecords = [];
   late StreamSubscription _receiveMessageSubscription;
+  late StreamSubscription _receiveMessageModifiedSubscription;
   late StreamSubscription _sendMessageSubscription;
   final CallRecordServiceImpl _callRecordService = CallRecordServiceImpl();
+
+  bool get _isDesktopRuntime => NECallKitUI.instance.isDesktopUiReuseEnabled;
 
   @override
   void initState() {
@@ -42,19 +45,18 @@ class _SingleCallWidgetState extends State<SingleCallWidget> {
     _userIdController = TextEditingController();
     _receiveMessageSubscription = NimCore
         .instance.messageService.onReceiveMessages
-        .listen((messages) async {
-      for (var message in messages) {
-        CallRecord? record = await RecordUtils.parseForCallRecord(message);
-        if (record != null) {
-          _addCallRecord(record);
-        }
-      }
-    });
+        .listen(_handleRecordMessages);
+    _receiveMessageModifiedSubscription = NimCore
+        .instance.messageService.onReceiveMessagesModified
+        .listen(_handleRecordMessages);
     _sendMessageSubscription =
         NimCore.instance.messageService.onSendMessage.listen((message) async {
-      CallRecord? record = await RecordUtils.parseForCallRecord(message);
+      CallRecord? record = await RecordUtils.parseForCallRecord(
+        message,
+        requireSendSucceeded: true,
+      );
       if (record != null) {
-        _addCallRecord(record);
+        await _addCallRecord(record);
       }
     });
     _loadCallRecords();
@@ -67,8 +69,18 @@ class _SingleCallWidgetState extends State<SingleCallWidget> {
   void dispose() {
     _userIdController.dispose();
     _receiveMessageSubscription.cancel();
+    _receiveMessageModifiedSubscription.cancel();
     _sendMessageSubscription.cancel();
     super.dispose();
+  }
+
+  Future<void> _handleRecordMessages(List<NIMMessage> messages) async {
+    for (final message in messages) {
+      final record = await RecordUtils.parseForCallRecord(message);
+      if (record != null) {
+        await _addCallRecord(record);
+      }
+    }
   }
 
   @override
@@ -200,7 +212,7 @@ class _SingleCallWidgetState extends State<SingleCallWidget> {
                 ])
               ],
             ),
-            const SizedBox(height: 45),
+            if (!_isDesktopRuntime) const SizedBox(height: 45),
           ],
         ));
   }
@@ -375,16 +387,23 @@ class _SingleCallWidgetState extends State<SingleCallWidget> {
     Navigator.of(context).pop();
   }
 
-  _call() {
+  Future<void> _call() async {
     if (_calledUserId.isNotEmpty) {
-      NECallKitUI.instance.call(
-          _calledUserId, _isAudioCall ? NECallType.audio : NECallType.video);
+      final result = await _placeCallViaPublicEntry(_calledUserId);
+      if (result.code != 0 &&
+          mounted &&
+          !_shouldSuppressDesktopPermissionToast(result)) {
+        ToastUtils.showToast(
+          context,
+          result.message ?? 'Call failed: ${result.code}',
+        );
+      }
     } else {
       ToastUtils.showToast(context, '请输入对方用户ID');
     }
   }
 
-  _callFromRecord(CallRecord record) {
+  Future<void> _callFromRecord(CallRecord record) async {
     // 设置被叫用户ID
     _calledUserId = record.accountId;
 
@@ -394,11 +413,32 @@ class _SingleCallWidgetState extends State<SingleCallWidget> {
     FocusScope.of(context).unfocus();
 
     // 2. 延迟 100ms 确保键盘完全关闭
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 100), () async {
       // 发起通话
-      NECallKitUI.instance.call(
-          record.accountId, _isAudioCall ? NECallType.audio : NECallType.video);
+      final result = await _placeCallViaPublicEntry(record.accountId);
+      if (result.code != 0 &&
+          mounted &&
+          !_shouldSuppressDesktopPermissionToast(result)) {
+        ToastUtils.showToast(
+          context,
+          result.message ?? 'Call failed: ${result.code}',
+        );
+      }
     });
+  }
+
+  Future<NEResult> _placeCallViaPublicEntry(String accountId) {
+    return NECallKitUI.instance.call(
+      accountId,
+      _isAudioCall ? NECallType.audio : NECallType.video,
+    );
+  }
+
+  bool _shouldSuppressDesktopPermissionToast(NEResult result) {
+    if (!(Platform.isMacOS || Platform.isWindows)) {
+      return false;
+    }
+    return result.message == NECallKitUI.localizations.permissionResultFail;
   }
 
   _goSettings() {
@@ -417,16 +457,20 @@ class _SingleCallWidgetState extends State<SingleCallWidget> {
         _callRecords = records;
       });
     } catch (e) {
-      print('Failed to load call records: $e');
+      debugPrint('Failed to load call records: $e');
     }
   }
 
   // 添加通话记录并保存
   Future<void> _addCallRecord(CallRecord record) async {
+    final added = await _callRecordService.addRecordToCurrentAccount(record);
+    if (!added || !mounted) {
+      return;
+    }
     setState(() {
+      _callRecords.remove(record);
       _callRecords.insert(0, record);
     });
-    await _callRecordService.addRecordToCurrentAccount(record);
   }
 
   // 清除通话记录
@@ -441,9 +485,12 @@ class _SingleCallWidgetState extends State<SingleCallWidget> {
   // 设置通话超时时间
   Future<void> _setCallTimeout() async {
     try {
-      await NECallEngine.instance.setTimeout(SettingsConfig.timeout);
+      final timeout = SettingsConfig.normalizeTimeout(SettingsConfig.timeout);
+      SettingsConfig.timeout = timeout;
+      await NECallEngine.instance.setTimeout(timeout);
+      debugPrint('SingleCallWidget: applied timeout=${timeout}s');
     } catch (e) {
-      print('Set timeout failed: $e');
+      debugPrint('Set timeout failed: $e');
     }
   }
 }

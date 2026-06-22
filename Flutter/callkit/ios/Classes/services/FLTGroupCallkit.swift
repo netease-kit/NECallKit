@@ -21,7 +21,7 @@ class FLTGroupCallkit: NSObject, FLTGroupCallKitApi {
     // MARK: - 初始化与释放
 
     func initConfig(_ config: FLTNEGroupConfigParam, completion: @escaping (FLTGroupSimpleResponse?, FlutterError?) -> Void) {
-        print("FLTGroupCallkit: init - appKey=\(config.appKey)")
+        print("FLTGroupCallkit: init")
 
         // 创建群呼配置
         let groupConfig = GroupConfigParam()

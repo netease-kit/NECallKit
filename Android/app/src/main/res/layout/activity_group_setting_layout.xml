@@ -37,6 +37,12 @@
             android:layout_height="wrap_content"
             android:hint="自定义推送内容" />
 
+        <EditText
+            android:id="@+id/edt_rtc_channel_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="RTC channelName" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -48,6 +54,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="设置推送内容" />
+
+            <Button
+                android:id="@+id/btn_save_rtc_channel_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="保存RTC频道" />
         </LinearLayout>
 
         <EditText
@@ -68,25 +80,6 @@
             android:layout_height="wrap_content"
             android:hint="挂断原因"
             android:maxLines="1" />
-
-        <EditText
-            android:id="@+id/edt_rtc_channel_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="RTC频道名称" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/btn_save_rtc_channel_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="保存RTC频道名称" />
-        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

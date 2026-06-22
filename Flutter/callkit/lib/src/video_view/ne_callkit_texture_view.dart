@@ -165,8 +165,13 @@ class _NECallkitTextureViewState extends State<NECallkitTextureView> {
 
   Widget _buildTextureView(int textureId, NECallkitVideoValue value) {
     final texture = Texture(textureId: textureId);
-    final videoWidth = value.width > 0 ? value.width.toDouble() : 1.0;
-    final videoHeight = value.height > 0 ? value.height.toDouble() : 1.0;
+    final isRotated = value.rotation == 90 || value.rotation == 270;
+    final videoWidth = value.width > 0
+        ? (isRotated ? value.height : value.width).toDouble()
+        : 1.0;
+    final videoHeight = value.height > 0
+        ? (isRotated ? value.width : value.height).toDouble()
+        : 1.0;
 
     // cover 需要特殊处理（FittedBox 不支持超出边界裁剪）
     if (widget.fitType == BoxFit.cover) {

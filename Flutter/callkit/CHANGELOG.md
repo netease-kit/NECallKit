@@ -1,3 +1,31 @@
+## [4.5.0+2] - 2026-04-24
+### Fixed
+- 对齐 Windows 平台下 `callkit_ui` 缺少 `runtimeobject` 链接导致构建失败的问题。
+
+### Compatibility
+- 兼容 `callkit` Android 4.4.0 版本
+- 兼容 `callkit` iOS 4.4.3 版本
+
+## [4.5.0+1] - 2026-04-24
+### Fixed
+- 修复 macOS 集成时，`prepare_macos_desktop.py` 硬依赖 `Ninja` 导致 `pod install` 可能失败的问题；未安装 `Ninja` 时会自动回退到 `Xcode` 生成器。
+
+### Compatibility
+- 兼容 `callkit` Android 4.4.0 版本
+- 兼容 `callkit` iOS 4.4.3 版本
+
+## [4.5.0] - 2026-04-23
+### Added
+- 支持 Flutter 桌面端（macOS / Windows）接入。
+
+### Compatibility
+- 兼容 `callkit` Android 4.4.0 版本
+- 兼容 `callkit` iOS 4.4.3 版本
+
+## [4.4.5-beta.1] - 2026-04-21
+### Changed
+- 发布测试。
+
 ## [4.4.3] - 2026-04-08
 ### Added
 - iOS 新增 LiveCommunicationKit `accept` / `hangup` response 回调透传能力，Flutter 业务层可监听系统来电界面的接听与拒绝结果。

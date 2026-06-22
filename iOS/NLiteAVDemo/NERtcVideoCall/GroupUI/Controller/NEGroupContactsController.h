@@ -26,6 +26,8 @@ typedef void (^InviteCompletion)(NSArray<NEUser *> *users);
 
 @property(nonatomic, assign) NSInteger hasJoinCount;
 
+@property(nonatomic, assign) BOOL ignoresMemberLimit;
+
 @end
 
 NS_ASSUME_NONNULL_END

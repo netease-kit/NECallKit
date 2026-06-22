@@ -84,7 +84,7 @@ class GroupCallKitPlatform : Pigeon.GroupCallKitApi, IPlatform, NEGroupCallDeleg
         config: Pigeon.NEGroupConfigParam,
         result: Pigeon.Result<Pigeon.GroupSimpleResponse>
     ) {
-        ALog.i(TAG, "init: appKey=${config.appKey}")
+        ALog.i(TAG, "init")
         try {
             val configParam = GroupConfigParam(
                 config.appKey,

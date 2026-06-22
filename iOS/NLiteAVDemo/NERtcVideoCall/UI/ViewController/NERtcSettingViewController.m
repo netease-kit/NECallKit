@@ -198,6 +198,27 @@
        forControlEvents:UIControlEventValueChanged];
   [busySwitch setOn:[[SettingManager shareInstance] rejectBusyCode]];
 
+  UILabel *singleToGroupLabel = [[UILabel alloc] init];
+  [self.view addSubview:singleToGroupLabel];
+  [singleToGroupLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.top.equalTo(self.rejectLabel.mas_bottom).offset(space);
+    make.left.equalTo(timeoutLabel.mas_left);
+  }];
+  singleToGroupLabel.textColor = timeoutLabel.textColor;
+  singleToGroupLabel.font = timeoutLabel.font;
+  singleToGroupLabel.text = @"开启单呼转多人（重启生效）";
+
+  UISwitch *singleToGroupSwitch = [[UISwitch alloc] init];
+  [self.view addSubview:singleToGroupSwitch];
+  [singleToGroupSwitch mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.right.equalTo(self.view).offset(-20);
+    make.centerY.equalTo(singleToGroupLabel);
+  }];
+  [singleToGroupSwitch addTarget:self
+                          action:@selector(singleToGroupSwitchChange:)
+                forControlEvents:UIControlEventValueChanged];
+  [singleToGroupSwitch setOn:[[SettingManager shareInstance] enableSingleToGroupCall]];
+
   UITapGestureRecognizer *tap =
       [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(hideKeyboard)];
   tap.numberOfTouchesRequired = 1;
@@ -207,7 +228,7 @@
   UILabel *copyLabel = [self createLabelWithText:@"全局抄送参数"];
   [self.view addSubview:copyLabel];
   [copyLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.top.equalTo(self.rejectLabel.mas_bottom).offset(space);
+    make.top.equalTo(singleToGroupLabel.mas_bottom).offset(space);
     make.left.equalTo(timeoutLabel.mas_left);
   }];
 
@@ -525,6 +546,10 @@
 
 - (void)busySwitchChange:(UISwitch *)uiswitch {
   [[SettingManager shareInstance] setBusyCode:uiswitch.isOn];
+}
+
+- (void)singleToGroupSwitchChange:(UISwitch *)uiswitch {
+  [[SettingManager shareInstance] setEnableSingleToGroupCall:uiswitch.isOn];
 }
 
 - (void)valueChange:(UISwitch *)uiswitch {

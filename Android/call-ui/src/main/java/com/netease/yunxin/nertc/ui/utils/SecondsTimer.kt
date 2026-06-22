@@ -14,6 +14,8 @@ class SecondsTimer(private val delay: Long = 0L, private val period: Long = 1000
     private var timer = Timer()
     private var running = false
     private var finished = false
+    var currentSeconds = 0L
+        private set
 
     fun start(onSecondsTick: (Long) -> Unit) {
         CallUILog.d(
@@ -29,6 +31,8 @@ class SecondsTimer(private val delay: Long = 0L, private val period: Long = 1000
         try {
             if (finished) {
                 timer = Timer()
+                currentSeconds = 0L
+                finished = false
             }
             timer.run {
                 schedule(
@@ -36,7 +40,7 @@ class SecondsTimer(private val delay: Long = 0L, private val period: Long = 1000
                         private var seconds = 0L
                         override fun run() {
                             seconds++
-                            onSecondsTick(seconds)
+                            onTick(seconds, onSecondsTick)
                         }
                     },
                     delay,
@@ -65,5 +69,10 @@ class SecondsTimer(private val delay: Long = 0L, private val period: Long = 1000
         } catch (e: Throwable) {
             CallUILog.e(tag, "SecondsTimer execute cancel error with $e.")
         }
+    }
+
+    private fun onTick(seconds: Long, onSecondsTick: (Long) -> Unit) {
+        currentSeconds = seconds
+        onSecondsTick(seconds)
     }
 }

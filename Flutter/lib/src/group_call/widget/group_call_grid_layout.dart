@@ -4,9 +4,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import '../group_call_member_ui.dart';
-import '../layout/grid_layout_config.dart';
 import '../layout/enlarged_layout_config.dart';
+import '../layout/grid_layout_config.dart';
 import 'group_call_member_view.dart';
 
 /// 群呼网格布局组件
@@ -35,7 +36,7 @@ class GroupCallGridLayout extends StatelessWidget {
   final String? enlargedMemberUserId;
 
   /// 点击成员视图回调
-  final Function(String userId) onMemberTap;
+  final void Function(String userId) onMemberTap;
 
   /// 切换摄像头回调
   final VoidCallback? onSwitchCamera;

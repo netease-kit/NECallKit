@@ -1,2 +1,10 @@
 hawk-api-test-cases/
 example/integration_test/
+example/devtools_options.yaml
+build/
+macos/.desktop_build/
+macos/.local_desktop_artifact
+macos/.local_desktop_artifact.zip
+macos/.prepared_bridge/
+macos/Frameworks/nertc_sdk_Mac.xcframework/
+macos/Frameworks/NEXKitBase.xcframework/

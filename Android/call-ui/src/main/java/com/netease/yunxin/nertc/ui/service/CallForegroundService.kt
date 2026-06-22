@@ -27,6 +27,7 @@ open class CallForegroundService : Service() {
 
     private val mainHandler = Handler(Looper.getMainLooper())
     private var isForegroundStarted = false
+    private var currentServiceId: String? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -39,12 +40,17 @@ open class CallForegroundService : Service() {
         CallUILog.d(TAG, "onStartCommand:$isRunning")
         isRunning = true
         val tempIntent = intent ?: return super.onStartCommand(null, flags, startId)
-        serviceId = tempIntent.getStringExtra(KEY_SERVICE_ID)
-        CallUILog.d(TAG, "onStartCommand:$serviceId")
+        currentServiceId = tempIntent.getStringExtra(KEY_SERVICE_ID)
+        CallUILog.d(TAG, "onStartCommand:$currentServiceId")
 
         // 立即启动前台服务，避免超时
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !isForegroundStarted) {
             startForegroundServiceImmediately(tempIntent)
+        }
+        val startAction = stateMachine.onForegroundStarted(currentServiceId)
+        if (startAction.stopSelfNow) {
+            CallUILog.d(TAG, "stopSelf after foreground started, serviceId:$currentServiceId")
+            stopSelf()
         }
 
         return super.onStartCommand(intent, flags, startId)
@@ -126,7 +132,11 @@ open class CallForegroundService : Service() {
         CallUILog.d(TAG, "onDestroy:$serviceId")
         isRunning = false
         isForegroundStarted = false
-        serviceId = null
+        stateMachine.resetIfCurrent(currentServiceId)
+        if (currentServiceId == serviceId || stateMachine.serviceId == null) {
+            serviceId = null
+        }
+        currentServiceId = null
     }
 
     companion object {
@@ -145,6 +155,8 @@ open class CallForegroundService : Service() {
 
         private var notificationConfig: CallKitNotificationConfig? = null
 
+        private val stateMachine = CallForegroundServiceStateMachine()
+
         @JvmStatic
         var isRunning: Boolean = false
             private set
@@ -159,6 +171,7 @@ open class CallForegroundService : Service() {
         ): String {
             val uuid = UUID.randomUUID().toString()
             this.serviceId = uuid
+            stateMachine.markStarting(uuid)
             CallUILog.d(TAG, "launchForegroundService, callType:$callType, serviceId:$serviceId")
             this.notificationConfig = config
             startService(context, intent, callType, uuid)
@@ -172,11 +185,18 @@ open class CallForegroundService : Service() {
                 TAG,
                 "terminateForegroundService, callType:$callType, serviceId:$serviceId, currentServiceId:${this.serviceId},"
             )
-            if (serviceId != null && serviceId != this.serviceId) {
-                return
+            val stopAction = stateMachine.requestStop(serviceId)
+            if (stopAction.stopServiceNow) {
+                stopService(context, callType)
+            } else {
+                CallUILog.d(
+                    TAG,
+                    "delay stopService, callType:$callType, serviceId:$serviceId, state:${stateMachine.state}"
+                )
             }
-            stopService(context, callType)
-            this.serviceId = null
+            if (stateMachine.serviceId == null || serviceId == null) {
+                this.serviceId = stateMachine.serviceId
+            }
         }
 
         private fun startService(context: Context, extraInfo: Intent, callType: Int, serviceId: String) {
@@ -199,6 +219,7 @@ open class CallForegroundService : Service() {
                 CallUILog.e(TAG, "Failed to start service", e)
                 // 重置状态
                 this.serviceId = null
+                stateMachine.reset()
                 isRunning = false
             }
         }

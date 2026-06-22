@@ -14,7 +14,7 @@ class Utils {
 
   static Future<String> getAssetsFilePath(String assetName) async {
     if (assetName.isEmpty) {
-      return "";
+      return '';
     }
     final tempDirectory = await getTempDirectory();
     final filePath = '$tempDirectory/$assetName';

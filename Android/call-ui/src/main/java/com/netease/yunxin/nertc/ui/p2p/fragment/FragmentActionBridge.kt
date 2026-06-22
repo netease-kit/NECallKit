@@ -58,6 +58,8 @@ interface FragmentActionBridge {
 
     fun doAccept(observer: NEResultObserver<CommonResult<NECallInfo>>? = null)
 
+    fun tryAutoAcceptFromIncomingBanner() = Unit
+
     fun doHangup(
         observer: NEResultObserver<CommonResult<Void>>? = null,
         channelId: String? = null,

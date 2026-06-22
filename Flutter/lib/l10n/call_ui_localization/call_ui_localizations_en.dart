@@ -2,8 +2,6 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
-
-
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'call_ui_localizations.dart';
@@ -30,19 +28,18 @@ class CallKitClientLocalizationsEn extends CallKitClientLocalizations {
   String get startCameraPermissionDenied => 'Start camera permission denied.';
 
   @override
-  String get startMicrophonePermissionDenied => 'Start microphone permission denied.';
-
-  @override
   String get applyForMicrophonePermission => 'apply for microphone permission';
 
   @override
   String get applyForCameraPermission => 'apply for camera permission';
 
   @override
-  String get applyForMicrophoneAndCameraPermissions => 'apply for microphone and camera permissions';
+  String get applyForMicrophoneAndCameraPermissions =>
+      'apply for microphone and camera permissions';
 
   @override
-  String get needToAccessMicrophonePermission => 'need to access microphone permission';
+  String get needToAccessMicrophonePermission =>
+      'need to access microphone permission';
 
   @override
   String get needToAccessCameraPermission => 'need to access camera permission';
@@ -54,10 +51,12 @@ class CallKitClientLocalizationsEn extends CallKitClientLocalizations {
   String get insufficientPermissions => 'insufficient permissions';
 
   @override
-  String get displayPopUpWindowWhileRunningInTheBackgroundAndDisplayPopUpWindowPermissions => 'display popUpWindow while running in the background and display popUpWindow permissions';
+  String get displayPopUpWindowWhileRunningInTheBackgroundAndDisplayPopUpWindowPermissions =>
+      'display popUpWindow while running in the background and display popUpWindow permissions';
 
   @override
-  String get needToAccessMicrophoneAndCameraPermissions => 'need to access microphone and camera permissions';
+  String get needToAccessMicrophoneAndCameraPermissions =>
+      'need to access microphone and camera permissions';
 
   @override
   String get noFloatWindowPermission => 'no float window permission';
@@ -69,7 +68,8 @@ class CallKitClientLocalizationsEn extends CallKitClientLocalizations {
   String get noBackgroundStartPermission => 'no background start permission';
 
   @override
-  String get needBackgroundStartPermission => 'Your phone has not granted background start permission, minimizing calls may not work properly';
+  String get needBackgroundStartPermission =>
+      'Your phone has not granted background start permission, minimizing calls may not work properly';
 
   @override
   String get accept => 'accept';
@@ -91,6 +91,33 @@ class CallKitClientLocalizationsEn extends CallKitClientLocalizations {
 
   @override
   String get microphoneIsOff => 'microphoneIsOff';
+
+  @override
+  String get chooseMicrophone => 'Choose Microphone';
+
+  @override
+  String get chooseSpeaker => 'Choose Speaker';
+
+  @override
+  String get chooseCamera => 'Choose Camera';
+
+  @override
+  String get openMicrophone => 'Turn On Microphone';
+
+  @override
+  String get closeMicrophone => 'Turn Off Microphone';
+
+  @override
+  String get openSpeaker => 'Turn On Speaker';
+
+  @override
+  String get closeSpeaker => 'Turn Off Speaker';
+
+  @override
+  String get openCamera => 'Turn On Camera';
+
+  @override
+  String get closeCamera => 'Turn Off Camera';
 
   @override
   String get blurBackground => 'blurBackground';

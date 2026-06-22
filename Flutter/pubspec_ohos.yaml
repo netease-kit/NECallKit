@@ -1,6 +1,6 @@
 name: netease_callkit_ui
 description: "netease callkit_ui is a ui kit about audio&video calls launched by CommsEase."
-version: 4.4.3
+version: 4.5.0+2
 repository: https://github.com/netease-kit/NECallKit
 homepage: https://yunxin.163.com/
 
@@ -41,7 +41,7 @@ dependencies:
         url: "https://gitcode.com/openharmony-sig/flutter_wakelock.git"
         path: ./wakelock
   netease_callkit:
-    path: ./callkit
+    path: ../callkit
 
 dev_dependencies:
   flutter_test:

@@ -4,15 +4,15 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 
 import 'package:flutter/material.dart';
-import 'package:netease_callkit/netease_callkit.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
 import 'package:netease_callkit_ui/src/data/constants.dart';
 import 'package:netease_callkit_ui/src/data/user.dart';
+import 'package:netease_callkit_ui/src/desktop/desktop_ui_reuse_adapter.dart';
 import 'package:netease_callkit_ui/src/event/event_notify.dart';
 import 'package:netease_callkit_ui/src/platform/call_kit_platform_interface.dart';
+import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 import 'package:netease_callkit_ui/src/ui/widget/calls/calls_function_widget.dart';
 import 'package:netease_callkit_ui/src/ui/widget/calls/calls_user_widget_data.dart';
 import 'package:netease_callkit_ui/src/ui/widget/common/float_permission_dialog.dart';
@@ -36,6 +36,8 @@ class CallsWidget extends StatefulWidget {
 class _CallsWidgetState extends State<CallsWidget>
     with TickerProviderStateMixin {
   static const String _tag = 'CallsWidgetState';
+  static const DesktopUiReuseAdapter _desktopUiReuseAdapter =
+      DesktopUiReuseAdapter();
   late NEEventCallback setStateCallBack;
   late NEEventCallback groupCallUserWidgetRefreshCallback;
   late AnimationController _controller;
@@ -253,24 +255,24 @@ class _CallsWidgetState extends State<CallsWidget>
   }
 
   Widget _buildTopWidget() {
-    final floatWindowBtnWidget = CallState.instance.enableFloatWindow &&
-            NECallStatus.accept == CallState.instance.selfUser.callStatus
-        ? Visibility(
-            visible: CallState.instance.enableFloatWindow &&
-                NECallStatus.accept == CallState.instance.selfUser.callStatus,
-            child: InkWell(
-                onTap: _openFloatWindow,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: Image.asset(
-                      'assets/images/floating_button.png',
-                      package: 'netease_callkit_ui',
-                    ),
-                  ),
-                )),
+    final showFloatWindowButton =
+        _desktopUiReuseAdapter.shouldShowSingleCallFloatWindowButton() &&
+            CallState.instance.enableFloatWindow &&
+            NECallStatus.accept == CallState.instance.selfUser.callStatus;
+    final floatWindowBtnWidget = showFloatWindowButton
+        ? InkWell(
+            onTap: _openFloatWindow,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(0, 0, 12, 12),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: Image.asset(
+                  'assets/images/floating_button.png',
+                  package: 'netease_callkit_ui',
+                ),
+              ),
+            ),
           )
         : const SizedBox();
 

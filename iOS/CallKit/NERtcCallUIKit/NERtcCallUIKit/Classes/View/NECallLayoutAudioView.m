@@ -188,11 +188,9 @@ static NSString *const kCallLayoutAudioViewTag = @"CallLayoutAudioView";
     } else {
       // 被叫：显示邀请文案
       NECallStateManager *stateManager = [NECallStateManager sharedInstance];
-      if (stateManager.callType == NECallTypeVideo) {
-        self.centerSubtitleLabel.text = [NECallKitUtil localizableWithKey:@"invite_video_call"];
-      } else {
-        self.centerSubtitleLabel.text = [NECallKitUtil localizableWithKey:@"invite_audio_call"];
-      }
+      self.centerSubtitleLabel.text =
+          [NECallKitUtil incomingInviteTextWithCallType:stateManager.callType
+                                       multiCallInvite:stateManager.inviteInfo.multiCallInvite];
     }
   }
 

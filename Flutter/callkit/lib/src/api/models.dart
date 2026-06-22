@@ -29,6 +29,21 @@ enum NECallInitRtcMode {
   inNeedDelayToAccept,
 }
 
+/// Preferred desktop video render path used during RTC initialization.
+enum NEDesktopVideoRenderMode {
+  /// Let the desktop runtime infer the render mode from available resources.
+  @JsonValue(0)
+  auto,
+
+  /// Initialize RTC for texture/external-renderer output.
+  @JsonValue(1)
+  externalRenderer,
+
+  /// Initialize RTC for native platform-window rendering.
+  @JsonValue(2)
+  platformWindow,
+}
+
 /// Type of call.
 enum NECallType {
   /// No call type.
@@ -79,6 +94,11 @@ enum NECallSwitchState {
 }
 
 /// Reason why a call ended.
+///
+/// Desktop runtime reuses the same public terminal space as mobile. Multi-
+/// client login alignment on desktop is normalized into [kicked],
+/// [otherRejected] and [otherAccepted] instead of introducing a
+/// desktop-only terminal model.
 enum NECallTerminalCode {
   /// Normal termination.
   @JsonValue(0)
@@ -207,6 +227,14 @@ enum NERtcVirtualBackgroundSourceStateReason {
   notSupported,
 }
 
+/// Shared public timeout contract for single-call engines.
+class NECallTimeoutPolicy {
+  NECallTimeoutPolicy._();
+
+  static const int defaultSeconds = 30;
+  static const int maxSeconds = 120;
+}
+
 // ==================== Models ====================
 
 /// Basic response model used by the CallKit API.
@@ -254,16 +282,20 @@ class NELCKConfig {
 class NESetupConfig {
   NESetupConfig({
     required this.appKey,
+    this.currentAccountId,
     this.currentUserRtcUid,
     this.enableJoinRtcWhenCall,
     this.initRtcMode,
+    this.desktopVideoRenderMode,
     this.lckConfig,
   });
 
   final String appKey;
+  final String? currentAccountId;
   final int? currentUserRtcUid;
   final bool? enableJoinRtcWhenCall;
   final NECallInitRtcMode? initRtcMode;
+  final NEDesktopVideoRenderMode? desktopVideoRenderMode;
   final NELCKConfig? lckConfig;
 
   factory NESetupConfig.fromJson(Map<String, dynamic> json) =>
@@ -478,18 +510,46 @@ class NEViewParam {
   Map<String, dynamic> toJson() => _$NEViewParamToJson(this);
 }
 
+/// Desktop video capture device descriptor exposed by the desktop bridge.
+class NEDesktopVideoDevice {
+  const NEDesktopVideoDevice({
+    required this.deviceId,
+    required this.deviceName,
+  });
+
+  final String deviceId;
+  final String deviceName;
+
+  String get displayName => deviceName.isNotEmpty ? deviceName : deviceId;
+}
+
+/// Desktop audio device descriptor exposed by the desktop bridge.
+class NEDesktopAudioDevice {
+  const NEDesktopAudioDevice({
+    required this.deviceId,
+    required this.deviceName,
+  });
+
+  final String deviceId;
+  final String deviceName;
+
+  String get displayName => deviceName.isNotEmpty ? deviceName : deviceId;
+}
+
 /// Invite information for an incoming call.
 @JsonSerializable()
 class NEInviteInfo {
   NEInviteInfo({
     required this.callerAccId,
     required this.callType,
+    this.callId,
     this.extraInfo,
     this.channelId,
   });
 
   final String callerAccId;
   final NECallType callType;
+  final String? callId;
   final String? extraInfo;
   final String? channelId;
 
@@ -534,11 +594,13 @@ class NELCKHangupResult {
 class NECallEndInfo {
   NECallEndInfo({
     required this.reasonCode,
+    this.callId,
     this.extraString,
     this.message,
   });
 
   final NECallTerminalCode reasonCode;
+  final String? callId;
   final String? extraString;
   final String? message;
 
@@ -566,6 +628,10 @@ class NECallTypeChangeInfo {
 }
 
 /// Configuration for a call record entry.
+///
+/// The public record payload intentionally stays minimal across mobile and
+/// desktop: only [accId], [callType] and [callState] are exposed to a custom
+/// [NERecordProvider].
 @JsonSerializable()
 class NERecordConfig {
   NERecordConfig({

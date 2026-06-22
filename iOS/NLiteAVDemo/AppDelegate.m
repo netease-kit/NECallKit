@@ -110,7 +110,9 @@ rotation:(NERtcVideoRotationType)rotation
   option.v2 = YES;
   [NIMSDK.sharedSDK registerWithOptionV2:option v2Option:nil];
 
+  BOOL enableSingleToGroupCall = [[SettingManager shareInstance] enableSingleToGroupCall];
   NESetupConfig *setupConfig = [[NESetupConfig alloc] initWithAppkey:kAppKey];
+  setupConfig.enableSingleToGroupCall = enableSingleToGroupCall;
   [[NECallEngine sharedInstance] setup:setupConfig];
 
   NECallUIKitConfig *config = [[NECallUIKitConfig alloc] init];
@@ -119,8 +121,14 @@ rotation:(NERtcVideoRotationType)rotation
   config.uiConfig.enableFloatingWindowOutOfApp = YES;
   config.uiConfig.language = NECallUILanguageAuto;
   config.uiConfig.enableGroupCallInviteOthersWhenCalling = YES;
+  config.uiConfig.singleToGroupInviteMode =
+      enableSingleToGroupCall ? NECallSingleToGroupInviteModeAfter1V1Connected
+                              : NECallSingleToGroupInviteModeDisabled;
   [[NERtcCallUIKit sharedInstance] setupWithConfig:config];
   [NERtcCallUIKit sharedInstance].delegate = self;
+  // 恢复来电横幅开关的持久化设置
+  BOOL bannerEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"kEnableIncomingBanner"];
+  [[NERtcCallUIKit sharedInstance] enableIncomingBanner:bannerEnabled];
 
   // 自定义UI示例
   [NERtcCallUIKit sharedInstance].customControllerClass = NECallCustomController.class;
@@ -226,6 +234,59 @@ rotation:(NERtcVideoRotationType)rotation
     }
   } else {
     NSLog(@"[GroupCallLayout] ⚠️ AppDelegate rootVC 为空，无法弹出页面");
+  }
+}
+
+- (void)selectInviteUsersWithContext:(NECallInviteUIContext *)context
+                          completion:(void (^)(NSArray<NSString *> *_Nullable userIDs))completion {
+  NSLog(@"[SingleToGroup] AppDelegate 收到邀请选人请求，callId: %@, inCallUserCount: %ld, "
+        @"remainingCount: %ld",
+        context.callId, (long)context.inCallUserIDs.count, (long)context.remainingCount);
+  NEGroupContactsController *group = [[NEGroupContactsController alloc] init];
+  group.isInvite = YES;
+  group.ignoresMemberLimit = YES;
+  group.title = @"邀请";
+  group.totalCount = context.maxMembers;
+  group.hasJoinCount = GroupCallUserLimit - context.remainingCount;
+  for (NSString *userID in context.inCallUserIDs) {
+    if (userID.length <= 0) {
+      continue;
+    }
+    NEUser *neUser = [[NEUser alloc] init];
+    neUser.imAccid = userID;
+    neUser.mobile = userID;
+    neUser.avatar = @"";
+    [group.inCallUserDic setObject:neUser forKey:userID];
+  }
+
+  group.completion = ^(NSArray<NEUser *> *_Nonnull users) {
+    NSMutableArray<NSString *> *userIDs = [[NSMutableArray alloc] init];
+    for (NEUser *user in users) {
+      if (user.imAccid.length > 0) {
+        [userIDs addObject:user.imAccid];
+      }
+    }
+    if (completion) {
+      completion(userIDs.copy);
+    }
+  };
+
+  [self presentInviteContactController:group];
+}
+
+- (void)presentInviteContactController:(UIViewController *)controller {
+  controller.modalPresentationStyle = UIModalPresentationFullScreen;
+  UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:controller];
+
+  UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow ?: self.window;
+  UIViewController *rootVC = keyWindow.rootViewController;
+  while (rootVC.presentedViewController) {
+    rootVC = rootVC.presentedViewController;
+  }
+  if (rootVC) {
+    [rootVC presentViewController:nav animated:YES completion:nil];
+  } else {
+    NSLog(@"[SingleToGroup] rootVC 为空，无法弹出选人页面");
   }
 }
 

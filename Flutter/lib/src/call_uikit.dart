@@ -3,18 +3,20 @@
 // found in the LICENSE file.
 
 import 'dart:io';
-import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 
 import 'package:flutter/cupertino.dart';
-import 'package:netease_callkit_ui/l10n/l10n.dart';
 import 'package:netease_callkit_ui/l10n/call_ui_localization/call_ui_localizations.dart';
+import 'package:netease_callkit_ui/l10n/l10n.dart';
 import 'package:netease_callkit_ui/ne_callkit_ui.dart';
-import 'package:netease_callkit_ui/src/ui/call_navigator_observer.dart';
+import 'package:netease_callkit_ui/src/desktop/desktop_ui_reuse_adapter.dart';
 import 'package:netease_callkit_ui/src/group_call/group_call_manager.dart';
+import 'package:netease_callkit_ui/src/platform/platform_compat.dart';
 
 class NECallKitUI {
   static const String _tag = 'NECallKitUI';
   static final NECallKitUI _instance = NECallKitUI();
+  static const DesktopUiReuseAdapter _desktopUiReuseAdapter =
+      DesktopUiReuseAdapter();
 
   static LocalizationsDelegate<CallKitClientLocalizations> get delegate {
     return S.delegate;
@@ -26,17 +28,54 @@ class NECallKitUI {
 
   static NECallKitUI get instance => _instance;
 
-  static NECallKitNavigatorObserver navigatorObserver =
+  static NECallKitNavigatorObserver get navigatorObserver =>
       NECallKitNavigatorObserver.getInstance();
+
+  bool get hasNavigatorObserverBinding => navigatorObserver.navigator != null;
+
+  bool get isDesktopUiReuseEnabled =>
+      _desktopUiReuseAdapter.shouldReuseFlutterCallPages();
+
+  bool get isCallingPageOpen =>
+      NECallKitNavigatorObserver.currentPage == CallPage.callingPage;
+
+  bool get canDriveCallingNavigation =>
+      _desktopUiReuseAdapter.canDriveCallingNavigation(
+        hasNavigatorBinding: hasNavigatorObserverBinding,
+        isCallingPageOpen: isCallingPageOpen,
+      );
+
+  bool get shouldUseDesktopNavigationOrchestration =>
+      _desktopUiReuseAdapter.shouldUseDesktopNavigationOrchestration(
+        hasNavigatorBinding: hasNavigatorObserverBinding,
+        isCallingPageOpen: isCallingPageOpen,
+      );
+
+  bool get shouldAwaitDesktopNavigatorBinding =>
+      _desktopUiReuseAdapter.shouldAwaitNavigatorBinding(
+        hasNavigatorBinding: hasNavigatorObserverBinding,
+        isCallingPageOpen: isCallingPageOpen,
+      );
+
+  bool get shouldUseDesktopHelperCoordination =>
+      _desktopUiReuseAdapter.shouldDelegatePlatformCoordinationToHelpers();
 
   /// init NECallKit
   ///
   /// @param appKey      appKey
   /// @param accountId      accountId
-  Future<void> setupEngine(String appKey, String accountId,
-      {NEExtraConfig? extraConfig, NEGroupConfigParam? groupConfigParam}) async {
-    return await CallManager.instance
-        .setupEngine(appKey, accountId, extraConfig: extraConfig, groupConfigParam: groupConfigParam);
+  Future<void> setupEngine(
+    String appKey,
+    String accountId, {
+    NEExtraConfig? extraConfig,
+    NEGroupConfigParam? groupConfigParam,
+  }) async {
+    return await CallManager.instance.setupEngine(
+      appKey,
+      accountId,
+      extraConfig: extraConfig,
+      groupConfigParam: groupConfigParam,
+    );
   }
 
   /// release NECallKit
@@ -51,11 +90,22 @@ class NECallKitUI {
   /// @param token       token
   /// @param certificateConfig 证书配置参数
   /// @param extraConfig 额外配置参数，包含 lckConfig 等
-  Future<NEResult> login(String appKey, String accountId, String token,
-      {NECertificateConfig? certificateConfig,
-      NEExtraConfig? extraConfig, NEGroupConfigParam? groupConfigParam}) async {
-    return await CallManager.instance.login(appKey, accountId, token,
-        certificateConfig: certificateConfig, extraConfig: extraConfig, groupConfigParam: groupConfigParam);
+  Future<NEResult> login(
+    String appKey,
+    String accountId,
+    String token, {
+    NECertificateConfig? certificateConfig,
+    NEExtraConfig? extraConfig,
+    NEGroupConfigParam? groupConfigParam,
+  }) async {
+    return await CallManager.instance.login(
+      appKey,
+      accountId,
+      token,
+      certificateConfig: certificateConfig,
+      extraConfig: extraConfig,
+      groupConfigParam: groupConfigParam,
+    );
   }
 
   /// logout NECallKit
@@ -78,8 +128,11 @@ class NECallKitUI {
   ///
   /// @param userId        callees
   /// @param callMediaType Call type
-  Future<NEResult> call(String userId, NECallType callMediaType,
-      [NECallParams? params]) async {
+  Future<NEResult> call(
+    String userId,
+    NECallType callMediaType, [
+    NECallParams? params,
+  ]) async {
     return await CallManager.instance.call(userId, callMediaType, params);
   }
 

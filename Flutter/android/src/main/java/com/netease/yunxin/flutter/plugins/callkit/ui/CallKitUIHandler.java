@@ -180,7 +180,9 @@ public class CallKitUIHandler {
 
   public void stopFloatWindow(MethodCall call, MethodChannel.Result result) {
     CallUILog.i(TAG, "stopFloatWindow");
-    WindowManager.showIncomingBanner(mApplicationContext);
+    // This path is used by the active-call float window cleanup on hangup.
+    // Re-showing an incoming banner here makes a finished call look like a new invite.
+    WindowManager.closeFloatWindow(mApplicationContext);
     result.success(0);
   }
 

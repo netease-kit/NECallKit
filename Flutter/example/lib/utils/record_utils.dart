@@ -2,55 +2,67 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
+import 'package:flutter/foundation.dart';
 import 'package:callkit_example/service/call_record_service.dart';
 import 'package:netease_callkit/netease_callkit.dart';
 import 'package:nim_core_v2/nim_core.dart';
 
 class RecordUtils {
-  static Future<CallRecord?> parseForCallRecord(NIMMessage message) async {
-    if (message.messageType == NIMMessageType.call &&
-        message.sendingState == NIMMessageSendingState.succeeded) {
-      var attachment = message.attachment;
-      if (attachment == null) {
-        print('handleNetCallAttachment attachment is null');
-        return null;
-      }
-
-      // 检查是否为通话附件
-      if (attachment is! NIMMessageCallAttachment) {
-        return null;
-      }
-
-      // 获取会话目标ID
-      var targetId = await _getTargetIdFromConversation(message);
-      if (targetId == null || targetId.isEmpty) {
-        print('handleNetCallAttachment targetId is null or empty');
-        return null;
-      }
-
-      // 从通话附件中获取真实的通话类型
-      NECallType callType = NECallType.audio; // 默认为音频
-      // 根据type字段判断通话类型：1=音频，2=视频
-      if (attachment.type == 2) {
-        callType = NECallType.video;
-      }
-
-      // 创建通话记录
-      final callRecord = CallRecord(
-        accountId: targetId,
-        isIncoming: !(message.isSelf ?? false), // 如果不是自己发送的，则为呼入
-        timestamp: DateTime.fromMillisecondsSinceEpoch(
-          message.createTime ?? DateTime.now().millisecondsSinceEpoch,
-        ),
-        callType: callType,
-      );
-      return callRecord;
+  static Future<CallRecord?> parseForCallRecord(
+    NIMMessage message, {
+    bool requireSendSucceeded = false,
+  }) async {
+    if (message.messageType != NIMMessageType.call) {
+      return null;
     }
-    return null;
+
+    if (requireSendSucceeded &&
+        message.sendingState != NIMMessageSendingState.succeeded) {
+      return null;
+    }
+
+    final attachment = message.attachment;
+    if (attachment == null) {
+      debugPrint('handleNetCallAttachment attachment is null');
+      return null;
+    }
+
+    if (attachment is! NIMMessageCallAttachment) {
+      return null;
+    }
+
+    final targetId = await _getTargetIdFromMessage(message);
+    if (targetId == null || targetId.isEmpty) {
+      debugPrint('handleNetCallAttachment targetId is null or empty');
+      return null;
+    }
+
+    final callType = attachment.type == 2 ? NECallType.video : NECallType.audio;
+
+    return CallRecord(
+      accountId: targetId,
+      isIncoming: !(message.isSelf ?? false),
+      timestamp: DateTime.fromMillisecondsSinceEpoch(
+        message.createTime ?? DateTime.now().millisecondsSinceEpoch,
+      ),
+      callType: callType,
+    );
   }
 
-  static Future<String?> _getTargetIdFromConversation(
-      NIMMessage message) async {
+  static Future<String?> _getTargetIdFromMessage(NIMMessage message) async {
+    final isSelf = message.isSelf ?? false;
+    if (isSelf) {
+      final receiverId = message.receiverId;
+      if (receiverId != null && receiverId.isNotEmpty) {
+        return receiverId;
+      }
+    } else {
+      final senderId = message.senderId;
+      if (senderId != null && senderId.isNotEmpty) {
+        return senderId;
+      }
+    }
+
     if (message.conversationId == null) {
       return null;
     }
@@ -60,8 +72,56 @@ class RecordUtils {
           .conversationTargetId(message.conversationId!);
       return result.data;
     } catch (e) {
-      print('Failed to get target ID: $e');
+      debugPrint('Failed to get target ID: $e');
       return null;
     }
+  }
+
+  static String formatCallType(NECallType callType) {
+    switch (callType) {
+      case NECallType.audio:
+        return 'audio';
+      case NECallType.video:
+        return 'video';
+      case NECallType.none:
+        return 'none';
+    }
+  }
+
+  static String formatCallState(NIMCallStatus callState) {
+    switch (callState) {
+      case NIMCallStatus.completed:
+        return 'completed';
+      case NIMCallStatus.cancelled:
+        return 'cancelled';
+      case NIMCallStatus.rejected:
+        return 'rejected';
+      case NIMCallStatus.timeout:
+        return 'timeout';
+      case NIMCallStatus.busy:
+        return 'busy';
+    }
+  }
+
+  static String describeRecordProviderPayload(
+    DemoRecordProviderPayload? payload,
+  ) {
+    if (payload == null) {
+      return 'waiting for onRecordSend';
+    }
+    final time = payload.receivedAt;
+    final timeLabel = '${time.hour.toString().padLeft(2, '0')}:'
+        '${time.minute.toString().padLeft(2, '0')}:'
+        '${time.second.toString().padLeft(2, '0')}';
+    return 'accId=${payload.accId}, '
+        'callType=${formatCallType(payload.callType)}, '
+        'callState=${formatCallState(payload.callState)}, '
+        'receivedAt=$timeLabel';
+  }
+
+  static String describeCallRecord(CallRecord record) {
+    final direction = record.isIncoming ? 'incoming' : 'outgoing';
+    return '$direction ${record.accountId} '
+        '(${formatCallType(record.callType)})';
   }
 }

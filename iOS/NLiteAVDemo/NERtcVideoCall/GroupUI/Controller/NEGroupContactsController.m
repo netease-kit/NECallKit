@@ -19,6 +19,13 @@
 #import "NSMacro.h"
 #import "SectionHeaderView.h"
 
+static NSInteger const NEGroupInviteHistoryLimit = 20;
+static NSString *const NEGroupInviteHistoryFileName = @"groupInviteHistory";
+
+static NSArray<NSString *> *NEGroupInvitePresetAccounts(void) {
+  return @[];
+}
+
 @interface NEGroupContactsController () <UITextFieldDelegate,
                                          NIMChatManagerDelegate,
                                          UITableViewDelegate,
@@ -41,6 +48,10 @@
 @property(nonatomic, strong) UITableView *contentTable;
 /// 最近搜索
 @property(nonatomic, strong) NSMutableArray *searchHistoryData;
+
+@property(nonatomic, strong) UIView *tableHeaderContainer;
+
+@property(nonatomic, strong) UIView *waitingUsersContainer;
 
 @property(nonatomic, strong) NSMutableDictionary<NSString *, NEUser *> *flagDic;
 
@@ -115,6 +126,7 @@
                                             (unsigned long)[self.userController getAllUsers].count]
         forState:UIControlStateNormal];
   }
+  [self refreshTableHeaderView];
 }
 
 - (void)backAction:(UIButton *)backButton {
@@ -139,6 +151,11 @@
     make.left.right.bottom.equalTo(self.view);
     make.top.mas_equalTo(statusHeight + 44);
   }];
+
+  self.userController = [[GroupUserController alloc] init];
+  [self addChildViewController:self.userController];
+  self.userController.delegate = self;
+
   self.contentTable.tableHeaderView = [self getHeaderView];
   self.contentTable.delegate = self;
   self.contentTable.dataSource = self;
@@ -148,13 +165,6 @@
             forCellReuseIdentifier:@"NESearchResultCell"];
   [self.contentTable registerClass:[NECallStatusRecordCell class]
             forCellReuseIdentifier:@"NECallStatusRecordCell"];
-
-  self.userController = [[GroupUserController alloc] init];
-  [self addChildViewController:self.userController];
-  self.userController.view.frame = CGRectMake(0, 0, self.view.frame.size.width, 100);
-  self.contentTable.tableFooterView = self.userController.view;
-  self.userController.weakTable = self.contentTable;
-  self.userController.delegate = self;
 
   [self.view addSubview:self.callBtn];
   [self.callBtn mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -171,8 +181,8 @@
 - (UIView *)getHeaderView {
   // 账号ID
   UIView *back = [[UIView alloc] init];
+  self.tableHeaderContainer = back;
   back.backgroundColor = UIColor.clearColor;
-  back.frame = CGRectMake(0, 0, self.view.frame.size.width, 40 + 8 + 40);
 
   [back addSubview:self.searchBarView];
   [self.searchBarView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -206,19 +216,105 @@
     make.width.mas_equalTo(48);
   }];
 
-  UILabel *currentPhoneLabel = [[UILabel alloc] init];
-  currentPhoneLabel.textAlignment = NSTextAlignmentLeft;
-  currentPhoneLabel.textColor = HEXCOLORA(0xFFFFFF, 0.5);
-  currentPhoneLabel.font = [UIFont systemFontOfSize:14.0];
-  currentPhoneLabel.text =
+  self.currentUserPhone = [[UILabel alloc] init];
+  self.currentUserPhone.textAlignment = NSTextAlignmentLeft;
+  self.currentUserPhone.textColor = HEXCOLORA(0xFFFFFF, 0.5);
+  self.currentUserPhone.font = [UIFont systemFontOfSize:14.0];
+  self.currentUserPhone.text =
       [NSString stringWithFormat:@"您的accoutId：%@", [NEAccount shared].userModel.imAccid];
-  [back addSubview:currentPhoneLabel];
-  [currentPhoneLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+  [back addSubview:self.currentUserPhone];
+  [self.currentUserPhone mas_makeConstraints:^(MASConstraintMaker *make) {
     make.left.equalTo(self.searchBarView);
     make.top.equalTo(self.searchBarView.mas_bottom).offset(20);
   }];
 
+  self.waitingUsersContainer = [[UIView alloc] init];
+  self.waitingUsersContainer.backgroundColor = UIColor.clearColor;
+  [back addSubview:self.waitingUsersContainer];
+  [self refreshTableHeaderView];
+
   return back;
+}
+
+- (CGFloat)waitingUsersHeightWithWidth:(CGFloat)width {
+  NSInteger count = [self.userController getAllUsers].count;
+  if (count <= 0) {
+    return 0;
+  }
+
+  CGFloat itemWidth = 80.0;
+  CGFloat itemHeight = 30.0;
+  CGFloat spacing = 10.0;
+  CGFloat horizontalInset = 20.0;
+  CGFloat availableWidth = MAX(width - horizontalInset * 2, itemWidth);
+  NSInteger itemsPerRow = MAX(1, (NSInteger)floor((availableWidth + spacing) / (itemWidth + spacing)));
+  NSInteger rows = (count + itemsPerRow - 1) / itemsPerRow;
+  return SectionHeaderView.height + spacing + rows * itemHeight + (rows - 1) * spacing + 16.0;
+}
+
+- (void)refreshTableHeaderView {
+  if (self.tableHeaderContainer == nil || self.waitingUsersContainer == nil) {
+    return;
+  }
+
+  CGFloat width = CGRectGetWidth(self.view.bounds);
+  CGFloat statusHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
+  CGFloat minimumHeight = 40 + 8 + 40;
+  CGFloat listTopHeight = CGRectGetHeight(self.view.bounds) * 0.5 - statusHeight - 44;
+  CGFloat waitingTop = 112.0;
+  CGFloat waitingHeight = [self waitingUsersHeightWithWidth:width];
+  CGFloat contentHeight = waitingHeight > 0 ? waitingTop + waitingHeight : minimumHeight;
+  CGFloat headerHeight = MAX(contentHeight, listTopHeight);
+
+  self.tableHeaderContainer.frame = CGRectMake(0, 0, width, headerHeight);
+  self.waitingUsersContainer.frame = CGRectMake(0, waitingTop, width, waitingHeight);
+  [self renderWaitingUsersWithWidth:width];
+
+  if (self.contentTable.tableHeaderView == self.tableHeaderContainer) {
+    self.contentTable.tableHeaderView = self.tableHeaderContainer;
+  }
+}
+
+- (void)renderWaitingUsersWithWidth:(CGFloat)width {
+  [self.waitingUsersContainer.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+  NSArray<NEUser *> *users = [[self.userController getAllUsers] copy];
+  if (users.count <= 0) {
+    return;
+  }
+
+  CGFloat horizontalInset = 20.0;
+  UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(horizontalInset, 0, width - horizontalInset * 2, SectionHeaderView.height)];
+  titleLabel.text = kWaittingCalledUser;
+  titleLabel.textColor = UIColor.whiteColor;
+  titleLabel.font = [UIFont systemFontOfSize:14.0];
+  [self.waitingUsersContainer addSubview:titleLabel];
+
+  CGFloat itemWidth = 80.0;
+  CGFloat itemHeight = 30.0;
+  CGFloat spacing = 10.0;
+  CGFloat availableWidth = MAX(width - horizontalInset * 2, itemWidth);
+  NSInteger itemsPerRow = MAX(1, (NSInteger)floor((availableWidth + spacing) / (itemWidth + spacing)));
+  CGFloat startY = SectionHeaderView.height + spacing;
+
+  [users enumerateObjectsUsingBlock:^(NEUser *_Nonnull user, NSUInteger idx, BOOL *_Nonnull stop) {
+    NSInteger row = idx / itemsPerRow;
+    NSInteger column = idx % itemsPerRow;
+    CGFloat x = horizontalInset + column * (itemWidth + spacing);
+    CGFloat y = startY + row * (itemHeight + spacing);
+
+    UILabel *accountLabel = [[UILabel alloc] initWithFrame:CGRectMake(x, y, itemWidth, itemHeight)];
+    accountLabel.text = user.imAccid ?: user.mobile ?: @"";
+    accountLabel.textAlignment = NSTextAlignmentCenter;
+    accountLabel.textColor = UIColor.whiteColor;
+    accountLabel.font = [UIFont systemFontOfSize:10.0];
+    accountLabel.numberOfLines = 0;
+    accountLabel.adjustsFontSizeToFitWidth = YES;
+    accountLabel.minimumScaleFactor = 0.8;
+    accountLabel.backgroundColor = [UIColor colorWithRed:0.22 green:0.29 blue:0.40 alpha:1.0];
+    accountLabel.layer.cornerRadius = 4.0;
+    accountLabel.clipsToBounds = YES;
+    [self.waitingUsersContainer addSubview:accountLabel];
+  }];
 }
 
 - (void)didSelectSearchUser:(NEUser *)user {
@@ -228,16 +324,24 @@
 
 - (void)didRemoveWithUser:(NEUser *)user {
   [self.flagDic removeObjectForKey:user.imAccid];
-  [self.contentTable reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 2)]
-                   withRowAnimation:UITableViewRowAnimationNone];
+  [self toggleInputAccountId:user.imAccid selected:NO];
+  [self.contentTable reloadData];
   [self userCountDidChange];
 }
 
 #pragma mark - data
 - (void)loadHistoryData {
   [self.searchHistoryData removeAllObjects];
-  NSArray *records = [self readFileName:historyFileName];
-  [self.searchHistoryData addObjectsFromArray:records];
+  NSArray *records = [self readFileName:NEGroupInviteHistoryFileName];
+  [self.searchHistoryData addObjectsFromArray:[self normalizedUsersFromUsers:records]];
+  for (NSString *accountId in NEGroupInvitePresetAccounts()) {
+    if (![self containsHistoryAccountId:accountId]) {
+      [self.searchHistoryData addObject:[self userWithAccountId:accountId]];
+    }
+  }
+  while (self.searchHistoryData.count > NEGroupInviteHistoryLimit) {
+    [self.searchHistoryData removeLastObject];
+  }
 }
 
 #pragma mark - event
@@ -248,6 +352,7 @@
     return;
   }
 
+  [self saveRecentAccounts:[self selectedAccountIds]];
   if (self.isInvite == YES) {
     if (self.completion) {
       self.completion([self.userController getAllUsers]);
@@ -277,8 +382,10 @@
 - (void)updateCallingList:(NSString *)inputText {
   if (!inputText || inputText.length == 0) {
     // 清空待呼叫列表
-    [self.userController removeAllUsers];
+    [self.userController removeUsers:[[self.userController getAllUsers] copy]];
     [self.flagDic removeAllObjects];
+    [self userCountDidChange];
+    [self.contentTable reloadData];
     return;
   }
 
@@ -318,7 +425,8 @@
     }
 
     // 检查人数限制
-    if ((self.hasJoinCount + [self.userController getAllUsers].count + toAdd.count) >=
+    if (self.ignoresMemberLimit == NO &&
+        (self.hasJoinCount + [self.userController getAllUsers].count + toAdd.count) >=
         GroupCallUserLimit) {
       break;  // 达到限制，停止添加
     }
@@ -336,24 +444,129 @@
   }
 
   [self userCountDidChange];
+  [self.contentTable reloadData];
 }
 
 - (NSArray *)parseAccountIds:(NSString *)inputText {
-  // 支持中文逗号和英文逗号分隔
-  NSCharacterSet *separators = [NSCharacterSet characterSetWithCharactersInString:@",，"];
+  NSCharacterSet *separators =
+      [NSCharacterSet characterSetWithCharactersInString:@",，;； \n\t"];
   NSArray *components = [inputText componentsSeparatedByCharactersInSet:separators];
 
   NSMutableArray *accountIds = [[NSMutableArray alloc] init];
   for (NSString *component in components) {
     NSString *trimmed = [component
         stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    if (trimmed.length > 0) {
+    if (trimmed.length > 0 && ![accountIds containsObject:trimmed]) {
       [accountIds addObject:trimmed];
     }
   }
 
   return [accountIds copy];
 }
+
+- (NEUser *)userWithAccountId:(NSString *)accountId {
+  NEUser *user = [[NEUser alloc] init];
+  user.imAccid = accountId;
+  user.mobile = accountId;
+  return user;
+}
+
+- (NSArray<NEUser *> *)normalizedUsersFromUsers:(NSArray *)users {
+  NSMutableArray<NEUser *> *result = [NSMutableArray array];
+  NSMutableSet<NSString *> *seenAccountIds = [NSMutableSet set];
+  for (NEUser *user in users) {
+    if (![user isKindOfClass:NEUser.class] || user.imAccid.length <= 0) {
+      continue;
+    }
+    NSString *accountId = [user.imAccid
+        stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (accountId.length <= 0 || [seenAccountIds containsObject:accountId]) {
+      continue;
+    }
+    [seenAccountIds addObject:accountId];
+    NEUser *normalizedUser = [self userWithAccountId:accountId];
+    normalizedUser.avatar = user.avatar;
+    normalizedUser.imToken = user.imToken;
+    normalizedUser.avRoomUid = user.avRoomUid;
+    [result addObject:normalizedUser];
+  }
+  return result;
+}
+
+- (BOOL)containsHistoryAccountId:(NSString *)accountId {
+  for (NEUser *user in self.searchHistoryData) {
+    if ([user.imAccid isEqualToString:accountId]) {
+      return YES;
+    }
+  }
+  return NO;
+}
+
+- (NSArray<NSString *> *)selectedAccountIds {
+  NSMutableArray<NSString *> *accountIds = [NSMutableArray array];
+  for (NEUser *user in [self.userController getAllUsers]) {
+    if (user.imAccid.length > 0 && ![accountIds containsObject:user.imAccid]) {
+      [accountIds addObject:user.imAccid];
+    }
+  }
+  return accountIds;
+}
+
+- (void)saveRecentAccounts:(NSArray<NSString *> *)accountIds {
+  if (accountIds.count <= 0) {
+    return;
+  }
+
+  NSMutableArray<NEUser *> *mergedUsers = [NSMutableArray array];
+  NSMutableSet<NSString *> *seenAccountIds = [NSMutableSet set];
+  void (^appendAccount)(NSString *) = ^(NSString *accountId) {
+    NSString *trimmedAccountId = [accountId
+        stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (trimmedAccountId.length <= 0 || [seenAccountIds containsObject:trimmedAccountId]) {
+      return;
+    }
+    [seenAccountIds addObject:trimmedAccountId];
+    [mergedUsers addObject:[self userWithAccountId:trimmedAccountId]];
+  };
+
+  for (NSString *accountId in accountIds) {
+    appendAccount(accountId);
+  }
+  for (NEUser *user in self.searchHistoryData) {
+    appendAccount(user.imAccid);
+  }
+  for (NSString *accountId in NEGroupInvitePresetAccounts()) {
+    appendAccount(accountId);
+  }
+  while (mergedUsers.count > NEGroupInviteHistoryLimit) {
+    [mergedUsers removeLastObject];
+  }
+
+  [self.searchHistoryData removeAllObjects];
+  [self.searchHistoryData addObjectsFromArray:mergedUsers];
+  [self writeToFile:NEGroupInviteHistoryFileName array:self.searchHistoryData];
+  [self.contentTable reloadData];
+}
+
+- (void)refreshInputWithAccountIds:(NSArray<NSString *> *)accountIds {
+  NSString *inputText = [accountIds componentsJoinedByString:@","];
+  self.textField.text = inputText;
+  self.lastUpdateText = inputText;
+  [self updateCallingList:inputText];
+}
+
+- (void)toggleInputAccountId:(NSString *)accountId selected:(BOOL)selected {
+  NSMutableArray<NSString *> *accountIds = [[self parseAccountIds:self.textField.text] mutableCopy];
+  if (selected) {
+    if (![accountIds containsObject:accountId]) {
+      [accountIds addObject:accountId];
+    }
+  } else {
+    [accountIds removeObject:accountId];
+  }
+  [self refreshInputWithAccountIds:accountIds];
+}
+
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
   if (self.textField.isFirstResponder) {
     [self.textField resignFirstResponder];
@@ -376,11 +589,18 @@
   dispatch_after(
       dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         NSString *currentText = textField.text ?: @"";
-        if (currentText.length > 0 && ![self.lastUpdateText isEqualToString:currentText]) {
+        if (![self.lastUpdateText isEqualToString:currentText]) {
           self.lastUpdateText = currentText;
           [self updateCallingList:currentText];
         }
       });
+  return YES;
+}
+
+- (BOOL)textFieldShouldClear:(UITextField *)textField {
+  self.lastUpdateText = @"";
+  [self updateCallingList:@""];
+  [self.contentTable reloadData];
   return YES;
 }
 - (UITextField *)textField {
@@ -407,7 +627,7 @@
 
 #pragma mark - file read & write
 - (void)saveUser:(NEUser *)user {
-  NSArray *array = [self readFileName:historyFileName];
+  NSArray *array = [self readFileName:NEGroupInviteHistoryFileName];
   NSMutableArray *mutArray = [NSMutableArray array];
   [mutArray addObject:user];
   [mutArray addObjectsFromArray:array];
@@ -416,10 +636,10 @@
       [mutArray removeObject:saveUser];
     }
   }
-  while (mutArray.count > RecordCountLimit) {
+  while (mutArray.count > NEGroupInviteHistoryLimit) {
     [mutArray removeLastObject];
   }
-  [self writeToFile:historyFileName array:mutArray];
+  [self writeToFile:NEGroupInviteHistoryFileName array:mutArray];
 }
 
 - (NSArray *)readFileName:(NSString *)fileName {
@@ -441,6 +661,7 @@
     return;
   }
 
+  [self saveRecentAccounts:[self selectedAccountIds]];
   if (self.isInvite == YES) {
     if (self.completion) {
       self.completion([self.userController getAllUsers]);
@@ -523,16 +744,19 @@
 
     NEUser *calledUser = [self.flagDic objectForKey:user.imAccid];
     if (calledUser == nil) {
-      if ((self.hasJoinCount + [self.userController getAllUsers].count) >= GroupCallUserLimit) {
+      if (self.ignoresMemberLimit == NO &&
+          (self.hasJoinCount + [self.userController getAllUsers].count) >= GroupCallUserLimit) {
         [UIApplication.sharedApplication.keyWindow ne_makeToast:@"邀请已达上限"];
         return;
       }
       [self.userController addUsers:@[ user ]];
       [self.flagDic setObject:user forKey:user.imAccid];
+      [self toggleInputAccountId:user.imAccid selected:YES];
       [tableView reloadData];
     } else {
       [self.userController removeUsers:@[ calledUser ]];
       [self.flagDic removeObjectForKey:user.imAccid];
+      [self toggleInputAccountId:user.imAccid selected:NO];
       [tableView reloadData];
     }
     [self userCountDidChange];
@@ -610,7 +834,7 @@
   if (nil == _historyHeader) {
     _historyHeader = [[SectionHeaderView alloc] init];
     _historyHeader.frame = CGRectMake(0, 0, self.view.frame.size.width, SectionHeaderView.height);
-    _historyHeader.titleLabel.text = @"最近搜索";
+    _historyHeader.titleLabel.text = @"最近邀请";
   }
   return _historyHeader;
 }

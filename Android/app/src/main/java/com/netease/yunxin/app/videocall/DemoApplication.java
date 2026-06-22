@@ -17,14 +17,18 @@ import com.netease.yunxin.app.videocall.config.AppConfig;
 import com.netease.yunxin.nertc.nertcvideocall.utils.NetworkUtils;
 import com.netease.yunxin.nertc.ui.CallKitUI;
 import com.netease.yunxin.nertc.ui.CallKitUIOptions;
+import com.netease.yunxin.nertc.ui.NECallSingleToGroupInviteMode;
 import com.netease.yunxin.nertc.ui.NECallUILanguage;
 import com.netease.yunxin.nertc.ui.base.TransHelper;
 import java.util.ArrayList;
 
 public class DemoApplication extends Application {
   private static final int CODE_REQUEST_INVITE_USERS = 9101;
+  private static final int IM_LOG_TOTAL_SIZE_MB = 512;
+  private static final int IM_LOG_MAX_FILE_SIZE_MB = 20;
+  private static final int IM_LOG_RETENTION_DAYS = 7;
+  private static final float IM_LOG_CLEANUP_RATIO = 0.8f;
   public static DemoApplication app;
-
   private static Application instance;
 
   @Override
@@ -41,11 +45,6 @@ public class DemoApplication extends Application {
     }
   }
 
-  /**
-   * 获取Application Context
-   *
-   * @return Application实例，如果未初始化则返回null
-   */
   public static Context getContext() {
     return instance;
   }
@@ -55,6 +54,10 @@ public class DemoApplication extends Application {
     SDKOptions options = new SDKOptions();
     //此处仅设置appkey，其他设置请自行参看信令文档设置 ：https://dev.yunxin.163.com/docs/product/信令/SDK开发集成/Android开发集成/初始化
     options.appKey = AppConfig.getAppKey();
+    options.totalLogSizeInMB = IM_LOG_TOTAL_SIZE_MB;
+    options.maxLogFileSizeInMB = IM_LOG_MAX_FILE_SIZE_MB;
+    options.logRetentionDays = IM_LOG_RETENTION_DAYS;
+    options.logCleanupRatio = IM_LOG_CLEANUP_RATIO;
     return options;
   }
 
@@ -76,7 +79,7 @@ public class DemoApplication extends Application {
             // 收到被叫时若 app 在后台，在恢复到前台时是否自动唤起被叫页面，默认为 true
             .resumeBGInvitation(true)
             .enableGroup(true)
-            .enableInviteOthersWhenGroupCalling(true)
+            .singleToGroupInviteMode(NECallSingleToGroupInviteMode.AFTER_1V1_CONNECTED)
             .enableAutoJoinWhenCalled(SettingActivity.ENABLE_AUTO_JOIN)
             // 设置用户信息
             .userInfoHelper(new SelfUserInfoHelper())
@@ -110,13 +113,41 @@ public class DemoApplication extends Application {
                         Intent data = intentResultInfo.getValue();
                         if (intentResultInfo.getSuccess()) {
                           ArrayList<String> selectorList =
-                              data.getStringArrayListExtra(
-                                  MultiCallUserActivity.KEY_CALL_USER_LIST);
+                              data.getStringArrayListExtra(MultiCallUserActivity.KEY_CALL_USER_LIST);
                           listNEResultObserver.onResult(selectorList);
                         }
                         return null;
                       });
                   return null;
+                })
+            .inviteContactSelector(
+                (context, inviteContext, listNEResultObserver) -> {
+                  if (listNEResultObserver == null) {
+                    return;
+                  }
+                  TransHelper.launchTask(
+                      context,
+                      CODE_REQUEST_INVITE_USERS,
+                      (innerContext, code) -> {
+                        MultiCallUserActivity.startSelectUser(
+                            innerContext,
+                            CODE_REQUEST_INVITE_USERS,
+                            CallModeType.RTC_GROUP_INVITE,
+                            inviteContext.getInCallUserAccIds());
+                        return null;
+                      },
+                      intentResultInfo -> {
+                        if (intentResultInfo == null || intentResultInfo.getValue() == null) {
+                          return null;
+                        }
+                        Intent data = intentResultInfo.getValue();
+                        if (intentResultInfo.getSuccess()) {
+                          ArrayList<String> selectorList =
+                              data.getStringArrayListExtra(MultiCallUserActivity.KEY_CALL_USER_LIST);
+                          listNEResultObserver.onResult(selectorList);
+                        }
+                        return null;
+                      });
                 })
             .language(NECallUILanguage.AUTO)
             .build();

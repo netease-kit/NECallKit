@@ -16,7 +16,12 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import com.netease.yunxin.flutter.plugins.callkit.ui.CallKitUIPlugin;
+import com.netease.yunxin.flutter.plugins.callkit.ui.utils.CallUILog;
 import com.netease.yunxin.flutter.plugins.callkit.ui.utils.FloatWindowsPermission;
+import com.netease.yunxin.kit.call.p2p.NECallEngine;
+import com.netease.yunxin.kit.call.p2p.model.NECallEndInfo;
+import com.netease.yunxin.kit.call.p2p.model.NECallEngineDelegateAbs;
 
 public class FloatWindowService extends Service {
   private CallFloatView mCallView;
@@ -37,6 +42,14 @@ public class FloatWindowService extends Service {
   private int mStopY;
   private boolean mIsMove;
   private int mLeftRightEdge = 20;
+  private final NECallEngineDelegateAbs mCallDelegate =
+      new NECallEngineDelegateAbs() {
+        @Override
+        public void onCallEnd(NECallEndInfo info) {
+          CallUILog.i(CallKitUIPlugin.TAG, "FloatWindowService onCallEnd, stopping service");
+          stopSelf();
+        }
+      };
 
   @Override
   public void onCreate() {
@@ -45,6 +58,14 @@ public class FloatWindowService extends Service {
     try {
       FloatWindowsPermission.setApplicationContext(getApplicationContext());
     } catch (Throwable ignore) {
+    }
+    try {
+      NECallEngine.sharedInstance().removeCallDelegate(mCallDelegate);
+      NECallEngine.sharedInstance().addCallDelegate(mCallDelegate);
+    } catch (Throwable throwable) {
+      CallUILog.e(
+          CallKitUIPlugin.TAG,
+          "FloatWindowService register call delegate failed: " + throwable.getMessage());
     }
     init();
   }
@@ -62,6 +83,10 @@ public class FloatWindowService extends Service {
   @Override
   public void onDestroy() {
     super.onDestroy();
+    try {
+      NECallEngine.sharedInstance().removeCallDelegate(mCallDelegate);
+    } catch (Throwable ignore) {
+    }
     if (null != mCallView) {
       mWindowManager.removeView(mCallView);
       mCallView.destroy();

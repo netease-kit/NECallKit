@@ -356,10 +356,10 @@ export struct IncomingCallBannerContent {
         .accessibilityText('拒绝')
         .margin({ right: 22 })
 
-      // 接听按钮（视频通话用绿底摄像头图标，音频通话用绿底电话图标）
+      // 接听按钮复用 Flutter Android 横幅同款图标，保持跨端一致
       Image(this.callerInfo.callType === 1 ?
-        $r('app.media.ic_accept_video') :
-        $r('app.media.ic_accept'))
+        $r('app.media.callkit_ic_dialing_video') :
+        $r('app.media.callkit_ic_dialing'))
         .width(36)
         .height(36)
         .onClick(() => this.onAccept())

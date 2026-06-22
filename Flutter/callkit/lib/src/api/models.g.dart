@@ -38,10 +38,13 @@ Map<String, dynamic> _$NELCKConfigToJson(NELCKConfig instance) =>
 NESetupConfig _$NESetupConfigFromJson(Map<String, dynamic> json) =>
     NESetupConfig(
       appKey: json['appKey'] as String,
+      currentAccountId: json['currentAccountId'] as String?,
       currentUserRtcUid: (json['currentUserRtcUid'] as num?)?.toInt(),
       enableJoinRtcWhenCall: json['enableJoinRtcWhenCall'] as bool?,
       initRtcMode:
           $enumDecodeNullable(_$NECallInitRtcModeEnumMap, json['initRtcMode']),
+      desktopVideoRenderMode: $enumDecodeNullable(
+          _$NEDesktopVideoRenderModeEnumMap, json['desktopVideoRenderMode']),
       lckConfig: json['lckConfig'] == null
           ? null
           : NELCKConfig.fromJson(json['lckConfig'] as Map<String, dynamic>),
@@ -50,9 +53,12 @@ NESetupConfig _$NESetupConfigFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$NESetupConfigToJson(NESetupConfig instance) =>
     <String, dynamic>{
       'appKey': instance.appKey,
+      'currentAccountId': instance.currentAccountId,
       'currentUserRtcUid': instance.currentUserRtcUid,
       'enableJoinRtcWhenCall': instance.enableJoinRtcWhenCall,
       'initRtcMode': _$NECallInitRtcModeEnumMap[instance.initRtcMode],
+      'desktopVideoRenderMode':
+          _$NEDesktopVideoRenderModeEnumMap[instance.desktopVideoRenderMode],
       'lckConfig': instance.lckConfig,
     };
 
@@ -60,6 +66,12 @@ const _$NECallInitRtcModeEnumMap = {
   NECallInitRtcMode.global: 0,
   NECallInitRtcMode.inNeed: 1,
   NECallInitRtcMode.inNeedDelayToAccept: 2,
+};
+
+const _$NEDesktopVideoRenderModeEnumMap = {
+  NEDesktopVideoRenderMode.auto: 0,
+  NEDesktopVideoRenderMode.externalRenderer: 1,
+  NEDesktopVideoRenderMode.platformWindow: 2,
 };
 
 NECallParam _$NECallParamFromJson(Map<String, dynamic> json) => NECallParam(
@@ -243,6 +255,7 @@ Map<String, dynamic> _$NEViewParamToJson(NEViewParam instance) =>
 NEInviteInfo _$NEInviteInfoFromJson(Map<String, dynamic> json) => NEInviteInfo(
       callerAccId: json['callerAccId'] as String,
       callType: $enumDecode(_$NECallTypeEnumMap, json['callType']),
+      callId: json['callId'] as String?,
       extraInfo: json['extraInfo'] as String?,
       channelId: json['channelId'] as String?,
     );
@@ -251,6 +264,7 @@ Map<String, dynamic> _$NEInviteInfoToJson(NEInviteInfo instance) =>
     <String, dynamic>{
       'callerAccId': instance.callerAccId,
       'callType': _$NECallTypeEnumMap[instance.callType]!,
+      'callId': instance.callId,
       'extraInfo': instance.extraInfo,
       'channelId': instance.channelId,
     };
@@ -258,6 +272,7 @@ Map<String, dynamic> _$NEInviteInfoToJson(NEInviteInfo instance) =>
 NECallEndInfo _$NECallEndInfoFromJson(Map<String, dynamic> json) =>
     NECallEndInfo(
       reasonCode: $enumDecode(_$NECallTerminalCodeEnumMap, json['reasonCode']),
+      callId: json['callId'] as String?,
       extraString: json['extraString'] as String?,
       message: json['message'] as String?,
     );
@@ -265,6 +280,7 @@ NECallEndInfo _$NECallEndInfoFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$NECallEndInfoToJson(NECallEndInfo instance) =>
     <String, dynamic>{
       'reasonCode': _$NECallTerminalCodeEnumMap[instance.reasonCode]!,
+      'callId': instance.callId,
       'extraString': instance.extraString,
       'message': instance.message,
     };

@@ -274,6 +274,10 @@ open class VideoOnTheCallFragment : BaseOnTheCallFragment() {
         bridge.configTimeTick(null)
     }
 
+    override fun onEnterSingleToGroupMode() {
+        hideFloatingWindow()
+    }
+
     override fun toUpdateUIState(type: Int) {
         when (type) {
             INIT, CHANGE_CALL_TYPE -> toInitState()

@@ -1,0 +1,14 @@
+{
+  "name": "@yunxin/callkit_ui",
+  "version": "4.4.0",
+  "description": "CallKit UI API Documentation",
+  "scripts": {
+    "docs": "node docs/generate-docs.js"
+  },
+  "devDependencies": {
+    "typedoc": "^0.25.0",
+    "typescript": "^5.0.0"
+  }
+}
+
+

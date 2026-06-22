@@ -62,9 +62,6 @@ class GroupCallFunctionWidget extends StatelessWidget {
   /// 挂断按钮点击回调
   final VoidCallback? onHangup;
 
-  /// 挂断按钮红色
-  static const Color _hangupColor = Color(0xFFE54040);
-
   const GroupCallFunctionWidget({
     super.key,
     required this.uiState,
@@ -81,8 +78,8 @@ class GroupCallFunctionWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     // 麦克风、扬声器、摄像头只在通话中（inCall）状态可以操作
     // 呼叫中（calling）和来电（incoming）状态下按钮禁用
-    final bool audioButtonsEnabled = uiState == GroupCallUIState.inCall || uiState == GroupCallUIState.calling;
-    final bool cameraButtonEnabled = uiState == GroupCallUIState.inCall;
+    final audioButtonsEnabled = uiState == GroupCallUIState.inCall || uiState == GroupCallUIState.calling;
+    final cameraButtonEnabled = uiState == GroupCallUIState.inCall;
 
     return Container(
       height: 103.w, // 64 (button) + 12 (spacing) + 27 (label height estimate)

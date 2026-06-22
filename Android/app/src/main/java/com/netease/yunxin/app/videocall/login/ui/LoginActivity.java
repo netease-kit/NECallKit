@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.netease.nimlib.sdk.auth.LoginInfo;
 import com.netease.yunxin.app.videocall.MainActivity;
 import com.netease.yunxin.app.videocall.R;
+import com.netease.yunxin.app.videocall.call.SettingActivity;
 import com.netease.yunxin.app.videocall.login.LoginManager;
 import com.netease.yunxin.kit.alog.ALog;
 import com.netease.yunxin.nertc.nertcvideocall.utils.NetworkUtils;
@@ -27,6 +28,7 @@ public class LoginActivity extends AppCompatActivity {
   private EditText mEdtAccountId;
   private EditText mEdtToken;
   private Button mBtnLogin;
+  private Button mBtnSettings;
   private TextView mTvHelpLink;
 
   public static void startLogin(Context context) {
@@ -46,10 +48,17 @@ public class LoginActivity extends AppCompatActivity {
     mEdtAccountId = findViewById(R.id.edt_account_id);
     mEdtToken = findViewById(R.id.edt_token);
     mBtnLogin = findViewById(R.id.btn_login);
+    mBtnSettings = findViewById(R.id.btn_settings);
     mTvHelpLink = findViewById(R.id.tv_help_link);
 
     mBtnLogin.setOnClickListener(v -> login());
+    mBtnSettings.setOnClickListener(v -> openSettings());
     mTvHelpLink.setOnClickListener(v -> openHelpLink());
+  }
+
+  private void openSettings() {
+    Intent intent = new Intent(LoginActivity.this, SettingActivity.class);
+    startActivity(intent);
   }
 
   private void openHelpLink() {

@@ -4,18 +4,20 @@
 
 import 'dart:io';
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:netease_callkit_ui/ne_callkit_ui.dart';
-import '../../group_call/group_call_state.dart';
-import '../../group_call/group_call_manager.dart';
-import '../../group_call/group_call_ui_state.dart';
-import '../../group_call/group_call_member_ui.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:netease_callkit_ui/ne_callkit_ui.dart';
+
+import '../../group_call/group_call_manager.dart';
+import '../../group_call/group_call_member_ui.dart';
+import '../../group_call/group_call_state.dart';
+import '../../group_call/group_call_ui_state.dart';
+import '../../utils/permission.dart';
 import 'group_calls_widget.dart';
 import 'safe_page_close_mixin.dart';
-import '../../utils/permission.dart';
 
 /// 群呼被叫邀请页面
 ///
@@ -485,7 +487,7 @@ class _GroupCallIncomingPageState extends State<GroupCallIncomingPage>
     if (result.code == 0) {
       // 接听成功，替换当前页面为通话页面
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
+        MaterialPageRoute<void>(
           builder: (context) => GroupCallsWidget(
             groupCallState: widget.groupCallState,
             onMinimize: () => Navigator.of(context).pop(),

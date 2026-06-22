@@ -2,6 +2,8 @@
 // Use of this source code is governed by a MIT license that can be
 // found in the LICENSE file.
 
+
+
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
 import 'app_localizations.dart';
@@ -127,6 +129,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enable_floating => 'Show floating window button';
 
   @override
+  String get desktop_log_directory => 'Desktop log directory';
+
+  @override
+  String get open => 'Open';
+
+  @override
+  String get open_log_directory_failed => 'Failed to open log directory';
+
+  @override
   String get call_custom_setiings => 'Custom call parameter settings';
 
   @override
@@ -208,8 +219,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get how_to_get_account_token => 'How to get NetEase account and Token';
 
   @override
-  String get sample_login_desc =>
-      'Please enter your NetEase account and Token to start exploring';
+  String get sample_login_desc => 'Please enter your NetEase account and Token to start exploring';
 
   @override
   String get enter_account => 'Please enter account';

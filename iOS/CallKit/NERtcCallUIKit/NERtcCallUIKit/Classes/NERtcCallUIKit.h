@@ -7,6 +7,7 @@
 
 #import <AVKit/AVKit.h>
 #import "NECallUIKitConfig.h"
+#import "NECallInviteUIContext.h"
 #import "NECallViewController.h"
 #import "NECustomButton.h"
 #import "NEExpandButton.h"
@@ -51,6 +52,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol NECallUIKitDelegate <NSObject>
 
+@optional
+
 /// 当有呼叫来到时候的回调，根据返回值决定内部是否返回，未实现此回调内部默认弹出被叫页面
 - (void)didCallComingWithInviteInfo:(NEInviteInfo *)inviteInfo
                       withCallParam:(NEUICallParam *)callParam
@@ -60,6 +63,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)inviteUsersWithCallId:(NSString *)callId
                   inCallUsers:(NSArray<NSString *> *)inCallUsers
                    completion:(void (^)(NSArray<NSString *> *_Nullable users))completion;
+
+/// 单呼转多人通话点击邀请入口后回调业务方选人。
+/// completion 返回 nil 或空数组表示取消。
+- (void)selectInviteUsersWithContext:(NECallInviteUIContext *)context
+                          completion:(void (^)(NSArray<NSString *> *_Nullable userIDs))completion;
 
 @end
 
@@ -102,6 +110,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// 发起群呼叫
 - (void)groupCallWithParam:(NEUIGroupCallParam *)callParam;
+
+/// 开启或关闭来电横幅模式。默认关闭（false）。
+/// 开启后收到来电时以顶部悬浮横幅替代原全屏来电界面；关闭后恢复原有行为。
+/// 可动态调用，下一次来电时生效。
+- (void)enableIncomingBanner:(BOOL)enable;
 
 @end
 

@@ -1,2 +1,8 @@
 example/integration_test/
 docs/
+devtools_options.yaml
+example/.vscode/
+example/devtools_options.yaml
+.dart_tool/
+build/
+pubspec.lock

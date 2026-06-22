@@ -5,10 +5,10 @@
 package com.netease.yunxin.app.videocall;
 
 import android.text.TextUtils;
+import com.netease.yunxin.kit.alog.ALog;
 import com.netease.yunxin.kit.call.group.NEGroupCallInfo;
 import com.netease.yunxin.kit.call.p2p.model.NEInviteInfo;
 import com.netease.yunxin.nertc.ui.CallKitNotificationConfig;
-import com.netease.yunxin.nertc.ui.utils.CallUILog;
 import kotlin.jvm.functions.Function1;
 import org.json.JSONObject;
 
@@ -42,7 +42,7 @@ class DemoSelfNotificationConfigFetcher<T> implements Function1<T, CallKitNotifi
       JSONObject object = new JSONObject(inviteExtraInfo);
       name = object.optString("userName");
     } catch (Exception exception) {
-      CallUILog.e(TAG, "parse inviteInfo extra error.", exception);
+      ALog.e(TAG, "parse inviteInfo extra error.", exception);
       name = "";
     }
     if (TextUtils.isEmpty(name)) {

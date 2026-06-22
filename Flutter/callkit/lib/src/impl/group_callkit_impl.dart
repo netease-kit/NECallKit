@@ -48,7 +48,7 @@ class NEGroupCallEngineImpl
 
   @override
   Future<NEGroupResult> init(NEGroupConfigParam config) async {
-    CallKitLog.i(_tag, 'init: appKey=${config.appKey}');
+    CallKitLog.i(_tag, 'init');
 
     if (config.appKey.isEmpty) {
       CallKitLog.e(_tag, 'init failed: appKey cannot be empty');

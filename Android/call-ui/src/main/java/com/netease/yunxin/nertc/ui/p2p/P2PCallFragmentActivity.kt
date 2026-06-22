@@ -15,6 +15,10 @@ import com.netease.yunxin.kit.call.NEResultObserver
 import com.netease.yunxin.kit.call.p2p.NECallEngine
 import com.netease.yunxin.kit.call.p2p.model.NECallEndInfo
 import com.netease.yunxin.kit.call.p2p.model.NECallInfo
+import com.netease.yunxin.kit.call.p2p.model.NECallInviteStateInfo
+import com.netease.yunxin.kit.call.p2p.model.NECallMemberChangeInfo
+import com.netease.yunxin.kit.call.p2p.model.NECallMemberState
+import com.netease.yunxin.kit.call.p2p.model.NECallModeChangeInfo
 import com.netease.yunxin.kit.call.p2p.model.NECallType
 import com.netease.yunxin.kit.call.p2p.model.NECallTypeChangeInfo
 import com.netease.yunxin.kit.call.p2p.model.NEHangupReasonCode
@@ -27,6 +31,7 @@ import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState.STATE_
 import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.CallParam
 import com.netease.yunxin.nertc.ui.base.CommonCallActivity
+import com.netease.yunxin.nertc.ui.base.consumeAutoAcceptFromIncomingBanner
 import com.netease.yunxin.nertc.ui.p2p.fragment.BaseP2pCallFragment
 import com.netease.yunxin.nertc.ui.p2p.fragment.FragmentActionBridge
 import com.netease.yunxin.nertc.ui.p2p.fragment.P2PCallFragmentType.AUDIO_CALLEE
@@ -44,6 +49,8 @@ import com.netease.yunxin.nertc.ui.p2p.fragment.caller.AudioCallerFragment
 import com.netease.yunxin.nertc.ui.p2p.fragment.caller.VideoCallerFragment
 import com.netease.yunxin.nertc.ui.p2p.fragment.onthecall.AudioOnTheCallFragment
 import com.netease.yunxin.nertc.ui.p2p.fragment.onthecall.VideoOnTheCallFragment
+import com.netease.yunxin.nertc.ui.singletogroup.SingleToGroupLogFormatter
+import com.netease.yunxin.nertc.ui.singletogroup.SingleToGroupUiController
 import com.netease.yunxin.nertc.ui.utils.CallUILog
 import com.netease.yunxin.nertc.ui.utils.toastShort
 
@@ -92,6 +99,9 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
         override fun doAccept(observer: NEResultObserver<CommonResult<NECallInfo>>?) =
             this@P2PCallFragmentActivity.doAccept(observer)
 
+        override fun tryAutoAcceptFromIncomingBanner() =
+            this@P2PCallFragmentActivity.tryAutoAcceptFromIncomingBanner()
+
         override fun doHangup(
             observer: NEResultObserver<CommonResult<Void>>?,
             channelId: String?,
@@ -134,8 +144,11 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
     private val audioCallerFragment = AudioCallerFragment()
     private val audioCalleeFragment = AudioCalleeFragment()
     private val audioOnTheCallFragment = AudioOnTheCallFragment()
+    private var singleToGroupUiController: SingleToGroupUiController? = null
 
     override fun onCallEnd(info: NECallEndInfo) {
+        singleToGroupUiController?.hideInviteEntry()
+        singleToGroupUiController?.release()
         when (info.reasonCode) {
             NEHangupReasonCode.CALLER_REJECTED -> if (!isFinishing && !callParam.isCalled) {
                 getString(R.string.tip_reject_by_other).toastShort(this@P2PCallFragmentActivity)
@@ -172,6 +185,10 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
         if (isFinishing) {
             return
         }
+        if (singleToGroupUiController?.hasEnteredSingleToGroup == true) {
+            CallUILog.i(tag, "onCallTypeChange ignored after single-to-group, info is $info")
+            return
+        }
         when (info.state) {
             SwitchCallState.ACCEPT -> {
                 val tempFragment = currentFragment
@@ -200,10 +217,36 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
         }
         changeCurrentFragment()
         currentFragment?.onCallConnected(info)
+        singleToGroupUiController?.updateInviteEntry()
+    }
+
+    override fun onCallModeChanged(info: NECallModeChangeInfo) {
+        if (isFinishing) {
+            return
+        }
+        CallUILog.i(tag, "onCallModeChanged info: $info")
+        singleToGroupUiController?.enterMode("onCallModeChanged")
+    }
+
+    override fun onCallMembersChanged(info: NECallMemberChangeInfo) {
+        if (isFinishing) {
+            return
+        }
+        singleToGroupUiController?.handleMembersChanged(info)
+    }
+
+    override fun onCallInviteStateChanged(infos: MutableList<NECallInviteStateInfo>?) {
+        if (isFinishing) {
+            return
+        }
+        singleToGroupUiController?.handleInviteStateChanged(infos)
     }
 
     override fun onVideoAvailable(userId: String?, available: Boolean) {
         if (isFinishing) {
+            return
+        }
+        if (singleToGroupUiController?.onVideoAvailable(userId, available) == true) {
             return
         }
         currentFragment?.onVideoAvailable(userId, available)
@@ -213,11 +256,17 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
         if (isFinishing) {
             return
         }
+        if (singleToGroupUiController?.onVideoMuted(userId, mute) == true) {
+            return
+        }
         currentFragment?.onVideoMuted(userId, mute)
     }
 
     override fun onAudioMuted(userId: String?, mute: Boolean) {
         if (isFinishing) {
+            return
+        }
+        if (singleToGroupUiController?.onAudioMuted(userId, mute) == true) {
             return
         }
         currentFragment?.onAudioMuted(userId, mute)
@@ -227,7 +276,55 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
 
     override fun doOnCreate(savedInstanceState: Bundle?) {
         super.doOnCreate(savedInstanceState)
+        singleToGroupUiController = SingleToGroupUiController(
+            activity = this,
+            callEngine = callEngine,
+            callParam = callParam,
+            enableVirtualBlur = uiConfig?.enableVirtualBlur == true,
+            currentCallState = { currentCallState() },
+            onEnterSingleToGroupMode = {
+                currentFragment?.onEnterSingleToGroupMode()
+            },
+            onMuteVideo = {
+                doMuteVideo()
+            },
+            onHangup = {
+                doHangup()
+                releaseAndFinish(false)
+            }
+        ).also {
+            it.init()
+        }
         changeCurrentFragment()
+        refreshInviteEntryOnFragmentReady("doOnCreate")
+    }
+
+    protected open fun tryAutoAcceptFromIncomingBanner() {
+        if (!callParam.isCalled || currentCallState() != STATE_INVITED) {
+            return
+        }
+        if (!callParam.consumeAutoAcceptFromIncomingBanner()) {
+            return
+        }
+        CallUILog.i(tag, "autoAcceptFromIncomingBanner: permission granted, call accept()")
+        doAccept { result ->
+            CallUILog.d(tag, "autoAcceptFromIncomingBanner result is $result")
+            if (result?.isSuccessful != true && !isFinishing) {
+                getString(R.string.tip_accept_failed).toastShort(this@P2PCallFragmentActivity)
+                finish()
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        restoreSingleToGroupModeIfNeeded("onResume")
+    }
+
+    override fun onDestroy() {
+        singleToGroupUiController?.release()
+        singleToGroupUiController = null
+        super.onDestroy()
     }
 
     override fun onBackPressed() {
@@ -241,7 +338,11 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
         confirmDialog.setPositiveButton(
             R.string.tip_dialog_finish_call_positive
         ) { _: DialogInterface?, _: Int ->
-            releaseAndFinish(true)
+            // 直接调用 doHangup（channelId=null → SDK 自动使用当前通话 channelId），
+            // 与拒绝按钮路径一致，确保挂断信令可靠送达；
+            // 再调用 releaseAndFinish(false) 完成 UI 清理，不重复挂断。
+            doHangup()
+            releaseAndFinish(false)
         }
         confirmDialog.setNegativeButton(
             R.string.tip_dialog_finish_call_negative
@@ -273,10 +374,14 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
         if (fragment != currentFragment) {
             val tag = "${getFragmentKey(callState, callType)}"
             val transaction = supportFragmentManager.beginTransaction()
+            transaction.runOnCommit {
+                refreshInviteEntryOnFragmentReady("fragmentCommitted")
+                restoreSingleToGroupModeIfNeeded("fragmentCommitted")
+            }
             if (supportFragmentManager.findFragmentByTag(tag) == fragment) {
                 transaction.show(fragment)
             } else {
-                transaction.add(R.id.clRoot, fragment, tag)
+                transaction.add(R.id.p2pFragmentContainer, fragment, tag)
             }
             currentFragment?.run {
                 transaction.hide(this)
@@ -284,6 +389,41 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
             transaction.commitAllowingStateLoss()
         }
         currentFragment = fragment
+    }
+
+    private fun refreshInviteEntryOnFragmentReady(reason: String) {
+        val callState = currentCallState()
+        if (!P2PCallFragmentInviteEntryPolicy.shouldRefreshOnFragmentReady(callState)) {
+            return
+        }
+        CallUILog.i(tag, "refreshInviteEntryOnFragmentReady reason:$reason callState:$callState")
+        singleToGroupUiController?.updateInviteEntry()
+    }
+
+    private fun restoreSingleToGroupModeIfNeeded(reason: String) {
+        if (isFinishing || singleToGroupUiController == null) {
+            return
+        }
+        val callState = currentCallState()
+        val members = callEngine.currentMembers()
+        val visibleMemberCount = members
+            .filter { it.state != NECallMemberState.LEAVING }
+            .map { it.userID }
+            .toSet()
+            .size
+        val shouldRestore =
+            callState == STATE_DIALOG && (callEngine.isInMultiCall() || visibleMemberCount >= 3)
+        if (shouldRestore) {
+            CallUILog.i(
+                tag,
+                "restoreSingleToGroupModeIfNeeded reason:$reason isFromFloatingWindow:$isFromFloatingWindow " +
+                    "callState:$callState visibleMemberCount:$visibleMemberCount " +
+                    "members:${SingleToGroupLogFormatter.memberSnapshotSummary(members)}"
+            )
+            // 多人状态可能在 1v1 应用内小窗期间到达；恢复页面时按当前成员快照补齐多人 UI。
+            currentFragment?.onEnterSingleToGroupMode()
+            singleToGroupUiController?.enterMode("restore-$reason", members)
+        }
     }
 
     protected open fun getFragment(callState: Int, callType: Int): BaseP2pCallFragment? {

@@ -31,6 +31,7 @@
 }
 
 - (void)setupUI {
+  self.userInteractionEnabled = NO;
   [self addSubview:self.textLabel];
   self.textLabel.translatesAutoresizingMaskIntoConstraints = NO;
   [NSLayoutConstraint activateConstraints:@[

@@ -15,12 +15,17 @@ import com.netease.yunxin.kit.alog.ParameterMap
 import com.netease.yunxin.kit.call.p2p.NECallEngine
 import com.netease.yunxin.kit.call.p2p.model.NECallEndInfo
 import com.netease.yunxin.kit.call.p2p.model.NECallEngineDelegateAbs
+import com.netease.yunxin.kit.call.p2p.model.NECallInviteStateInfo
+import com.netease.yunxin.kit.call.p2p.model.NECallMemberChangeInfo
+import com.netease.yunxin.kit.call.p2p.model.NECallMode
+import com.netease.yunxin.kit.call.p2p.model.NECallModeChangeInfo
 import com.netease.yunxin.kit.call.p2p.model.NECallType
 import com.netease.yunxin.kit.call.p2p.model.NECallTypeChangeInfo
 import com.netease.yunxin.kit.call.p2p.model.NEHangupReasonCode
 import com.netease.yunxin.nertc.nertcvideocall.model.SwitchCallState
 import com.netease.yunxin.nertc.nertcvideocall.model.impl.state.CallState
 import com.netease.yunxin.nertc.ui.CallKitUI
+import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.CallParam
 import com.netease.yunxin.nertc.ui.base.Constants
 import com.netease.yunxin.nertc.ui.base.launchTask
@@ -29,6 +34,7 @@ import com.netease.yunxin.nertc.ui.floating.FloatingWindowWrapper
 import com.netease.yunxin.nertc.ui.utils.CallUILog
 import com.netease.yunxin.nertc.ui.utils.CallUIUtils
 import com.netease.yunxin.nertc.ui.utils.SwitchCallTypeConfirmDialog
+import com.netease.yunxin.nertc.ui.utils.toastShort
 
 /**
  * 浮窗整体逻辑：
@@ -92,6 +98,28 @@ object CallUIFloatingWindowMgr {
             }
             // 用于浮窗在左侧时变化ui时浮窗没有吸附
             floatingWindowWrapper?.toUpdateViewContent()
+        }
+
+        override fun onCallModeChanged(info: NECallModeChangeInfo?) {
+            super.onCallModeChanged(info)
+            if (info?.newMode == NECallMode.MULTI || info?.hasEverMulti == true) {
+                expireSwitchCallTypeInvite("onCallModeChanged")
+            }
+        }
+
+        override fun onCallMembersChanged(info: NECallMemberChangeInfo?) {
+            super.onCallMembersChanged(info)
+            val memberCount = info?.members?.map { it.userID }?.toSet()?.size ?: 0
+            if (NECallEngine.sharedInstance().isInMultiCall() || memberCount >= 3) {
+                expireSwitchCallTypeInvite("onCallMembersChanged")
+            }
+        }
+
+        override fun onCallInviteStateChanged(infos: MutableList<NECallInviteStateInfo>?) {
+            super.onCallInviteStateChanged(infos)
+            if (!infos.isNullOrEmpty()) {
+                expireSwitchCallTypeInvite("onCallInviteStateChanged")
+            }
         }
 
         override fun onCallEnd(info: NECallEndInfo?) {
@@ -214,6 +242,17 @@ object CallUIFloatingWindowMgr {
         innerRelease(isFinished)
     }
 
+    fun dismissSwitchCallTypeConfirmDialog() {
+        dialog?.dismiss()
+        dialog = null
+        dialogFlag = null
+    }
+
+    private fun expireSwitchCallTypeInvite(reason: String) {
+        CallUIOperationsMgr.expireSwitchCallTypeInvite("floating:$reason")
+        dismissSwitchCallTypeConfirmDialog()
+    }
+
     /**
      * 是否正在展示浮窗
      */
@@ -229,13 +268,30 @@ object CallUIFloatingWindowMgr {
             return
         }
         dialogFlag = Any()
+        val revision = CallUIOperationsMgr.currentSwitchCallTypeInviteRevision()
         floatingWindowWrapper?.context?.run {
             launchTask(this, REQUEST_CODE_FLOAT, { activity, _ ->
+                if (!CallUIOperationsMgr.isCurrentSwitchCallTypeInvite(info.callType, revision)) {
+                    activity.getString(R.string.ui_switch_call_type_request_expired)
+                        .toastShort(activity)
+                    dialogFlag = null
+                    activity.finish()
+                    return@launchTask
+                }
                 CallUILog.d(TAG, "showSwitchCallTypeConfirmDialog")
                 dialog =
                     switchCallTypeConfirmDialogProvider?.invoke(activity) ?: SwitchCallTypeConfirmDialog(
                         activity,
                         {
+                            if (!CallUIOperationsMgr.isCurrentSwitchCallTypeInvite(
+                                    info.callType,
+                                    revision
+                                )
+                            ) {
+                                activity.getString(R.string.ui_switch_call_type_request_expired)
+                                    .toastShort(activity)
+                                return@SwitchCallTypeConfirmDialog
+                            }
                             CallUIOperationsMgr.doSwitchCallType(
                                 info.callType,
                                 SwitchCallState.ACCEPT,
@@ -243,6 +299,15 @@ object CallUIFloatingWindowMgr {
                             )
                         },
                         {
+                            if (!CallUIOperationsMgr.isCurrentSwitchCallTypeInvite(
+                                    info.callType,
+                                    revision
+                                )
+                            ) {
+                                activity.getString(R.string.ui_switch_call_type_request_expired)
+                                    .toastShort(activity)
+                                return@SwitchCallTypeConfirmDialog
+                            }
                             CallUIOperationsMgr.doSwitchCallType(
                                 info.callType,
                                 SwitchCallState.REJECT,
@@ -254,8 +319,11 @@ object CallUIFloatingWindowMgr {
                             activity.finish()
                         }
                         show(info.callType)
-                        val latestInfo = CallUIOperationsMgr.currentSwitchTypeCallInfo()
-                        if (latestInfo?.state != SwitchCallState.INVITE) {
+                        if (!CallUIOperationsMgr.isCurrentSwitchCallTypeInvite(
+                                info.callType,
+                                revision
+                            )
+                        ) {
                             dismiss()
                         }
                     }
@@ -271,9 +339,7 @@ object CallUIFloatingWindowMgr {
         floatContentView?.toDestroy(isFinished)
         floatingWindowWrapper?.dismissView()
         floatingWindowWrapper = null
-        dialog?.dismiss()
-        dialog = null
-        dialogFlag = null
+        dismissSwitchCallTypeConfirmDialog()
     }
 
     /**

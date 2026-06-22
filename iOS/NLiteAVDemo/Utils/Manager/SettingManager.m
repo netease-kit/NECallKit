@@ -8,6 +8,8 @@ NSString *const kYXOTOTimeOut = @"kYXOTOTimeOut";
 
 NSString *const kShowCName = @"kShowCName";
 
+NSString *const kEnableSingleToGroupCall = @"kEnableSingleToGroupCall";
+
 @interface SettingManager ()
 
 @property(nonatomic, assign, readwrite) NSInteger timeout;
@@ -23,6 +25,8 @@ NSString *const kShowCName = @"kShowCName";
 @property(nonatomic, assign, readwrite) BOOL useEnableLocalMute;
 
 @property(nonatomic, assign, readwrite) BOOL isGlobalInit;
+
+@property(nonatomic, assign, readwrite) BOOL enableSingleToGroupCall;
 
 @end
 
@@ -77,6 +81,9 @@ NSString *const kShowCName = @"kShowCName";
     if (showCname != nil) {
       self.incallShowCName = [showCname boolValue];
     }
+    NSNumber *enableSingleToGroupCall = [userDefault objectForKey:kEnableSingleToGroupCall];
+    _enableSingleToGroupCall = [enableSingleToGroupCall boolValue];
+
     NSLog(@"current accid : %@", [NIMSDK.sharedSDK.v2LoginService getLoginUser]);
   }
   return self;
@@ -145,6 +152,13 @@ NSString *const kShowCName = @"kShowCName";
 // 1.5.6 add
 - (void)setEnableLocal:(BOOL)enable {
   self.useEnableLocalMute = enable;
+}
+
+- (void)setEnableSingleToGroupCall:(BOOL)enable {
+  _enableSingleToGroupCall = enable;
+  NSUserDefaults *userDefault = [NSUserDefaults standardUserDefaults];
+  [userDefault setObject:@(enable) forKey:kEnableSingleToGroupCall];
+  [userDefault synchronize];
 }
 
 @end

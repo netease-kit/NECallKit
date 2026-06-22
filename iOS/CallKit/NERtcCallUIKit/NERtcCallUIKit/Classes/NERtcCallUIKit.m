@@ -16,7 +16,18 @@
 #import "NEDataManager.h"
 #import "NEGroupCallViewController.h"
 #import "NEUIGroupCallParam.h"
+#import "NECallStateManager.h"
 #import "NetManager.h"
+#import "NEIncomingCallBannerView.h"
+#import "NEIncomingCallBannerWindow.h"
+
+@interface NECallViewController (NEIncomingBannerAccept)
+
+@property(nonatomic, assign) BOOL incomingBannerAcceptConnecting;
+
+- (void)updateUIonStatus:(NERtcCallStatus)status;
+
+@end
 
 NSString *kAudioCalling = @"kAudioCalling";
 
@@ -36,8 +47,19 @@ NSString *kCallStatusQueryKey = @"imkit://call/state/isIdle";
 
 NSString *kCallStatusCallBackKey = @"imkit://call/state/result";
 
+NSString *kNECallLCKJoinConversationActionNotification =
+    @"NECallLCKJoinConversationActionNotification";
+
 // 群呼人数限制常量
 const NSInteger kGroupCallMaxUsers = 10;
+
+@interface NECallKitUtil (NECallWindowDismiss)
+
++ (void)performAfterPresentationSettledInViewController:(UIViewController *)viewController
+                                             retryCount:(NSInteger)retryCount
+                                             completion:(dispatch_block_t)completion;
+
+@end
 
 @interface NERtcCallUIKit () <NECallEngineDelegate,
                               XKitService,
@@ -49,6 +71,8 @@ const NSInteger kGroupCallMaxUsers = 10;
                               NEGroupCallViewControllerDelegate>
 
 @property(nonatomic, strong) NECallUIKitConfig *config;
+
+@property(nonatomic, assign) BOOL incomingBannerEnabled;
 
 @property(nonatomic, strong) UIWindow *keywindow;
 
@@ -89,6 +113,26 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 @property(nonatomic, assign) BOOL isCalled;
 
+@property(nonatomic, assign) BOOL hasLoggedPipRenderFrame;
+
+@property(nonatomic, strong) NEUICallParam *incomingBannerCallParam;
+
+@property(nonatomic, copy) NSString *incomingBannerChannelId;
+
+@property(nonatomic, assign) BOOL incomingBannerAccepting;
+
+@property(nonatomic, assign) BOOL callWindowDismissing;
+
+- (BOOL)isCachedIncomingBannerCallMatched:(NECallInfo *)callInfo;
+
+- (void)showFullScreenAfterSystemAcceptIfNeededWithCallInfo:(NECallInfo *)callInfo
+                                                     source:(NSString *)source;
+
+- (void)showIncomingBannerAcceptConnectingViewIfNeededWithCallParam:(NEUICallParam *)callParam;
+
+- (void)performCallWindowDismiss;
+- (void)cleanupCallWindowAfterDismiss;
+
 @end
 
 @implementation NERtcCallUIKit
@@ -100,6 +144,26 @@ const NSInteger kGroupCallMaxUsers = 10;
     instance = [[self alloc] init];
   });
   return instance;
+}
+
++ (BOOL)shouldShowIncomingBannerForCallStatus:(NERtcCallStatus)callStatus
+                              currentChannelId:(NSString *)currentChannelId
+                               cachedChannelId:(NSString *)cachedChannelId
+                                   callerAccId:(NSString *)callerAccId
+                              cachedCallerAccId:(NSString *)cachedCallerAccId {
+  if (callStatus != NERtcCallStatusCalled) {
+    return NO;
+  }
+  if (cachedChannelId.length > 0) {
+    if (currentChannelId.length <= 0 || ![cachedChannelId isEqualToString:currentChannelId]) {
+      return NO;
+    }
+  }
+  if (cachedCallerAccId.length > 0 && callerAccId.length > 0 &&
+      ![cachedCallerAccId isEqualToString:callerAccId]) {
+    return NO;
+  }
+  return YES;
 }
 
 - (NSString *)serviceName {
@@ -115,7 +179,10 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)setupWithConfig:(NECallUIKitConfig *)config {
+  BOOL enableSingleToGroupCall =
+      config.uiConfig.singleToGroupInviteMode != NECallSingleToGroupInviteModeDisabled;
   if (nil != config.config) {
+    config.config.enableSingleToGroupCall = enableSingleToGroupCall;
     [[NECallEngine sharedInstance] setup:config.config];
   }
   [[XKit instance] registerService:self];
@@ -139,6 +206,7 @@ const NSInteger kGroupCallMaxUsers = 10;
   self = [super init];
   if (self) {
     [NetManager shareInstance];
+    [[NECallStateManager sharedInstance] startObserving];
     [[NECallEngine sharedInstance] addCallDelegate:self];
     [NECallEngine sharedInstance].engineDelegate = self;
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -167,6 +235,10 @@ const NSInteger kGroupCallMaxUsers = 10;
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(appDidEnterForeground)
                                                  name:UIApplicationWillEnterForegroundNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onSystemIncomingCallAccepting:)
+                                                 name:kNECallLCKJoinConversationActionNotification
                                                object:nil];
     self.smallVideoSize = CGSizeMake(90, 160);
     self.smallAudioSize = CGSizeMake(70, 70);
@@ -257,6 +329,15 @@ const NSInteger kGroupCallMaxUsers = 10;
 - (void)onCallEnd:(NECallEndInfo *)info {
   NEXKitBaseLogInfo(@"call ui kit oncallend");
   [self stopPip];
+  self.incomingBannerCallParam = nil;
+  self.incomingBannerChannelId = nil;
+  self.incomingBannerAccepting = NO;
+  // 横幅模式下 keywindow 为 nil（未展示全屏通话界面），
+  // didDismiss: 不会被触发，需在此手动重置标志位。
+  if (self.keywindow == nil) {
+    self.isCalled = NO;
+    self.isCalling = NO;
+  }
 }
 
 - (UIImageView *)getRemoteHeaderImage {
@@ -289,6 +370,8 @@ const NSInteger kGroupCallMaxUsers = 10;
     [self.remoteHeaderImageView.heightAnchor constraintEqualToAnchor:self.coverView.widthAnchor
                                                           multiplier:0.5]
   ]];
+  NEXKitBaseLogInfo(@"call ui kit pip cover prepared remoteAccid:%@ cover:%@ hidden:%d",
+                    self.currentRemoteAccid, self.coverView, self.coverView.hidden);
 }
 
 - (void)onCallTypeChange:(NECallTypeChangeInfo *)info {
@@ -307,6 +390,7 @@ const NSInteger kGroupCallMaxUsers = 10;
   if (info.callType == NECallTypeVideo) {
     [self createPipController];
   }
+  [self showFullScreenAfterSystemAcceptIfNeededWithCallInfo:info source:@"onCallConnected"];
 }
 
 - (void)onLocalAudioMuted:(BOOL)muted {
@@ -327,6 +411,8 @@ const NSInteger kGroupCallMaxUsers = 10;
     return;
   }
   self.isCalled = YES;
+  NSString *inviteChannelId = info.channelId ?: @"";
+  NSString *inviteCallerAccId = info.callerAccId ?: @"";
   [NIMSDK.sharedSDK.userManager
       fetchUserInfos:@[ info.callerAccId ]
           completion:^(NSArray<NIMUser *> *_Nullable users, NSError *_Nullable error) {
@@ -350,6 +436,136 @@ const NSInteger kGroupCallMaxUsers = 10;
                   self.config.uiConfig.enableFloatingWindowOutOfApp;
               callParam.callType = info.callType;
               callParam.isCaller = NO;
+              callParam.multiCallInvite = info.multiCallInvite;
+              if (self.incomingBannerEnabled == YES) {
+                NECallEngine *engine = [NECallEngine sharedInstance];
+                NECallInfo *currentCallInfo = [engine getCallInfo];
+                NSString *currentChannelId = currentCallInfo.signalInfo.channelId ?: @"";
+                NSString *currentCallerAccId = currentCallInfo.callerInfo.accId ?: @"";
+                if (![NERtcCallUIKit shouldShowIncomingBannerForCallStatus:engine.callStatus
+                                                           currentChannelId:currentChannelId
+                                                            cachedChannelId:inviteChannelId
+                                                                callerAccId:currentCallerAccId
+                                                           cachedCallerAccId:inviteCallerAccId]) {
+                  NEXKitBaseLogInfo(@"skipIncomingBanner stale invite callerAccId=%@ "
+                                    @"inviteChannelId=%@ currentCallerAccId=%@ "
+                                    @"currentChannelId=%@ callStatus:%lu",
+                                    inviteCallerAccId, inviteChannelId, currentCallerAccId,
+                                    currentChannelId, (unsigned long)engine.callStatus);
+                  if (engine.callStatus != NERtcCallStatusCalled) {
+                    self.isCalled = NO;
+                  }
+                  return;
+                }
+                if ([NEIncomingCallBannerWindow.sharedInstance isShowing]) {
+                  NEXKitBaseLogInfo(@"secondCallIgnored replyBusy callerAccId=%@", callParam.remoteUserAccid);
+                  NEHangupParam *busyParam = [[NEHangupParam alloc] init];
+                  [busyParam setValue:[NSNumber numberWithInteger:TerminalCodeBusy] forKey:@"reasonCode"];
+                  [[NECallEngine sharedInstance] hangup:busyParam completion:^(NSError *_Nullable e){}];
+                  self.isCalled = NO;
+                  return;
+                }
+                self.incomingBannerCallParam = callParam;
+                self.incomingBannerChannelId = inviteChannelId;
+                NEXKitBaseLogInfo(@"showIncomingBanner callerAccId=%@ callType=%ld",
+                           callParam.remoteUserAccid, (long)callParam.callType);
+                NEIncomingCallerInfo *callerInfo = [[NEIncomingCallerInfo alloc] init];
+                callerInfo.accountId   = callParam.remoteUserAccid;
+                callerInfo.displayName = callParam.remoteShowName;
+                callerInfo.avatarUrl   = callParam.remoteAvatar;
+                callerInfo.callType = callParam.callType;
+                callerInfo.multiCallInvite = info.multiCallInvite;
+                __weak typeof(self) weakSelf = self;
+                void (^acceptBlock)(void) = ^{
+                  weakSelf.incomingBannerCallParam = nil;
+                  weakSelf.incomingBannerChannelId = nil;
+                  UIViewController *permissionViewController =
+                      [NEIncomingCallBannerWindow.sharedInstance presentingViewController];
+                  NECallType permissionCallType =
+                      [NECallKitUtil requiredPermissionCallTypeForCallType:callParam.callType
+                                                           multiCallInvite:callParam.multiCallInvite];
+                  [NECallKitUtil
+                      requestAuthorizationForCallType:permissionCallType
+                                  fromViewController:permissionViewController
+                                          completion:^(BOOL granted, BOOL openSettings) {
+                                            if (!granted) {
+                                              NEXKitBaseLogInfo(@"incoming banner accept permission "
+                                                                @"denied callType:%ld "
+                                                                @"openSettings:%d",
+                                                                (long)permissionCallType,
+                                                                openSettings);
+                                              [[NECallEngine sharedInstance]
+                                                  hangup:[[NEHangupParam alloc] init]
+                                              completion:^(__unused NSError *_Nullable error){}];
+                                              weakSelf.isCalled = NO;
+                                              [NEIncomingCallBannerWindow.sharedInstance dismiss];
+                                              return;
+                                            }
+                                            [NEIncomingCallBannerWindow.sharedInstance dismiss];
+                                            weakSelf.incomingBannerAccepting = YES;
+                                            dispatch_async(dispatch_get_main_queue(), ^{
+                                              NECallViewController *connectingVC =
+                                                  [[NECallViewController alloc] init];
+                                              connectingVC.callParam = callParam;
+                                              connectingVC.status = NERtcCallStatusCalled;
+                                              connectingVC.uiConfigDic = weakSelf.uiConfigDic;
+                                              connectingVC.config = weakSelf.config.uiConfig;
+                                              connectingVC.ringAlreadyPlaying = YES;
+                                              connectingVC.incomingBannerAcceptConnecting = YES;
+                                              [[NECallEngine sharedInstance]
+                                                  accept:^(NSError *_Nullable error,
+                                                           NECallInfo *_Nullable callInfo) {
+                                                    dispatch_async(dispatch_get_main_queue(), ^{
+                                                      weakSelf.incomingBannerAccepting = NO;
+                                                      if (error) {
+                                                        [weakSelf.preiousKeywindow
+                                                            ne_makeToast:
+                                                                [NSString
+                                                                    stringWithFormat:
+                                                                        @"%@ %@",
+                                                                        [NECallKitUtil
+                                                                            localizableWithKey:
+                                                                                @"accept_failed"],
+                                                                        error.localizedDescription]];
+                                                        [connectingVC destroy];
+                                                        return;
+                                                      }
+                                                      if (callParam.multiCallInvite ||
+                                                          [[NECallEngine sharedInstance] isInMultiCall]) {
+                                                        [connectingVC
+                                                            updateUIonStatus:NERtcCallStatusInCall];
+                                                      }
+                                                    });
+                                                  }];
+                                              [weakSelf showCallView:connectingVC];
+                                            });
+                                          }];
+                };
+                void (^rejectBlock)(void) = ^{
+                  weakSelf.incomingBannerCallParam = nil;
+                  weakSelf.incomingBannerChannelId = nil;
+                  [[NECallEngine sharedInstance] hangup:[[NEHangupParam alloc] init]
+                                            completion:nil];
+                  weakSelf.isCalled = NO;
+                };
+                void (^bodyTapBlock)(void) = ^{
+                  dispatch_async(dispatch_get_main_queue(), ^{
+                    NECallViewController *calledVC = [[NECallViewController alloc] init];
+                    calledVC.callParam   = callParam;
+                    calledVC.status      = NERtcCallStatusCalled;
+                    calledVC.uiConfigDic = weakSelf.uiConfigDic;
+                    calledVC.config      = weakSelf.config.uiConfig;
+                    // 来自横幅主体点击，铃声已在播放，全屏 VC 不重新触发（FR-017）
+                    calledVC.ringAlreadyPlaying = YES;
+                    [weakSelf showCallView:calledVC];
+                  });
+                };
+                [NEIncomingCallBannerWindow.sharedInstance showWithCallerInfo:callerInfo
+                                                                     onAccept:acceptBlock
+                                                                     onReject:rejectBlock
+                                                                    onBodyTap:bodyTapBlock];
+                return;
+              }
               if (self.customControllerClass != nil) {
                 if (self.delegate != nil &&
                     [self.delegate respondsToSelector:@selector
@@ -413,6 +629,22 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)showCallView:(NECallViewBaseController *)callVC {
+  NECallEngine *engine = [NECallEngine sharedInstance];
+  if (self.callWindowDismissing || self.keywindow != nil) {
+    NEXKitBaseLogInfo(@"call uikit skip show call view busy dismissing:%d keywindow:%@",
+                      self.callWindowDismissing, self.keywindow);
+    return;
+  }
+  BOOL isCalledViewStale =
+      [callVC isKindOfClass:NECallViewController.class] &&
+      ((NECallViewController *)callVC).status == NERtcCallStatusCalled &&
+      engine.callStatus != NERtcCallStatusCalled;
+  if (isCalledViewStale) {
+    NEXKitBaseLogInfo(@"call uikit skip show call view stale uiStatus:%lu engineStatus:%lu",
+                      (unsigned long)((NECallViewController *)callVC).status,
+                      (unsigned long)engine.callStatus);
+    return;
+  }
   if (self.config.uiConfig.enableFloatingWindowOutOfApp == YES) {
     [self setRemoteWithUrl:callVC.callParam.remoteAvatar
                  withAccid:callVC.callParam.remoteUserAccid];
@@ -426,6 +658,91 @@ const NSInteger kGroupCallMaxUsers = 10;
   [callNav.navigationBar setHidden:YES];
   [nav presentViewController:callNav animated:YES completion:nil];
   NEXKitBaseLogInfo(@"call uikit show call view caller : %d", callVC.callParam.isCaller);
+}
+
+- (BOOL)isCachedIncomingBannerCallMatched:(NECallInfo *)callInfo {
+  if (self.incomingBannerCallParam == nil || callInfo == nil) {
+    return NO;
+  }
+  NSString *currentChannelId = callInfo.signalInfo.channelId ?: @"";
+  NSString *cachedChannelId = self.incomingBannerChannelId ?: @"";
+  if (cachedChannelId.length > 0 && currentChannelId.length > 0 &&
+      ![cachedChannelId isEqualToString:currentChannelId]) {
+    return NO;
+  }
+  NSString *callerAccId = callInfo.callerInfo.accId ?: @"";
+  if (callerAccId.length > 0 &&
+      ![callerAccId isEqualToString:self.incomingBannerCallParam.remoteUserAccid]) {
+    return NO;
+  }
+  return YES;
+}
+
+- (void)showFullScreenAfterSystemAcceptIfNeededWithCallInfo:(NECallInfo *)callInfo
+                                                     source:(NSString *)source {
+  NECallEngine *engine = [NECallEngine sharedInstance];
+  BOOL connectedEvent = [source isEqualToString:@"onCallConnected"];
+  if (connectedEvent && [self.callViewController isKindOfClass:NECallViewController.class]) {
+    NECallViewController *callVC = (NECallViewController *)self.callViewController;
+    if (callVC.status == NERtcCallStatusCalled) {
+      self.incomingBannerAccepting = NO;
+      [callVC updateUIonStatus:NERtcCallStatusInCall];
+      self.incomingBannerCallParam = nil;
+      self.incomingBannerChannelId = nil;
+      return;
+    }
+  }
+  if (self.incomingBannerEnabled != YES ||
+      (!connectedEvent && engine.callStatus != NECallStatusInCall) ||
+      self.keywindow != nil || self.callViewController != nil ||
+      ![self isCachedIncomingBannerCallMatched:callInfo]) {
+    return;
+  }
+
+  self.incomingBannerAccepting = NO;
+
+  NEXKitBaseLogInfo(
+      @"call ui kit show full screen after system accept source:%@ callId:%@ channelId:%@ "
+       @"remote:%@",
+      source, callInfo.callId, callInfo.signalInfo.channelId,
+      self.incomingBannerCallParam.remoteUserAccid);
+  [NEIncomingCallBannerWindow.sharedInstance dismiss];
+
+  NECallViewController *inCallVC = [[NECallViewController alloc] init];
+  self.incomingBannerCallParam.callType = callInfo.callType;
+  inCallVC.callParam = self.incomingBannerCallParam;
+  inCallVC.status = NERtcCallStatusInCall;
+  inCallVC.uiConfigDic = self.uiConfigDic;
+  inCallVC.config = self.config.uiConfig;
+  [self showCallView:inCallVC];
+
+  self.incomingBannerCallParam = nil;
+  self.incomingBannerChannelId = nil;
+}
+
+- (void)showIncomingBannerAcceptConnectingViewIfNeededWithCallParam:(NEUICallParam *)callParam {
+  if (callParam == nil || self.keywindow != nil || self.callViewController != nil) {
+    return;
+  }
+  [NEIncomingCallBannerWindow.sharedInstance dismiss];
+
+  NECallViewController *connectingVC = [[NECallViewController alloc] init];
+  connectingVC.callParam = callParam;
+  connectingVC.status = NERtcCallStatusCalled;
+  connectingVC.uiConfigDic = self.uiConfigDic;
+  connectingVC.config = self.config.uiConfig;
+  connectingVC.ringAlreadyPlaying = YES;
+  connectingVC.incomingBannerAcceptConnecting = YES;
+  [self showCallView:connectingVC];
+}
+
+- (BOOL)shouldReshowIncomingBannerOnForegroundWithCallStatus:(NERtcCallStatus)callStatus {
+  if (self.incomingBannerAccepting) {
+    NEXKitBaseLogInfo(@"call ui kit skip incoming banner reshow while accepting");
+    return NO;
+  }
+  return self.incomingBannerEnabled == YES && callStatus == NERtcCallStatusCalled &&
+         self.keywindow == nil && self.callViewController == nil;
 }
 
 - (void)stopPip {
@@ -451,7 +768,14 @@ const NSInteger kGroupCallMaxUsers = 10;
     window.windowLevel = UIWindowLevelStatusBar - 1;
     window.backgroundColor = [UIColor clearColor];
     self.keywindow = window;
-    self.preiousKeywindow = UIApplication.sharedApplication.keyWindow;
+    UIWindow *previousWindow = UIApplication.sharedApplication.keyWindow;
+    if ([NEIncomingCallBannerWindow.sharedInstance isBannerWindow:previousWindow]) {
+      UIWindow *hostWindow = [NEIncomingCallBannerWindow.sharedInstance hostWindow];
+      NEXKitBaseLogInfo(@"call uikit use banner host window:%@ instead of banner:%@",
+                        hostWindow, previousWindow);
+      previousWindow = hostWindow;
+    }
+    self.preiousKeywindow = previousWindow;
     NEXKitBaseLogInfo(@"create new window %@", self.keywindow);
     NEXKitBaseLogInfo(@"self.preiousKeywindow %@", self.preiousKeywindow);
   }
@@ -471,14 +795,35 @@ const NSInteger kGroupCallMaxUsers = 10;
 - (void)didDismiss:(NSNotification *)noti {
   NEXKitBaseLogInfo(@"call uikit didDismiss caller : %d called : %d", self.isCalling,
                     self.isCalled);
+  if (self.callWindowDismissing) {
+    NEXKitBaseLogInfo(@"call uikit didDismiss ignored while dismissing");
+    return;
+  }
+  self.callWindowDismissing = YES;
+  __weak typeof(self) weakSelf = self;
+  [NECallKitUtil performAfterPresentationSettledInViewController:self.keywindow.rootViewController
+                                                      retryCount:8
+                                                      completion:^{
+                                                        [weakSelf performCallWindowDismiss];
+                                                      }];
+}
+
+- (void)performCallWindowDismiss {
   UINavigationController *nav = (UINavigationController *)self.keywindow.rootViewController;
+  if (nav == nil) {
+    [self cleanupCallWindowAfterDismiss];
+    return;
+  }
   __weak typeof(self) weakSelf = self;
   [nav dismissViewControllerAnimated:YES
                           completion:^{
                             NSLog(@"self window %@", weakSelf.keywindow);
                             NEXKitBaseLogInfo(@"call uikit didDismiss completion");
+                            [weakSelf cleanupCallWindowAfterDismiss];
                           }];
+}
 
+- (void)cleanupCallWindowAfterDismiss {
   [self.keywindow resignKeyWindow];
   self.keywindow = nil;
   if (self.parentView != nil && self.callViewController.view != self.parentView) {
@@ -490,6 +835,7 @@ const NSInteger kGroupCallMaxUsers = 10;
   self.pipController = nil;
   self.isCalled = NO;
   self.isCalling = NO;
+  self.callWindowDismissing = NO;
 }
 
 - (void)showCustomClassController:(NEUICallParam *)callParam {
@@ -509,17 +855,23 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 - (void)tryOpenWindowOutApp {
   // 处理应用程序进入后台的操作
+  NECallInfo *callInfo = [[NECallEngine sharedInstance] getCallInfo];
+  uint64_t remoteUid = self.isCalled ? callInfo.callerInfo.uid : callInfo.calleeInfo.uid;
+  self.hasLoggedPipRenderFrame = NO;
+  NEXKitBaseLogInfo(
+      @"call ui kit tryOpenWindowOutApp callId:%@ isCalled:%d remoteUid:%llu cover:%@ "
+       @"coverHidden:%d pip:%@ pipActive:%d",
+      callInfo.callId, self.isCalled, (unsigned long long)remoteUid, self.coverView,
+      self.coverView ? self.coverView.hidden : -1, self.pipController,
+      self.pipController ? self.pipController.isPictureInPictureActive : 0);
   NERtcVideoCanvas *canvas = [[NERtcVideoCanvas alloc] init];
   canvas.renderMode = kNERtcVideoRenderScaleCropFill;
   canvas.useExternalRender = YES;
   canvas.externalVideoRender = self;
-  [NERtcEngine.sharedEngine
-      setupRemoteVideoCanvas:canvas
-                   forUserID:self.isCalled
-                                 ? [[NECallEngine sharedInstance] getCallInfo].callerInfo.uid
-                                 : [[NECallEngine sharedInstance] getCallInfo].calleeInfo.uid];
+  [NERtcEngine.sharedEngine setupRemoteVideoCanvas:canvas forUserID:remoteUid];
   if (![self.pipController isPictureInPictureActive]) {
-    NSLog(@"isPictureInPictureSupported");
+    NEXKitBaseLogInfo(@"call ui kit startPictureInPicture request remoteUid:%llu pip:%@",
+                      (unsigned long long)remoteUid, self.pipController);
     dispatch_async(dispatch_get_main_queue(), ^{
       [self.pipController startPictureInPicture];
     });
@@ -527,20 +879,43 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)appDidEnterBackground {
-  NSLog(@"appDidEnterBackground");
+  NECallEngine *engine = [NECallEngine sharedInstance];
+  NECallInfo *callInfo = [engine getCallInfo];
+  NEXKitBaseLogInfo(
+      @"call ui kit appDidEnterBackground callStatus:%lu callType:%lu callId:%@ "
+       @"enableFloat:%d enableFloatOut:%d cover:%@ coverHidden:%d",
+      (unsigned long)engine.callStatus, (unsigned long)callInfo.callType, callInfo.callId,
+      self.config.uiConfig.enableFloatingWindow, self.config.uiConfig.enableFloatingWindowOutOfApp,
+      self.coverView, self.coverView ? self.coverView.hidden : -1);
 
   if ([self checkoutOutOfAppWindownEnable] == NO) {
+    NEXKitBaseLogInfo(@"call ui kit appDidEnterBackground skip out-app floating window");
     return;
   }
   [self tryOpenWindowOutApp];
 }
 
 - (void)appDidEnterForeground {
-  [self.pipController stopPictureInPicture];
   NECallEngine *engine = [NECallEngine sharedInstance];
+  NECallInfo *callInfo = [engine getCallInfo];
+  BOOL pipActive = self.pipController ? self.pipController.isPictureInPictureActive : NO;
+  NEXKitBaseLogInfo(
+      @"call ui kit appDidEnterForeground callStatus:%lu callType:%lu callId:%@ "
+       @"pip:%@ pipActive:%d cover:%@ coverHidden:%d callVC:%@",
+      (unsigned long)engine.callStatus, (unsigned long)callInfo.callType, callInfo.callId,
+      self.pipController, pipActive, self.coverView, self.coverView ? self.coverView.hidden : -1,
+      self.callViewController);
+  [self showFullScreenAfterSystemAcceptIfNeededWithCallInfo:callInfo source:@"foreground"];
+  // T040: 若有待显示的来电横幅（App 在后台收到来电），回到前台后重新展示
+  if ([self shouldReshowIncomingBannerOnForegroundWithCallStatus:engine.callStatus]) {
+    [NEIncomingCallBannerWindow.sharedInstance show];
+  }
+  [self.pipController stopPictureInPicture];
   if (engine.callStatus == NECallStatusInCall && [engine getCallInfo].callType == NECallTypeVideo &&
       self.callViewController != nil) {
     dispatch_async(dispatch_get_main_queue(), ^{
+      NEXKitBaseLogInfo(@"call ui kit appDidEnterForeground setupRemoteView recoveryView:%@",
+                        self.callViewController.recoveryView);
       [[NECallEngine sharedInstance] setupRemoteView:self.callViewController.recoveryView];
     });
   }
@@ -551,6 +926,15 @@ const NSInteger kGroupCallMaxUsers = 10;
       [self createPipController];
     });
   }
+}
+
+- (void)onSystemIncomingCallAccepting:(NSNotification *)notification {
+  if (self.incomingBannerCallParam == nil) {
+    return;
+  }
+  self.incomingBannerAccepting = YES;
+  NEXKitBaseLogInfo(@"call ui kit system incoming call accepting");
+  [self showIncomingBannerAcceptConnectingViewIfNeededWithCallParam:self.incomingBannerCallParam];
 }
 
 ///  转为小窗模式
@@ -615,11 +999,16 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 - (void)onVideoMuted:(BOOL)muted userID:(NSString *)userId {
   NEXKitBaseLogInfo(
-      @"callkit ui onVideoMuted current accid : %@  userid : %@ mute : %d mask view : %@",
-      self.currentRemoteAccid, userId, muted, self.coverView);
+      @"callkit ui onVideoMuted current accid : %@  userid : %@ mute : %d mask view : %@ "
+       @"hiddenBefore:%d pipActive:%d",
+      self.currentRemoteAccid, userId, muted, self.coverView,
+      self.coverView ? self.coverView.hidden : -1,
+      self.pipController ? self.pipController.isPictureInPictureActive : 0);
 
   if (self.currentRemoteAccid.length > 0 && [self.currentRemoteAccid isEqualToString:userId]) {
     self.coverView.hidden = !muted;
+    NEXKitBaseLogInfo(@"callkit ui onVideoMuted update pip cover userId:%@ hiddenAfter:%d",
+                      userId, self.coverView.hidden);
   }
 }
 
@@ -661,15 +1050,18 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 - (void)createPipController {
   if (self.config.uiConfig.enableFloatingWindow == NO) {
+    NEXKitBaseLogInfo(@"call ui kit createPipController skip enableFloatingWindow=NO");
     return;
   }
 
   if (self.config.uiConfig.enableFloatingWindowOutOfApp == NO) {
+    NEXKitBaseLogInfo(@"call ui kit createPipController skip enableFloatingWindowOutOfApp=NO");
     return;
   }
 
   if (!_pipController) {
     if (![AVPictureInPictureController isPictureInPictureSupported]) {
+      NEXKitBaseLogInfo(@"call ui kit createPipController skip PiP unsupported");
       return;
     }
     UIView *sourceView = nil;
@@ -688,7 +1080,18 @@ const NSInteger kGroupCallMaxUsers = 10;
 
       _pipController.canStartPictureInPictureAutomaticallyFromInline = NO;
       [_pipController stopPictureInPicture];
+      NEXKitBaseLogInfo(@"call ui kit createPipController success sourceView:%@ pip:%@ cover:%@ "
+                        @"coverHidden:%d displayView:%@",
+                        sourceView, _pipController, self.coverView,
+                        self.coverView ? self.coverView.hidden : -1, self.displayView);
+    } else {
+      NEXKitBaseLogInfo(@"call ui kit createPipController skip iOS < 15");
     }
+  } else {
+    NEXKitBaseLogInfo(@"call ui kit createPipController reuse pip:%@ active:%d cover:%@ "
+                      @"coverHidden:%d",
+                      _pipController, _pipController.isPictureInPictureActive, self.coverView,
+                      self.coverView ? self.coverView.hidden : -1);
   }
 }
 
@@ -722,6 +1125,10 @@ const NSInteger kGroupCallMaxUsers = 10;
           constraintEqualToAnchor:videoCallViewController.view.bottomAnchor]
     ]];
   }
+  NEXKitBaseLogInfo(@"call ui kit getVideoCallViewController displayView:%@ cover:%@ "
+                    @"coverHidden:%d preferredSize:%@",
+                    self.displayView, self.coverView, self.coverView ? self.coverView.hidden : -1,
+                    NSStringFromCGSize(videoCallViewController.preferredContentSize));
   return videoCallViewController;
 }
 
@@ -734,29 +1141,42 @@ const NSInteger kGroupCallMaxUsers = 10;
 - (BOOL)checkoutOutOfAppWindownEnable {
   if ([NECallEngine sharedInstance].callStatus != NECallStatusInCall) {
     // 不在通话中，不需要处理进入后台逻辑
-    NSLog(@"appDidEnterBackground call status : %lu",
-          (unsigned long)NECallEngine.sharedInstance.callStatus);
+    NEXKitBaseLogInfo(@"call ui kit checkoutOutOfAppWindownEnable false callStatus:%lu",
+                      (unsigned long)NECallEngine.sharedInstance.callStatus);
     return NO;
   }
 
   NECallType calltype = [[NECallEngine sharedInstance] getCallInfo].callType;
   if (calltype != NECallTypeVideo) {
     // 音频呼叫没有应用外小窗
+    NEXKitBaseLogInfo(@"call ui kit checkoutOutOfAppWindownEnable false callType:%lu",
+                      (unsigned long)calltype);
     return NO;
   }
 
   if (self.config.uiConfig.enableFloatingWindow == YES &&
       self.config.uiConfig.enableFloatingWindowOutOfApp == YES) {
+    NEXKitBaseLogInfo(@"call ui kit checkoutOutOfAppWindownEnable true");
     return YES;
   }
+  NEXKitBaseLogInfo(
+      @"call ui kit checkoutOutOfAppWindownEnable false enableFloat:%d enableFloatOut:%d",
+      self.config.uiConfig.enableFloatingWindow, self.config.uiConfig.enableFloatingWindowOutOfApp);
   return NO;
 }
 
 #pragma mark - Rtc Delegate
 
 - (void)onNERtcEngineRenderFrame:(NERtcVideoFrame *_Nonnull)frame {
-  if (self.transcodingDelegate != nil && self.pipController != nil &&
-      [self.pipController isPictureInPictureActive]) {
+  BOOL pipActive = self.pipController != nil && [self.pipController isPictureInPictureActive];
+  if (pipActive && !self.hasLoggedPipRenderFrame) {
+    self.hasLoggedPipRenderFrame = YES;
+    NEXKitBaseLogInfo(@"call ui kit pip first render frame displayView:%@ cover:%@ coverHidden:%d "
+                      @"transcodingDelegate:%@",
+                      self.displayView, self.coverView, self.coverView ? self.coverView.hidden : -1,
+                      self.transcodingDelegate);
+  }
+  if (self.transcodingDelegate != nil && self.pipController != nil && pipActive) {
     [self.transcodingDelegate renderFrame:frame withLayer:self.displayView.getLayer];
   }
 }
@@ -804,41 +1224,70 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 - (void)pictureInPictureControllerDidStopPictureInPicture:
     (AVPictureInPictureController *)pictureInPictureController {
-  NSLog(@"call ui kit pictureInPictureControllerDidStopPictureInPicture");
+  self.hasLoggedPipRenderFrame = NO;
+  NEXKitBaseLogInfo(@"call ui kit pictureInPictureControllerDidStopPictureInPicture pip:%@ "
+                    @"cover:%@ coverHidden:%d",
+                    pictureInPictureController, self.coverView,
+                    self.coverView ? self.coverView.hidden : -1);
 }
 
 - (void)pictureInPictureControllerDidStartPictureInPicture:
     (AVPictureInPictureController *)pictureInPictureController {
-  NSLog(@"call ui kit pictureInPictureControllerDidStartPictureInPicture");
+  self.hasLoggedPipRenderFrame = NO;
+  NEXKitBaseLogInfo(@"call ui kit pictureInPictureControllerDidStartPictureInPicture pip:%@ "
+                    @"cover:%@ coverHidden:%d displayView:%@",
+                    pictureInPictureController, self.coverView,
+                    self.coverView ? self.coverView.hidden : -1, self.displayView);
 }
 
 - (void)pictureInPictureControllerWillStopPictureInPicture:
     (AVPictureInPictureController *)pictureInPictureController {
-  NSLog(@"call ui kit pictureInPictureControllerWillStopPictureInPicture");
+  NEXKitBaseLogInfo(@"call ui kit pictureInPictureControllerWillStopPictureInPicture pip:%@ "
+                    @"cover:%@ coverHidden:%d",
+                    pictureInPictureController, self.coverView,
+                    self.coverView ? self.coverView.hidden : -1);
 }
 
 - (void)pictureInPictureControllerWillStartPictureInPicture:
     (AVPictureInPictureController *)pictureInPictureController {
-  NSLog(@"call ui kit pictureInPictureControllerWillStartPictureInPicture");
+  NEXKitBaseLogInfo(@"call ui kit pictureInPictureControllerWillStartPictureInPicture pip:%@ "
+                    @"cover:%@ coverHidden:%d displayView:%@",
+                    pictureInPictureController, self.coverView,
+                    self.coverView ? self.coverView.hidden : -1, self.displayView);
 }
 
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController
     failedToStartPictureInPictureWithError:(NSError *)error {
-  NSLog(@"call ui kit pictureInPictureController  error : %@", error);
+  NEXKitBaseLogInfo(@"call ui kit pictureInPictureController failed error:%@ pip:%@ cover:%@ "
+                    @"coverHidden:%d",
+                    error, pictureInPictureController, self.coverView,
+                    self.coverView ? self.coverView.hidden : -1);
 }
 
 - (void)pictureInPictureController:(AVPictureInPictureController *)pictureInPictureController
     restoreUserInterfaceForPictureInPictureStopWithCompletionHandler:
         (void (^)(BOOL))completionHandler {
+  NEXKitBaseLogInfo(@"call ui kit pictureInPicture restore UI pip:%@ callVC:%@ cover:%@ "
+                    @"coverHidden:%d",
+                    pictureInPictureController, self.callViewController, self.coverView,
+                    self.coverView ? self.coverView.hidden : -1);
   if (self.callViewController != nil) {
     [self.callViewController changeToNormal];
   }
 }
 
+#pragma mark - Incoming Banner
+
+- (void)enableIncomingBanner:(BOOL)enable {
+  self.incomingBannerEnabled = enable;
+  NEXKitBaseLogInfo(@"enableIncomingBanner: %d", enable);
+}
+
 #pragma mark - Version
 
 + (NSString *)version {
-  return @"4.1.0";
+  return @"4.7.0";
+
 }
 
 #pragma mark - Group Call

@@ -54,7 +54,7 @@
             android:background="@color/color_f5455e"
             android:padding="10dp"
             android:gravity="center"
-            android:text="@string/restart_tip"
+            android:text="当前设置需要重启应用生效！"
             android:textColor="@color/white"
             android:visibility="gone" />
 
@@ -87,7 +87,7 @@
                 android:layout_alignBottom="@id/edt_time"
                 android:layout_marginStart="20dp"
                 android:gravity="center_vertical"
-                android:text="@string/rtc_timeout_tip"
+                android:text="设置RTC呼叫超时时间（秒）：\n 融合呼叫场景下为转换时间"
                 android:textColor="@color/colorWhite" />
         </RelativeLayout>
 
@@ -115,7 +115,7 @@
                 android:layout_alignBottom="@id/swEnableJoinRtcWhenCall"
                 android:layout_width="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="@string/enable_join_rtc_when_call"
+                android:text="开启呼叫时加入Rtc ：           "
                 android:gravity="center_vertical"
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
@@ -145,7 +145,7 @@
                 android:layout_alignBottom="@id/swEnableAutoJoin"
                 android:layout_width="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="@string/enable_auto_join_channel"
+                android:text="开启自动加入信令通道 ：           "
                 android:gravity="center_vertical"
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
@@ -176,7 +176,7 @@
                 android:layout_alignBottom="@id/sw_for_support_foreground_service"
                 android:layout_width="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="@string/enable_foreground_service"
+                android:text="是否开启通话前台服务 ：                    "
                 android:gravity="center_vertical"
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
@@ -205,7 +205,7 @@
                 android:layout_alignBottom="@id/et_input_global_extra"
                 android:layout_width="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="@string/global_extra_copy"
+                android:text="全局抄送参数 ："
                 android:gravity="center_vertical"
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
@@ -234,7 +234,7 @@
                 android:layout_alignBottom="@id/et_input_custom_channel_name"
                 android:layout_width="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="@string/custom_channel_name"
+                android:text="自定义channelName："
                 android:gravity="center_vertical"
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
@@ -462,6 +462,37 @@
             android:layout_height="wrap_content">
 
             <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/sw_enable_incoming_banner"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="30dp"
+                android:layout_toEndOf="@+id/enable_incoming_banner"
+                android:checked="false"
+                android:gravity="center"
+                android:maxLength="5"
+                android:textColor="@color/colorWhite"
+                android:textSize="16sp" />
+
+            <TextView
+                android:id="@+id/enable_incoming_banner"
+                android:layout_alignTop="@id/sw_enable_incoming_banner"
+                android:layout_alignBottom="@id/sw_enable_incoming_banner"
+                android:layout_width="wrap_content"
+                android:layout_marginStart="20dp"
+                android:text="开启来电横幅："
+                android:gravity="center_vertical"
+                android:textColor="@color/colorWhite"
+                android:layout_height="wrap_content"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_marginTop="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/sw_support_audio_to_video"
                 android:layout_width="wrap_content"
                 android:layout_height="60dp"
@@ -608,6 +639,32 @@
                 android:layout_alignBottom="@id/sw_video_to_audio_confirm"
                 android:gravity="center_vertical"
                 android:text="视频转音频是否需要确认"
+                android:textColor="@color/colorWhite" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_marginTop="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Spinner
+                android:id="@+id/spinner_ains_mode"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="10dp"
+                android:layout_marginEnd="30dp"
+                android:layout_toEndOf="@+id/ains_noise_reduction_mode_tip" />
+
+            <TextView
+                android:id="@+id/ains_noise_reduction_mode_tip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@id/spinner_ains_mode"
+                android:layout_alignBottom="@id/spinner_ains_mode"
+                android:layout_marginStart="20dp"
+                android:gravity="center_vertical"
+                android:text="@string/ains_noise_reduction_mode"
                 android:textColor="@color/colorWhite" />
         </RelativeLayout>
 
@@ -773,35 +830,6 @@
             android:text="上传 rtc 日志"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
-
-        <RelativeLayout
-            android:layout_marginTop="20dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <Spinner
-                android:id="@+id/spinner_ains_mode"
-                android:layout_width="150dp"
-                android:layout_height="60dp"
-                android:layout_marginEnd="30dp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginStart="10dp"
-                android:layout_toEndOf="@+id/tv_ains_mode_tip"
-                android:textSize="16sp"
-                android:textColor="@color/colorWhite"
-                android:background="@drawable/et_search_bg" />
-
-            <TextView
-                android:id="@+id/tv_ains_mode_tip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignTop="@id/spinner_ains_mode"
-                android:layout_alignBottom="@id/spinner_ains_mode"
-                android:layout_marginStart="20dp"
-                android:gravity="center_vertical"
-                android:text="@string/ains_noise_reduction_mode"
-                android:textColor="@color/colorWhite" />
-        </RelativeLayout>
 
     </LinearLayout>
 
