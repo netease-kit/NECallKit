@@ -6,7 +6,7 @@ set +x
 TARGET_PLATFORM="$1"
 
 if [ -z "$TARGET_PLATFORM" ]; then
-  echo "Usage: sh deploy/switch_nim_sdk_options_factory.sh <android|ios|ohos>"
+  echo "Usage: sh script/switch_nim_sdk_options_factory.sh <android|ios|ohos>"
   exit 1
 fi
 
@@ -89,7 +89,7 @@ case "${TARGET_PLATFORM}" in
     ;;
   *)
     echo "Unsupported platform: ${TARGET_PLATFORM}"
-    echo "Usage: sh deploy/switch_nim_sdk_options_factory.sh <android|ios|ohos>"
+    echo "Usage: sh script/switch_nim_sdk_options_factory.sh <android|ios|ohos>"
     exit 1
     ;;
 esac
