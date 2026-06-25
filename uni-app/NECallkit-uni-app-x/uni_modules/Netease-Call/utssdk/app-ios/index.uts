@@ -22,6 +22,7 @@ import {
 } from "./utils/index.uts";
 import { NERtcCallKit, 
  NECallParam, 
+ NECallPushConfig,
  NECallType, 
  NECallEngine, 
  NECallEngineDelegate,
@@ -31,10 +32,12 @@ import { NERtcCallKit,
  NECallInfo, 
  NERtcAudioAINSMode, 
  NECallSwitchState} from "NERtcCallKit";
-import { NECallKitBridge, NEFloatWindowObserver } from "NERtcCallUIKit";
+import { NECallKitBridge, NEFloatWindowObserver, NERtcCallUIKit, NECallUIKitConfig, NEIncomingCallBannerWindow } from "NERtcCallUIKit";
 import { NEXKitBaseLog } from "NEXKitBase";
 
 import { Int } from 'Swift';
+import { NSMutableDictionary, NSString } from 'Foundation';
+import { UIApplication } from "UIKit";
 
 const listenerMap = new Map<string, Array<(res: any) => void>>();
 
@@ -58,12 +61,75 @@ export class CallEngine {
     this.callObserver = new CallEngineObserver(callObserve);
 	this.floatWindowObserver = new FloatWindowObserver(callObserve);
 
-	console.log(`${NAME.PREFIX} constructor.start callObserver ${this.callObserver}`);
+    console.log(`${NAME.PREFIX} constructor.start callObserver ${this.callObserver}`);
+    this.callBridge.add(this.floatWindowObserver as NEFloatWindowObserver);
   }
 
   private log(msg:string){
 	  console.log(`${NAME.PREFIX} log:------------------- ${msg}`);
       NEXKitBaseLog.shared().log(NEXKitBaseLogLevel.info, moduleName = "CallkitUts", tag = "CallkitUts", type = NEXKitBaseLogType.normal, line = 0, message = msg)
+  }
+
+  private getPushOptions(options: UTSJSONObject | null): UTSJSONObject | null {
+    if (options == null) {
+      return null;
+    }
+
+    let pushOptions = options.getJSON("pushConfig");
+    if (pushOptions != null) {
+      return pushOptions;
+    }
+
+    if (
+      options.hasOwnProperty("needPush") ||
+      options.hasOwnProperty("pushTitle") ||
+      options.hasOwnProperty("pushContent") ||
+      options.hasOwnProperty("pushPayload") ||
+      options.hasOwnProperty("needBadge")
+    ) {
+      return options;
+    }
+    return null;
+  }
+
+  private createPushConfig(options: UTSJSONObject): NECallPushConfig {
+    const pushConfig = new NECallPushConfig();
+    const pushTitle = options.getString("pushTitle");
+    if (pushTitle != null) {
+      pushConfig.pushTitle = pushTitle!;
+    }
+    const pushContent = options.getString("pushContent");
+    if (pushContent != null) {
+      pushConfig.pushContent = pushContent!;
+    }
+    pushConfig.needPush = this.getBoolean(options, "needPush", true);
+    pushConfig.needBadge = this.getBoolean(options, "needBadge", true);
+
+    const pushPayload = this.getPayloadString(options, "pushPayload");
+    if (pushPayload != null) {
+      pushConfig.pushPayload = this.createPayloadDictionary(pushPayload);
+    }
+    return pushConfig;
+  }
+
+  private getBoolean(options: UTSJSONObject, key: string, defaultValue: boolean): boolean {
+    const value = options.getBoolean(key);
+    return value == null ? defaultValue : value;
+  }
+
+  private getPayloadString(options: UTSJSONObject, key: string): string | null {
+    const value = options.getAny(key);
+    if (value == null) {
+      return null;
+    }
+    if (typeof value == "string") {
+      return value as string;
+    }
+    return JSON.stringify(value);
+  }
+
+  private createPayloadDictionary(payload: string): NSMutableDictionary {
+    return new NSMutableDictionary(object = payload as NSString, forKey = "payload" as NSString);
   }
 
   public setup(param: InitParams) {
@@ -104,6 +170,16 @@ export class CallEngine {
       (voipCerName = voipCerName),
       (currentUserRtcUid = currentUserRtcUid)
     );
+    const uiKitConfig = new NECallUIKitConfig();
+    uiKitConfig.appKey = param.appKey;
+    uiKitConfig.uiConfig.disableShowCalleeView = true;
+    uiKitConfig.uiConfig.disableShowGroupCallInviteView = true;
+    uiKitConfig.uiConfig.enableNativeIncomingRing = false;
+
+    uiKitConfig.uiConfig.enableFloatingWindow = true;
+    uiKitConfig.uiConfig.enableFloatingWindowOutOfApp = param.enableAutoFloatingWindowWhenHome ?? false;
+    NERtcCallUIKit.sharedInstance().setup(with = uiKitConfig);
+    NERtcCallUIKit.sharedInstance().enableIncomingBanner(param.enableIncomingBanner ?? false);
     
     param.success?.();
   }
@@ -171,7 +247,10 @@ export class CallEngine {
       if (globalExtraCopy != null) {
         callParam.globalExtraCopy = globalExtraCopy;
       }
-      // pushConfig 如果需要的话，可以从 params 中获取并设置
+      let pushConfigOptions = this.getPushOptions(param.params);
+      if (pushConfigOptions != null) {
+        callParam.pushConfig = this.createPushConfig(pushConfigOptions);
+      }
     }
     
     // 调用 callWithParam 方法
@@ -235,19 +314,18 @@ export class CallEngine {
    * 视频通话中转为音频通话
    */
   public switchCallType(param: SwitchCallTypeParams): void {
-    console.log(`${NAME.PREFIX} switchCallType.start, callType: ${param.callType}`);    
-    // 转换 callType 为 NECallType
+    const currentConfig = this.callBridge.getCallConfig();
+    console.log(
+      `${NAME.PREFIX} switchCallType.start, callType: ${param.callType}, state: ${param.state}, ` +
+        `config: ${currentConfig}`
+    );
     const callType = ParamsCovert.covertMediaType(param.callType);
-    
-    // 创建 NESwitchParam 对象
     const switchParam = new NESwitchParam();
     switchParam.callType = callType;
     switchParam.state = ParamsCovert.covertSwitchState(param.state);
-    
-    // switchCallTypeWithParam 没有回调，直接调用
+
     this.callBridge.switchCallType(with = switchParam);
-    
-    // 由于没有回调，直接调用 success
+    console.log(`${NAME.PREFIX} switchCallType success, callType: ${param.callType}, state: ${param.state}`);
     param.success?.();
   }
   
@@ -302,20 +380,39 @@ export class CallEngine {
    * @param options 回调选项，包含成功和失败回调
    */
   public startFloatWindow(options: CallbackOptions) {
-    console.log(`${NAME.PREFIX} startFloatWindow.start`);
-    this.callBridge.startFloatWindow()
-	this.callBridge.add(this.floatWindowObserver as NEFloatWindowObserver)
+    if (UIApplication.shared.applicationState != UIApplication.State.active) {
+      console.log(`${NAME.PREFIX} startFloatWindow skipped, app is not active`);
+      options.fail?.(-1, "app is not active");
+      return;
+    }
+    this.callBridge.startFloatWindow();
+    this.callBridge.add(this.floatWindowObserver as NEFloatWindowObserver);
 	options.success?.();
-	console.log(`${NAME.PREFIX} startFloatWindow.success`);
   }
 
   /**
    * 关闭悬浮窗
    */
   public stopFloatWindow() {
-    console.log(`${NAME.PREFIX} stopFloatWindow.start`);
-    this.callBridge.stopFloatWindow();   
-    // this.callBridge.remove(this.floatWindowObserver as NEFloatWindowObserver);
+    this.callBridge.stopFloatWindow(); 
+  }
+
+  public isFloatWindowVisible(): boolean {
+    return false;
+  }
+
+  public setIncomingBannerEnabled(enable: boolean): void {
+    console.log(`${NAME.PREFIX} setIncomingBannerEnabled, enable: ${enable}`);
+    NERtcCallUIKit.sharedInstance().enableIncomingBanner(enable);
+  }
+
+  public showIncomingBanner(caller: string, mediaType: number): void {
+    console.log(`${NAME.PREFIX} showIncomingBanner noop on iOS, caller: ${caller}, mediaType: ${mediaType}`);
+  }
+
+  public cancelIncomingBanner(): void {
+    console.log(`${NAME.PREFIX} cancelIncomingBanner on iOS`);
+    NEIncomingCallBannerWindow.sharedInstance().dismiss();
   }
 
   /**
@@ -339,6 +436,25 @@ export class CallEngine {
   public setCallConfig(config: NECallConfig): void {
     console.log(`${NAME.PREFIX} setCallConfig`);
     this.callBridge.setCallConfig(config);
+  }
+
+  public setSwitchCallTypeConfirm(audioToVideoConfirm: boolean, videoToAudioConfirm: boolean): void {
+    const config = this.callBridge.getCallConfig() ?? new NECallConfig();
+    console.log(
+      `${NAME.PREFIX} setSwitchCallTypeConfirm, audioToVideoConfirm: ${audioToVideoConfirm}, ` +
+        `videoToAudioConfirm: ${videoToAudioConfirm}, config: ${config}`
+    );
+    config.enableSwitchVideoConfirm = audioToVideoConfirm;
+    config.enableSwitchAudioConfirm = videoToAudioConfirm;
+    this.callBridge.setCallConfig(config);
+  }
+
+  public setAutoFloatingWindowWhenHomeEnabled(enable: boolean): void {
+    console.log(`${NAME.PREFIX} setAutoFloatingWindowWhenHomeEnabled, enable: ${enable}`);
+    NERtcCallUIKit.sharedInstance().setValue(
+      enable,
+      forKeyPath = "config.uiConfig.enableFloatingWindowOutOfApp"
+    );
   }
 
   /**
@@ -429,6 +545,7 @@ export class CallEngine {
     listenerMap.delete(eventName);
     if (listenerMap.size === 0) {
       NECallEngine.sharedInstance().removeCall(this.callObserver);
+	  this.callBridge.remove(this.floatWindowObserver as NEFloatWindowObserver);
     }
   }
 }

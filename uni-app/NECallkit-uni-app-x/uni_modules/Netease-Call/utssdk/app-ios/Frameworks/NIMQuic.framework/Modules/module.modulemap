@@ -1,6 +1,0 @@
-framework module NIMQuic {
-  umbrella header "NIMQuic.h"
-
-  export *
-  module * { export * }
-}

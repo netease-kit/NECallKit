@@ -1,17 +1,17 @@
 {
-  "deploymentTarget": "13", // ios 系统版本 13.0
+  "deploymentTarget": "13",
   "dependencies-pods": [
     {
       "name": "NERtcCallKit",
-      "version": "4.0.0"
+      "version": "4.7.5"
     },
-	{
-	  "name": "NERtcCallUIKit",
-	  "version": "4.0.0"
-	},
-	{
-	  "name": "NERtcSDK",
-	  "version": "5.9.10"
-	}
+    {
+      "name": "NERtcCallUIKit",
+      "version": "4.7.5"
+    },
+    {
+      "name": "NERtcSDK",
+      "version": "5.9.10"
+    }
   ]
 }

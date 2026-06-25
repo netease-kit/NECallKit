@@ -96,5 +96,9 @@ export class FloatWindowObserver implements NEFloatWindowObserver {
     console.log(`${NAME.PREFIX} tapFloatWindow`);
     this.listener("onFloatWindowClick", {});
   }
-}
 
+  tapIncomingBanner(action: string) {
+    console.log(`${NAME.PREFIX} tapIncomingBanner, action: ${action}`);
+    this.listener("onIncomingBannerClick", { action });
+  }
+}
