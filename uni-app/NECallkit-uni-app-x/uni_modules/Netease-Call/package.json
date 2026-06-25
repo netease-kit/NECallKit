@@ -1,7 +1,7 @@
 {
   "id": "Netease-Call",
   "displayName": "【官方】网易云信RTC音视频通话组件 Netease-Call",
-  "version": "4.0.0",
+  "version": "4.7.5",
   "description": "NECallKit 是云信官方推出的音视频通话 UTS 插件，支持 1v1 通话，简化了呼叫流程，并提供通用的通话UI交互，开发者也可以根据自己的业务需求进行 UI 定制。",
   "keywords": [
     "Call",
@@ -9,12 +9,12 @@
     "音视频",
     "APP",
     "UTS"
-  ],
+],
   "repository": "https://github.com/netease-kit/NECallKit/tree/main/uni-app",
   "engines": {
     "HBuilderX": "^4.53",
-    "uni-app": "^3.1.0",
-    "uni-app-x": "^3.1.0"
+    "uni-app": "^3.7.12",
+    "uni-app-x": "^3.7.12"
   },
   "dcloudext": {
     "type": "component-uts",
@@ -35,9 +35,9 @@
       "permissions": "安卓：摄像头，语音，本地存储空间 IOS：摄像头，语音，本地存储空间"
     },
     "npmurl": "",
-    "darkmode": "-",
-    "i18n": "-",
-    "widescreen": "-"
+    "darkmode": "x",
+    "i18n": "√",
+    "widescreen": "x"
   },
   "uni_modules": {
     "dependencies": [],
@@ -55,44 +55,56 @@
             "vue3": "-"
           },
           "web": {
-            "safari": "-",
-            "chrome": "-"
+            "safari": "x",
+            "chrome": "x"
           },
           "app": {
             "vue": "-",
             "nvue": "-",
-            "android": "-",
-            "ios": "-",
-            "harmony": "-"
+            "android": {
+                "extVersion": "",
+                "minVersion": "21"
+            },
+            "ios": {
+                "extVersion": "",
+                "minVersion": "13"
+            },
+            "harmony": "x"
           },
           "mp": {
-            "weixin": "-",
-            "alipay": "-",
-            "toutiao": "-",
-            "baidu": "-",
-            "kuaishou": "-",
-            "jd": "-",
-            "harmony": "-",
-            "qq": "-",
-            "lark": "-"
+            "weixin": "x",
+            "alipay": "x",
+            "toutiao": "x",
+            "baidu": "x",
+            "kuaishou": "x",
+            "jd": "x",
+            "harmony": "x",
+            "qq": "x",
+            "lark": "x"
           },
           "quickapp": {
-            "huawei": "-",
-            "union": "-"
+            "huawei": "x",
+            "union": "x"
           }
         },
         "uni-app-x": {
           "web": {
-            "safari": "-",
-            "chrome": "-"
+            "safari": "x",
+            "chrome": "x"
           },
           "app": {
-            "android": "-",
-            "ios": "-",
-            "harmony": "-"
+            "android": {
+                "extVersion": "",
+                "minVersion": "21"
+            },
+            "ios": {
+                "extVersion": "",
+                "minVersion": "13"
+            },
+            "harmony": "x"
           },
           "mp": {
-            "weixin": "-"
+            "weixin": "x"
           }
         }
       }
