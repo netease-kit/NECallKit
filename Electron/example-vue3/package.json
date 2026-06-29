@@ -1,0 +1,14 @@
+{
+  "name": "electron-callkit-example-vue3",
+  "private": true,
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "@xkit-yx/electron-callkit-vue3-uikit": "4.6.0-rc.1",
+    "electron": "30.0.1",
+    "node-nim": "^10.9.80",
+    "vue": "^3.4.0"
+  }
+}
