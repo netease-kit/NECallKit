@@ -37,8 +37,8 @@ function createCallkitRuntime(options = {}) {
 
 // mac IPC topology factory — kept on the uikit boundary so the example
 // renderer never has to import src/lib/ipc-callkit-runtime.js or set
-// framework/channel by hand. Lazy-required for the same reason as the
-// React uikit's mirror.
+// framework/channel by hand. Lazy-required so the helper can resolve from
+// either the source tree or the packaged app resources.
 function isMissingRequestedModule(error, request) {
   return (
     error &&

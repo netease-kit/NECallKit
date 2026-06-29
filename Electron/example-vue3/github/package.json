@@ -1,6 +1,6 @@
 {
   "name": "@xkit-yx/electron-callkit-vue3-uikit",
-  "version": "4.7.0-rc.1",
+  "version": "4.6.0-rc.1",
   "description": "Electron CallKit Vue3 UIKit — 在 Electron 应用中接入 1v1 音视频通话的 Vue 3 UI 组件",
   "license": "MIT",
   "author": "",
@@ -62,10 +62,10 @@
     "vue": "^3.4.0"
   },
   "dependencies": {
-    "@xkit-yx/callkit-domain": "4.7.0-rc.1",
-    "@xkit-yx/callkit-runtime-electron": "4.7.0-rc.1",
-    "@xkit-yx/callkit-vue3-core": "4.7.0-rc.1",
-    "@xkit-yx/electron-callkit-sdk": "4.7.0-rc.1"
+    "@xkit-yx/callkit-domain": "4.6.0-rc.1",
+    "@xkit-yx/callkit-runtime-electron": "4.6.0-rc.1",
+    "@xkit-yx/callkit-vue3-core": "4.6.0-rc.1",
+    "@xkit-yx/electron-callkit-sdk": "4.6.0-rc.1"
   },
   "bundleDependencies": [
     "@xkit-yx/callkit-domain",

@@ -12,7 +12,7 @@ In a consumer project:
 npm install @xkit-yx/electron-callkit-vue3-uikit vue
 ```
 
-In this sample repo, `Electron/example-vue3/package.json` follows the published package version from the source example. For local source debugging, temporarily install this directory through a local path or local tarball.
+In this sample repo, `Electron/example-vue3/package.json` uses the published npm package version. For local source debugging, temporarily install this directory through a local path or local tarball.
 
 ## Minimal Usage
 
