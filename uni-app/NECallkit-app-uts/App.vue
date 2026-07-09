@@ -7,6 +7,9 @@ import {
 } from "@/uni_modules/Netease-Call/callkit/callServices/const/index";
 
 let openNotificationListenerRegistered = false;
+const LIVE_COMMUNICATION_KIT_CONFIG_KEY = "NECallKit_UTS_LiveCommunicationKit_Config";
+const DEFAULT_VOIP_CER_NAME = "party_release_inhouse";
+const DEFAULT_LIVE_COMMUNICATION_KIT_RINGTONE_NAME = "lck_incoming_ring.mp3";
 
 export default {
   onLaunch: function () {
@@ -46,6 +49,13 @@ export default {
     uni.$appIsActive = () => isActive;
     
     const app = getApp();
+    let liveCommunicationKitConfig = {};
+    try {
+      liveCommunicationKitConfig =
+        uni.getStorageSync(LIVE_COMMUNICATION_KIT_CONFIG_KEY) || {};
+    } catch (error) {
+      console.error("读取LiveCommunicationKit配置失败", error);
+    }
     app.globalData = {
       timeout: 30,
       channelName: '',
@@ -57,6 +67,10 @@ export default {
       enableFloatingWindow: true,
       enableAutoFloatingWindowWhenHome: false,
       enableIncomingBanner: false,
+      liveCommunicationKitEnabled: liveCommunicationKitConfig.enabled === true,
+      voipCerName: liveCommunicationKitConfig.voipCerName || DEFAULT_VOIP_CER_NAME,
+      liveCommunicationKitRingtoneName:
+        liveCommunicationKitConfig.ringtoneName || DEFAULT_LIVE_COMMUNICATION_KIT_RINGTONE_NAME,
       pushEnabled: true,
       pushTitle: '',
       pushContent: '',
@@ -84,11 +98,27 @@ export default {
           console.log('=====addOpenNotificationListener success:', JSON.stringify(result))
 
           const callInfo = JSON.parse(result.nertcCallkit);
+          const isIOS = uni.getSystemInfoSync().platform === "ios";
+          let nativeCallInfo = null;
+          if (isIOS) {
+            if (uni.$NECallKit?.recoverConnectedCallPageFromNative?.("notification")) {
+              return;
+            }
+            nativeCallInfo = uni.$NECallKit?.getCallInfo?.();
+            const nativeCallStatus = Number(nativeCallInfo?.callStatus ?? 0);
+            if (nativeCallStatus !== 2 && nativeCallStatus !== 3) {
+              console.log(
+                '=====addOpenNotificationListener ignore stale call push, nativeCallStatus:',
+                nativeCallStatus
+              );
+              return;
+            }
+          }
           let updateStoreParams = {
             [NAME.CALL_ROLE]: CallRole.CALLEE,
             [NAME.CALL_STATUS]: CallStatus.CALLING,
-            [NAME.MEDIA_TYPE]: callInfo.callType,
-            [NAME.CALLER_USER_INFO]: callInfo.accId,
+            [NAME.MEDIA_TYPE]: nativeCallInfo?.callType ?? callInfo.callType,
+            [NAME.CALLER_USER_INFO]: nativeCallInfo?.callerInfo?.accId ?? callInfo.accId,
           };
           uni.$NEStore.updateStore(updateStoreParams, StoreName.CALL);
 

@@ -3,11 +3,11 @@
   "dependencies-pods": [
     {
       "name": "NERtcCallKit",
-      "version": "4.7.5"
+      "version": "4.8.1"
     },
     {
       "name": "NERtcCallUIKit",
-      "version": "4.7.5"
+      "version": "4.8.1"
     },
     {
       "name": "NERtcSDK",

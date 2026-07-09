@@ -56,6 +56,7 @@ class CallService {
   private _switchCallTypeConfirmModalRevision: number = 0;
   private _autoFloatingWindowWhenHomeEnabled: boolean = false;
   private _incomingCallPermissionRevision: number = 0;
+  private _iosLiveCommunicationKitIncoming: boolean = false;
 
   constructor() {
     console.log(`${NAME.PREFIX} constructor`);
@@ -70,6 +71,9 @@ class CallService {
     });
     uni.onAppShow(() => {
       this._isInForeground = true;
+      if (this._isIOSPlatform()) {
+        this.recoverConnectedCallPageFromNative("appShow");
+      }
     });
   }
 
@@ -85,6 +89,15 @@ class CallService {
 
     this.callEngine.on("onError", (res) => {
       console.error(`${NAME.PREFIX} onError, data: ${JSON.stringify(res)}`);
+    });
+    this.callEngine.on("onLiveCommunicationKitIncomingStateChanged", (res) => {
+      console.log(
+        `${NAME.PREFIX} onLiveCommunicationKitIncomingStateChanged, data: ${JSON.stringify(res)}`
+      );
+      this._iosLiveCommunicationKitIncoming = res?.isIncoming === true;
+      if (this._iosLiveCommunicationKitIncoming) {
+        this._ringController.stopLoopRing();
+      }
     });
     this.callEngine.on("onCallReceived", (res) => {
       console.log(
@@ -136,11 +149,11 @@ class CallService {
           };
           uni.$NEStore.updateStore(updateStoreParams, StoreName.CALL);
           if (this._incomingBannerEnabled) {
-            this._ringController.startIncomingRing();
+            this._startIncomingRingIfNeeded();
             this.showIncomingBanner();
             return;
           }
-          this._ringController.startIncomingRing();
+          this._startIncomingRingIfNeeded();
           getApp().globalData.timeout > 0 && this._navigateToCallPage();
         },
         () => {
@@ -151,12 +164,23 @@ class CallService {
 
     this.callEngine.on("onCallConnected", (res) => {
       console.log(`${NAME.PREFIX} onCallConnected, data: ${JSON.stringify(res)}`);
+      this._clearIOSLiveCommunicationKitIncoming();
       this._ringController.stopLoopRing();
       
+      const connectedCallInfo = res?.info;
+      if (
+        this._isIOSPlatform() &&
+        Number(connectedCallInfo?.callStatus ?? 0) === 3 &&
+        !this._isCallPageVisible() &&
+        this.recoverConnectedCallPageFromNative("onCallConnected", connectedCallInfo)
+      ) {
+        return;
+      }
+
       const callType = uni.$NEStore.getData(
         StoreName.CALL,
         NAME.MEDIA_TYPE
-      );
+      ) || connectedCallInfo?.callType;
       this.startService(callType);
       
       const callStatus = uni.$NEStore.getData(
@@ -164,6 +188,14 @@ class CallService {
         NAME.CALL_STATUS
       );
       if (callStatus === CallStatus.CALLING) {
+        if (
+          this._isIOSPlatform() &&
+          this._incomingBannerEnabled &&
+          !this._isCallPageVisible() &&
+          this.recoverConnectedCallPageFromNative("onCallConnected", connectedCallInfo)
+        ) {
+          return;
+        }
         uni.$NEStore.update(
           StoreName.CALL,
           NAME.CALL_STATUS,
@@ -171,6 +203,13 @@ class CallService {
         );
         uni.$NEStore.update(StoreName.CALL, NAME.CALL_TIPS, "");
         this._startTimer();
+        return;
+      }
+      if (this._isIOSPlatform() && callStatus !== CallStatus.CONNECTED) {
+        console.log(
+          `${NAME.PREFIX} onCallConnected recover call page from native info, callStatus: ${callStatus}`
+        );
+        this.recoverConnectedCallPageFromNative("onCallConnected", connectedCallInfo);
       }
     });
 
@@ -219,6 +258,7 @@ class CallService {
 
     this.callEngine.on("onCallEnd", (res) => {
       console.log(`${NAME.PREFIX} onCallEnd, data: ${JSON.stringify(res)}`);
+      this._clearIOSLiveCommunicationKitIncoming();
       this._incomingCallPermissionRevision++;
       this._ringController.stopLoopRing();
       
@@ -291,6 +331,7 @@ class CallService {
       console.log(
         `${NAME.PREFIX} onCallNotConnected, data: ${JSON.stringify(res)}`
       );
+      this._clearIOSLiveCommunicationKitIncoming();
       this._ringController.stopLoopRing();
       this._navigateBackCallPage();
       this.stopFloatWindow();
@@ -324,6 +365,7 @@ class CallService {
 
   private _removeListenr(): void {
     this.callEngine.off("onError");
+    this.callEngine.off("onLiveCommunicationKitIncomingStateChanged");
     this.callEngine.off("onCallReceived");
     this.callEngine.off("onCallBegin");
     this.callEngine.off("onCallTypeChange");
@@ -425,6 +467,7 @@ class CallService {
 
   public accept(options?: AcceptParams): void {
     console.log(`${NAME.PREFIX} accept`);
+    this._clearIOSLiveCommunicationKitIncoming();
     this._ringController.stopLoopRing();
     this.cancelIncomingBanner();
     const params: AcceptParams = {
@@ -440,6 +483,7 @@ class CallService {
   
   public hangup(options?: HangupParams): void {
     console.log(`${NAME.PREFIX} hangup`);
+    this._clearIOSLiveCommunicationKitIncoming();
     this._ringController.stopLoopRing();
     this.cancelIncomingBanner();
     const params: HangupParams = {
@@ -808,6 +852,81 @@ class CallService {
 
   public getNECallEngineInstance() {
     return this.callEngine;
+  }
+
+  public getCallInfo(): any {
+    return this.callEngine.getCallInfo?.();
+  }
+
+  public recoverConnectedCallPageFromNative(source: string, callInfo?: any): boolean {
+    if (!this._isIOSPlatform()) {
+      return false;
+    }
+    let nativeCallInfo = callInfo;
+    if (!nativeCallInfo) {
+      try {
+        nativeCallInfo = this.getCallInfo();
+      } catch (error) {
+        console.log(`${NAME.PREFIX} recoverConnectedCallPageFromNative getCallInfo failed, ${error}`);
+        return false;
+      }
+    }
+    if (Number(nativeCallInfo?.callStatus ?? 0) !== 3) {
+      return false;
+    }
+    const floatWindowActive = this._isFloatWindowActive();
+    console.log(
+      `${NAME.PREFIX} recoverConnectedCallPageFromNative, source: ${source}, ` +
+        `floatWindowActive: ${floatWindowActive}`
+    );
+    this._syncConnectedCallStoreFromNativeInfo(nativeCallInfo);
+    this.startService(nativeCallInfo?.callType);
+    if (!floatWindowActive) {
+      this._navigateToCallPage();
+    }
+    this._startTimer();
+    return true;
+  }
+
+  private _isFloatWindowActive(): boolean {
+    const storeFloatWindowActive =
+      uni.$NEStore.getData(StoreName.CALL, NAME.ENABLE_FLOAT_WINDOW) === true;
+    const nativeFloatWindowVisible = this.callEngine.isFloatWindowVisible?.();
+    if (typeof nativeFloatWindowVisible === "boolean") {
+      return nativeFloatWindowVisible || storeFloatWindowActive;
+    }
+    return storeFloatWindowActive;
+  }
+
+  private _syncConnectedCallStoreFromNativeInfo(callInfo: any): void {
+    if (!callInfo) return;
+    const currentAccId = callInfo?.currentAccId;
+    const callerAccId = callInfo?.callerInfo?.accId;
+    const calleeAccId = callInfo?.calleeInfo?.accId;
+    const isCaller = currentAccId && callerAccId && currentAccId === callerAccId;
+    const remoteAccId = isCaller ? calleeAccId : callerAccId;
+    uni.$NEStore.updateStore(
+      {
+        [NAME.CALL_ROLE]: isCaller ? CallRole.CALLER : CallRole.CALLEE,
+        [NAME.CALL_STATUS]: CallStatus.CONNECTED,
+        [NAME.MEDIA_TYPE]: callInfo?.callType,
+        [NAME.CALL_TIPS]: "",
+        [NAME.CALLER_USER_INFO]: remoteAccId,
+        [NAME.CALL_EXTRA_INFO]:
+          callInfo?.signalInfo?.extraInfo ?? callInfo?.signalInfo?.globalExtraCopy,
+      },
+      StoreName.CALL
+    );
+  }
+
+  private _isIOSPlatform(): boolean {
+    return uni.getSystemInfoSync().platform === "ios";
+  }
+
+  private _isCallPageVisible(): boolean {
+    const pagesList = getCurrentPages();
+    const currentPage = pagesList[pagesList.length - 1]?.route || "";
+    return currentPage.indexOf("callkit/callPage") !== -1;
   }
 
   private _navigateToCallPage() {
@@ -1214,6 +1333,18 @@ class CallService {
     }
   }
 
+  private _startIncomingRingIfNeeded(): void {
+    if (this._iosLiveCommunicationKitIncoming) {
+      console.log(`${NAME.PREFIX} skip incoming ring because iOS LiveCommunicationKit is incoming`);
+      return;
+    }
+    this._ringController.startIncomingRing();
+  }
+
+  private _clearIOSLiveCommunicationKitIncoming(): void {
+    this._iosLiveCommunicationKitIncoming = false;
+  }
+
   private _hasPermission(
     type: number,
     success?: () => void,
@@ -1262,6 +1393,7 @@ class CallService {
 
   private _hangupPermissionDeniedCall(): void {
     console.log(`${NAME.PREFIX} _hangupPermissionDeniedCall`);
+    this._clearIOSLiveCommunicationKitIncoming();
     this._ringController.stopLoopRing();
     this.cancelIncomingBanner();
     this.callEngine.hangup({
@@ -1279,6 +1411,7 @@ class CallService {
   }
 
   private _resetCallStore(): void {
+    this._clearIOSLiveCommunicationKitIncoming();
     this._restoreSwitchCallTypeConfirmConfig();
     this._clearPendingSwitchCallType();
     this._clearSwitchCallTypeConfirmModal();

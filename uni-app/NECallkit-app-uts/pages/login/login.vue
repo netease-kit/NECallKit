@@ -26,6 +26,9 @@
             href="https://doc.yunxin.163.com/messaging2/guide/jU0Mzg0MTU?platform=client#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E6%B3%A8%E5%86%8C-im-%E8%B4%A6%E5%8F%B7"
             text="如何获取云信账号与Token" color="#007BFF"></uni-link>
         </view>
+        <view class="settings-entry" @click="openSettings">
+          设置
+        </view>
       </view>
     </view>
   </view>
@@ -39,6 +42,12 @@ const user = useUserStore();
 const userID = ref("");
 const token = ref("");
 const autoLoginStarted = ref(false);
+
+const openSettings = () => {
+  uni.navigateTo({
+    url: "/pages/settings/settings",
+  });
+};
 
 const login = () => {
   if (!userID.value) {
@@ -179,6 +188,13 @@ onMounted(() => {
     font-size: 16px;
     color: #ffffff;
     letter-spacing: 0;
+  }
+
+  .settings-entry {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 14px;
+    color: #007bff;
   }
 
   .list-item {

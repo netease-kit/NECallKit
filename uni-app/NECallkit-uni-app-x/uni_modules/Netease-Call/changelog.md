@@ -1,3 +1,17 @@
+## 4.8.1（2026-07-09）
+
+本插件为 uni-app-x UTS 接口层插件，仅提供 CallEngine，不包含 UI 组件。
+
+### 新增接口
+
+* `setup` 新增参数：
+  * `liveCommunicationKitConfig.enabled` — iOS 端开启 LiveCommunicationKit 系统来电横幅能力。
+  * `liveCommunicationKitConfig.ringtoneName` — iOS 端配置 LiveCommunicationKit 系统来电横幅铃声文件名。
+
+### Compatibility
+* 兼容 Android `CallKit` 4.8.0 版本
+* 兼容 iOS `CallKit` 4.8.1 版本
+
 ## 4.7.5（2026-06-25）
 
 本插件为 uni-app-x UTS 接口层插件，仅提供 CallEngine，不包含 UI 组件。

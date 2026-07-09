@@ -1,7 +1,7 @@
 {
   "id": "Netease-Call",
   "displayName": "【官方】网易云信RTC音视频通话组件 Netease-Call",
-  "version": "4.7.5",
+  "version": "4.8.1",
   "description": "NECallKit 是云信官方推出的音视频通话 UTS 插件，支持 1v1 通话，简化了呼叫流程，并提供通用的通话UI交互，开发者也可以根据自己的业务需求进行 UI 定制。",
   "keywords": [
     "Call",

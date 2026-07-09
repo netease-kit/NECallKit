@@ -32,7 +32,7 @@ import { NERtcCallKit,
  NECallInfo, 
  NERtcAudioAINSMode, 
  NECallSwitchState} from "NERtcCallKit";
-import { NECallKitBridge, NEFloatWindowObserver, NERtcCallUIKit, NECallUIKitConfig, NEIncomingCallBannerWindow } from "NERtcCallUIKit";
+import { NECallKitBridge, NECallKitLiveCommunicationKitConfig, NEFloatWindowObserver, NERtcCallUIKit, NECallUIKitConfig, NEIncomingCallBannerWindow } from "NERtcCallUIKit";
 import { NEXKitBaseLog } from "NEXKitBase";
 
 import { Int } from 'Swift';
@@ -45,6 +45,8 @@ export class CallEngine {
   callBridge: NECallKitBridge;
   callObserver: NECallEngineDelegate;
   floatWindowObserver: FloatWindowObserver;
+  liveCommunicationKitEnabled: boolean = false;
+  liveCommunicationKitRingtoneName: string = "";
 
   constructor() {
     this.callBridge = NECallKitBridge.instance();
@@ -132,11 +134,20 @@ export class CallEngine {
     return new NSMutableDictionary(object = payload as NSString, forKey = "payload" as NSString);
   }
 
+  private applyLiveCommunicationKitConfig() {
+    const liveCommunicationKitConfig = new NECallKitLiveCommunicationKitConfig();
+    liveCommunicationKitConfig.enabled = this.liveCommunicationKitEnabled;
+    liveCommunicationKitConfig.ringtoneName = this.liveCommunicationKitRingtoneName;
+    this.callBridge.setLiveCommunicationKitConfig(liveCommunicationKitConfig);
+  }
+
   public setup(param: InitParams) {
     console.log(`setup init param: ${JSON.stringify(param)}`);
     let currentUserRtcUid: UInt64 = 0;
     let apnsCername: string = "";
     let voipCerName: string = "";
+    this.liveCommunicationKitEnabled = param.liveCommunicationKitConfig?.enabled ?? false;
+    this.liveCommunicationKitRingtoneName = param.liveCommunicationKitConfig?.ringtoneName ?? "";
     
     if (param.params != null) {
       let uidValue = param.params.getNumber("currentUserRtcUid");
@@ -151,6 +162,10 @@ export class CallEngine {
       if (voipCerValue != null) {
         voipCerName = voipCerValue;
       }
+    }
+
+    if (this.liveCommunicationKitEnabled && voipCerName.length == 0) {
+      this.log("LiveCommunicationKit is enabled but params.voipCerName is empty");
     }
     
     console.log(`${NAME.PREFIX} setup params:`, {
@@ -180,27 +195,36 @@ export class CallEngine {
     uiKitConfig.uiConfig.enableFloatingWindowOutOfApp = param.enableAutoFloatingWindowWhenHome ?? false;
     NERtcCallUIKit.sharedInstance().setup(with = uiKitConfig);
     NERtcCallUIKit.sharedInstance().enableIncomingBanner(param.enableIncomingBanner ?? false);
-    
+    this.callBridge.setLiveCommunicationKitIncomingStateChangedHandler(
+      (isIncoming: boolean): void => {
+        listenerMap.get("onLiveCommunicationKitIncomingStateChanged")?.forEach((cb) => {
+          cb({
+            isIncoming: isIncoming,
+          });
+        });
+      }
+    );
     param.success?.();
   }
 
   public login(param: LoginParams) {
     console.log(`${NAME.PREFIX} login.start12, data: ${JSON.stringify(param)}`);
-		
-	this.callBridge.login((withAccountId = param.accountId),
-	  (token = param.token),
-	  (onSuccess = (data: any): void => {
-	    console.log(`${NAME.PREFIX} login success, data: ${data}`);
-	    param.success?.();
-	  }),
-	  (onFail = (code: Int, message: string | null): void => {
-	    const errMsg = message ?? "";
-	    console.error(
-	      `${NAME.PREFIX} login fail, errCode = ${code}, errMsg = ${errMsg}`
-	    );
-	    param.fail?.(code as number, errMsg as string);
-	  })
-	);
+
+    this.callBridge.login((withAccountId = param.accountId),
+      (token = param.token),
+      (onSuccess = (data: any): void => {
+        console.log(`${NAME.PREFIX} login success, data: ${data}`);
+        this.applyLiveCommunicationKitConfig();
+        param.success?.();
+      }),
+      (onFail = (code: Int, message: string | null): void => {
+        const errMsg = message ?? "";
+        console.error(
+          `${NAME.PREFIX} login fail, errCode = ${code}, errMsg = ${errMsg}`
+        );
+        param.fail?.(code as number, errMsg as string);
+      })
+    );
   }
 
   public logout(param: CallbackParams) {
@@ -394,7 +418,7 @@ export class CallEngine {
    * 关闭悬浮窗
    */
   public stopFloatWindow() {
-    this.callBridge.stopFloatWindow(); 
+    this.callBridge.stopFloatWindow();   
   }
 
   public isFloatWindowVisible(): boolean {
@@ -545,7 +569,6 @@ export class CallEngine {
     listenerMap.delete(eventName);
     if (listenerMap.size === 0) {
       NECallEngine.sharedInstance().removeCall(this.callObserver);
-	  this.callBridge.remove(this.floatWindowObserver as NEFloatWindowObserver);
     }
   }
 }

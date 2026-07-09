@@ -106,6 +106,20 @@ export type MultiDeviceOptions = {
   fail: (errCode: number, errMsg: string) => void;
 };
 
+export type LiveCommunicationKitConfig = {
+  /**
+   * 是否开启 iOS LiveCommunicationKit 系统来电接听能力。默认 false。
+   * 仅 app-ios 平台生效，其他平台忽略。
+   */
+  enabled?: boolean;
+  /**
+   * iOS LiveCommunicationKit 系统来电铃声文件名。默认使用系统/native 默认铃声。
+   * 仅 app-ios 平台生效。文件必须随 iOS App 打入 main bundle，只传文件名，例如
+   * "lck_incoming_ring.mp3"，不要传 "/static/audio/xxx.mp3"。
+   */
+  ringtoneName?: string;
+};
+
 export type PermissionOptions = {
   type: number;
   success: () => void;
@@ -134,6 +148,11 @@ export type InitParams = {
    * App 退后台时自动展示系统级或系统外浮窗。默认 false。
    */
   enableAutoFloatingWindowWhenHome?: boolean;
+  /**
+   * iOS LiveCommunicationKit 系统来电配置。默认关闭，仅 app-ios 生效。
+   * 开启时应同时通过 params.voipCerName 传入 PushKit/VoIP 证书名。
+   */
+  liveCommunicationKitConfig?: LiveCommunicationKitConfig;
 };
 
 export type LoginParams = {

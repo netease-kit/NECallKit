@@ -53,6 +53,33 @@
         </view>
 
         <view class="switch-row">
+          <label class="setting-label">开启LiveCommunicationKit（重新登录生效）：</label>
+          <switch :checked="liveCommunicationKitEnabled" @change="handleLiveCommunicationKitChange" color="#16C36A" />
+        </view>
+
+        <view class="setting-row column-row">
+          <label class="setting-label">VoIP证书名（重新登录生效）：</label>
+          <view class="input-box full-input">
+            <input class="setting-input" v-model="voipCerName" maxlength="80" type="text" placeholder="PushKit/VoIP证书名" />
+          </view>
+        </view>
+
+        <view class="setting-row column-row">
+          <label class="setting-label">系统来电铃声文件名（重新登录生效）：</label>
+          <picker
+            class="input-box full-input"
+            mode="selector"
+            :range="liveCommunicationKitRingtoneOptions"
+            range-key="label"
+            :value="liveCommunicationKitRingtoneIndex"
+            @change="handleLiveCommunicationKitRingtoneChange">
+            <view class="picker-value">
+              {{ liveCommunicationKitRingtoneOptions[liveCommunicationKitRingtoneIndex].label }}
+            </view>
+          </picker>
+        </view>
+
+        <view class="switch-row">
           <label class="setting-label">是否支持音频转视频：</label>
           <switch :checked="supportAudioToVideo" @change="handleSupportAudioToVideoChange" color="#16C36A" />
         </view>
@@ -110,8 +137,24 @@
 </template>
 
 <script>
+  const LIVE_COMMUNICATION_KIT_CONFIG_KEY = "NECallKit_UTS_LiveCommunicationKit_Config";
+  const LIVE_COMMUNICATION_KIT_RINGTONE_OPTIONS = [
+    { label: "默认铃声（lck_incoming_ring.mp3）", value: "lck_incoming_ring.mp3" },
+    { label: "备用铃声（lck_incoming_ring_alt.mp3）", value: "lck_incoming_ring_alt.mp3" },
+  ];
+  const DEFAULT_LIVE_COMMUNICATION_KIT_RINGTONE_NAME =
+    LIVE_COMMUNICATION_KIT_RINGTONE_OPTIONS[0].value;
+
+  function getRingtoneIndex(ringtoneName) {
+    const index = LIVE_COMMUNICATION_KIT_RINGTONE_OPTIONS.findIndex(
+      (item) => item.value === ringtoneName
+    );
+    return index >= 0 ? index : 0;
+  }
+
   export default {
     data() {
+      const ringtoneIndex = getRingtoneIndex(getApp().globalData.liveCommunicationKitRingtoneName);
       return {
         timeout: getApp().globalData.timeout,
         channelName: getApp().globalData.channelName,
@@ -119,6 +162,13 @@
         enableIncomingBanner: getApp().globalData.enableIncomingBanner,
         enableFloatingWindow: getApp().globalData.enableFloatingWindow,
         enableAutoFloatingWindowWhenHome: getApp().globalData.enableAutoFloatingWindowWhenHome,
+        liveCommunicationKitEnabled: getApp().globalData.liveCommunicationKitEnabled,
+        voipCerName: getApp().globalData.voipCerName,
+        liveCommunicationKitRingtoneOptions: LIVE_COMMUNICATION_KIT_RINGTONE_OPTIONS,
+        liveCommunicationKitRingtoneIndex: ringtoneIndex,
+        liveCommunicationKitRingtoneName:
+          LIVE_COMMUNICATION_KIT_RINGTONE_OPTIONS[ringtoneIndex]?.value ||
+          DEFAULT_LIVE_COMMUNICATION_KIT_RINGTONE_NAME,
         supportAudioToVideo: getApp().globalData.supportAudioToVideo,
         supportVideoToAudio: getApp().globalData.supportVideoToAudio,
         audioToVideoConfirm: getApp().globalData.audioToVideoConfirm,
@@ -149,6 +199,16 @@
       handleAutoFloatingWindowWhenHomeChange(event) {
         this.enableAutoFloatingWindowWhenHome = event.detail.value;
       },
+      handleLiveCommunicationKitChange(event) {
+        this.liveCommunicationKitEnabled = event.detail.value;
+      },
+      handleLiveCommunicationKitRingtoneChange(event) {
+        const index = Number(event.detail.value);
+        this.liveCommunicationKitRingtoneIndex = index;
+        this.liveCommunicationKitRingtoneName =
+          this.liveCommunicationKitRingtoneOptions[index]?.value ||
+          DEFAULT_LIVE_COMMUNICATION_KIT_RINGTONE_NAME;
+      },
       handleSupportAudioToVideoChange(event) {
         this.supportAudioToVideo = event.detail.value;
       },
@@ -168,6 +228,12 @@
         this.needBadge = event.detail.value;
       },
       handleSetting() {
+        const needRelogin =
+          this.rtcUid != getApp().globalData.rtcUid ||
+          this.liveCommunicationKitEnabled != getApp().globalData.liveCommunicationKitEnabled ||
+          this.voipCerName != getApp().globalData.voipCerName ||
+          this.liveCommunicationKitRingtoneName != getApp().globalData.liveCommunicationKitRingtoneName;
+
         if (this.timeout != getApp().globalData.timeout) {
           if (this.isValidTimeout) {
             uni.$NECallKit.setTimeout(Number(this.timeout) * 1000);
@@ -189,6 +255,18 @@
         getApp().globalData.enableFloatingWindow = this.enableFloatingWindow;
         getApp().globalData.enableAutoFloatingWindowWhenHome =
           this.enableFloatingWindow && this.enableAutoFloatingWindowWhenHome;
+        getApp().globalData.liveCommunicationKitEnabled = this.liveCommunicationKitEnabled;
+        getApp().globalData.voipCerName = this.voipCerName;
+        getApp().globalData.liveCommunicationKitRingtoneName = this.liveCommunicationKitRingtoneName;
+        try {
+          uni.setStorageSync(LIVE_COMMUNICATION_KIT_CONFIG_KEY, {
+            enabled: this.liveCommunicationKitEnabled,
+            voipCerName: this.voipCerName,
+            ringtoneName: this.liveCommunicationKitRingtoneName,
+          });
+        } catch (error) {
+          console.error("保存LiveCommunicationKit配置失败", error);
+        }
         getApp().globalData.supportAudioToVideo = this.supportAudioToVideo;
         getApp().globalData.supportVideoToAudio = this.supportVideoToAudio;
         getApp().globalData.audioToVideoConfirm = this.audioToVideoConfirm;
@@ -202,13 +280,13 @@
         getApp().globalData.pushPayload = this.pushPayload;
         getApp().globalData.needBadge = this.needBadge;
         
-        if (this.rtcUid != getApp().globalData.rtcUid) {
+        if (needRelogin) {
           getApp().globalData.rtcUid = Number(this.rtcUid);
           getApp().globalData.enableIncomingBanner = this.enableIncomingBanner;
           uni.$NECallKit.enableIncomingBanner(this.enableIncomingBanner);
           uni.navigateBack();
           uni.showToast({
-            title: "设置成功，RtcUid需重新登录生效",
+            title: "设置成功，需重新登录生效",
             position: "bottom",
           });
         } else {
@@ -340,11 +418,18 @@
   }
 
   .setting-input,
-  .input-timeout {
+  .input-timeout,
+  .picker-value {
     flex: 1;
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
+  }
+
+  .picker-value {
+    font-size: 16px;
+    line-height: 20px;
+    color: white;
   }
 
   .input-timeout[placeholder] {

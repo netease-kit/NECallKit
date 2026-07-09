@@ -1,24 +1,25 @@
-export type CallType = 0 | 1 | 2
-export type CallRole = "unknown" | "callee" | "caller"
-export type CallStatus = "idle" | "calling" | "connected"
+import { reactive } from 'vue'
+
+export type CallType = number
+export type CallRole = number
+export type CallStatus = number
 
 export const CALL_TYPE = {
-  UNKNOWN: 0,
   AUDIO: 1,
-  VIDEO: 2
-}
+  VIDEO: 2,
+} as const
 
 export const CALL_ROLE = {
-  UNKNOWN: "unknown",
-  CALLEE: "callee",
-  CALLER: "caller"
-}
+  UNKNOWN: 0,
+  CALLER: 1,
+  CALLEE: 2,
+} as const
 
 export const CALL_STATUS = {
-  IDLE: "idle",
-  CALLING: "calling",
-  CONNECTED: "connected"
-}
+  IDLE: 0,
+  CALLING: 1,
+  CONNECTED: 2,
+} as const
 
 export type State = {
   callType: CallType
@@ -26,20 +27,20 @@ export type State = {
   callStatus: CallStatus
 }
 
-export const state = reactive({
+export const state: State = reactive({
   callType: CALL_TYPE.VIDEO as CallType,
   callRole: CALL_ROLE.UNKNOWN as CallRole,
-  callStatus: CALL_STATUS.IDLE as CallStatus
-} as State)
+  callStatus: CALL_STATUS.IDLE as CallStatus,
+})
 
-export const setCallType = (type: CallType) => {
-  state.callType = type
+export const setCallType = (callType: CallType) => {
+  state.callType = callType
 }
 
-export const setCallRole = (role: CallRole) => {
-  state.callRole = role
+export const setCallRole = (callRole: CallRole) => {
+  state.callRole = callRole
 }
 
-export const setCallStatus = (status: CallStatus) => {
-  state.callStatus = status
+export const setCallStatus = (callStatus: CallStatus) => {
+  state.callStatus = callStatus
 }
