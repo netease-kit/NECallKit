@@ -55,7 +55,7 @@
             /* ios打包配置 */
             "ios" : {
                 "dSYMs" : false,
-                "UIBackgroundModes" : "audio"
+                "UIBackgroundModes" : "audio,voip"
             },
             /* SDK配置 */
             "sdkConfigs" : {
