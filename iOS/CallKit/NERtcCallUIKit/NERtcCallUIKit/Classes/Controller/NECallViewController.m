@@ -26,6 +26,12 @@ NSString *const kCallKitDismissNoti = @"kCallKitDismissNoti";
 
 NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
 
+@interface NERtcCallUIKit (NECallUIDynamicConfigAccess)
+
+@property(nonatomic, strong, readonly) NECallUIDynamicConfig *dynamicUIConfig;
+
+@end
+
 @interface NECallViewController () <NERtcLinkEngineDelegate, NECallEngineRtcDelegateEx>
 
 @property(nonatomic, strong) UIButton *switchCameraBtn;
@@ -38,7 +44,7 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
 
 @property(nonatomic, strong) UIImageView *blurImage;
 
-@property(nonatomic, strong) UIToolbar *toolBar;
+@property(nonatomic, strong) UIVisualEffectView *backgroundBlurView;
 
 @property(nonatomic, assign) int timerCount;
 
@@ -87,6 +93,8 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
 
 + (BOOL)shouldShowAcceptButtonForIncomingBannerAcceptConnecting;
 + (BOOL)shouldEnableAcceptButtonForIncomingBannerAcceptConnecting;
+
+- (void)applyDynamicIncomingBackgroundIfNeeded;
 
 @end
 
@@ -177,7 +185,7 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
   } else if (self.status == NERtcCallStatusCalled) {
     // 仅被叫等待接听状态才播放铃声；InCall 状态（横幅直接接听）不播放。
     // 横幅主体点击跳入全屏时不重复播放铃声，但仍需要做权限预检。
-    if (!self.ringAlreadyPlaying) {
+    if (self.config.enableNativeIncomingRing && !self.ringAlreadyPlaying) {
       [self playRingWithType:CRTCalleeRing];
     }
     NECallType permissionCallType =
@@ -278,9 +286,16 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
     ]];
   }
 
-  self.toolBar = [[UIToolbar alloc] initWithFrame:self.view.bounds];
-  self.toolBar.barStyle = UIBarStyleBlackOpaque;
-  [self.blurImage addSubview:self.toolBar];
+  UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
+  self.backgroundBlurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+  self.backgroundBlurView.translatesAutoresizingMaskIntoConstraints = NO;
+  [self.blurImage addSubview:self.backgroundBlurView];
+  [NSLayoutConstraint activateConstraints:@[
+    [self.backgroundBlurView.leftAnchor constraintEqualToAnchor:self.blurImage.leftAnchor],
+    [self.backgroundBlurView.rightAnchor constraintEqualToAnchor:self.blurImage.rightAnchor],
+    [self.backgroundBlurView.topAnchor constraintEqualToAnchor:self.blurImage.topAnchor],
+    [self.backgroundBlurView.bottomAnchor constraintEqualToAnchor:self.blurImage.bottomAnchor]
+  ]];
 
   [self setupChildController];
 
@@ -497,6 +512,7 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
                        [weakSelf.blurImage setHidden:NO];
                      }
                      weakSelf.blurImage.image = image;
+                     [weakSelf applyDynamicIncomingBackgroundIfNeeded];
                    }];
 
     } break;
@@ -1542,7 +1558,53 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
                                  [weakSelf.blurImage setHidden:NO];
                                }
                                weakSelf.blurImage.image = image;
+                               [weakSelf applyDynamicIncomingBackgroundIfNeeded];
                              }];
+}
+
+- (void)applyDynamicIncomingBackgroundIfNeeded {
+  if (self.status != NERtcCallStatusCalled || self.blurImage == nil) {
+    return;
+  }
+  NECallUIIncomingBackgroundSource *source =
+      [NERtcCallUIKit sharedInstance].dynamicUIConfig.incomingCallBackground;
+  if (source == nil) {
+    return;
+  }
+  self.blurImage.contentMode = UIViewContentModeScaleAspectFill;
+  self.blurImage.clipsToBounds = YES;
+  __weak typeof(self) weakSelf = self;
+  switch (source.type) {
+    case NECallUIIncomingBackgroundSourceTypeImage:
+      if (source.image != nil) {
+        [self.blurImage.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        self.backgroundBlurView.hidden = YES;
+        self.blurImage.image = source.image;
+      }
+      break;
+    case NECallUIIncomingBackgroundSourceTypeURL: {
+      NSURL *url = source.url;
+      NSString *scheme = url.scheme.lowercaseString;
+      if (![scheme isEqualToString:@"http"] && ![scheme isEqualToString:@"https"]) {
+        return;
+      }
+      [self.blurImage sd_setImageWithURL:url
+                        placeholderImage:self.blurImage.image
+                                 options:0
+                               completed:^(UIImage *_Nullable image, NSError *_Nullable error,
+                                           SDImageCacheType cacheType, NSURL *_Nullable imageURL) {
+                                 if (weakSelf == nil ||
+                                     weakSelf.status != NERtcCallStatusCalled ||
+                                     weakSelf.blurImage == nil ||
+                                     image == nil || error != nil) {
+                                   return;
+                                 }
+                                 [weakSelf.blurImage.subviews
+                                     makeObjectsPerformSelector:@selector(removeFromSuperview)];
+                                 weakSelf.backgroundBlurView.hidden = YES;
+                               }];
+    } break;
+  }
 }
 
 - (void)startTimer {

@@ -12,6 +12,7 @@
 #import "NEAISubtitleView.h"
 #import "NEBufferDisplayView.h"
 #import "NECallKitUtil.h"
+#import "NECallUTSBackgroundPipAdapter.h"
 #import "NECallViewController.h"
 #import "NEDataManager.h"
 #import "NEGroupCallViewController.h"
@@ -20,6 +21,9 @@
 #import "NetManager.h"
 #import "NEIncomingCallBannerView.h"
 #import "NEIncomingCallBannerWindow.h"
+
+static NSString *const kEventInAppFloatWindowStateChanged =
+    @"EVENT_IN_APP_FLOATWINDOW_STATE_CHANGED";
 
 @interface NECallViewController (NEIncomingBannerAccept)
 
@@ -42,6 +46,7 @@ NSString *kCalledState = @"kCalledState";
 NSString *kMouldName = @"NERtcCallUIKit";
 
 NSString *kCallStatusResult = @"result";
+static NSString *const kEventTapIncomingBanner = @"EVENT_TAP_INCOMING_BANNER";
 
 NSString *kCallStatusQueryKey = @"imkit://call/state/isIdle";
 
@@ -72,6 +77,8 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 @property(nonatomic, strong) NECallUIKitConfig *config;
 
+@property(nonatomic, strong) NECallUIDynamicConfig *currentDynamicUIConfig;
+
 @property(nonatomic, assign) BOOL incomingBannerEnabled;
 
 @property(nonatomic, strong) UIWindow *keywindow;
@@ -101,7 +108,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 /// 转码协议
 @property(nonatomic, strong) id<NETranscodingDelegate> transcodingDelegate;
 
-@property(nonatomic, weak) NERtcVideoCanvas *canvas;
+@property(nonatomic, strong) NERtcVideoCanvas *canvas;
 
 @property(nonatomic, strong) UIView *coverView;
 
@@ -113,8 +120,6 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 @property(nonatomic, assign) BOOL isCalled;
 
-@property(nonatomic, assign) BOOL hasLoggedPipRenderFrame;
-
 @property(nonatomic, strong) NEUICallParam *incomingBannerCallParam;
 
 @property(nonatomic, copy) NSString *incomingBannerChannelId;
@@ -122,6 +127,10 @@ const NSInteger kGroupCallMaxUsers = 10;
 @property(nonatomic, assign) BOOL incomingBannerAccepting;
 
 @property(nonatomic, assign) BOOL callWindowDismissing;
+
+@property(nonatomic, assign) BOOL inAppFloatWindowActive;
+
+@property(nonatomic, assign) BOOL utsBackgroundPipStartRequested;
 
 - (BOOL)isCachedIncomingBannerCallMatched:(NECallInfo *)callInfo;
 
@@ -132,6 +141,9 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 - (void)performCallWindowDismiss;
 - (void)cleanupCallWindowAfterDismiss;
+- (BOOL)startPictureInPictureImmediatelyIfPossible:(BOOL)immediately;
+- (void)appWillResignActive;
+- (void)onInAppFloatWindowStateChanged:(NSNotification *)notification;
 
 @end
 
@@ -178,7 +190,21 @@ const NSInteger kGroupCallMaxUsers = 10;
   return self.config.appKey;
 }
 
+- (BOOL)isNativeIncomingRingEnabled {
+  return self.config == nil || self.config.uiConfig.enableNativeIncomingRing;
+}
+
+- (NECallUIDynamicConfig *)dynamicUIConfig {
+  return self.currentDynamicUIConfig;
+}
+
+- (void)setDynamicUIConfig:(NECallUIDynamicConfig *)config {
+  NEXKitBaseLogInfo(@"setDynamicUIConfig config: %@", config);
+  self.currentDynamicUIConfig = config;
+}
+
 - (void)setupWithConfig:(NECallUIKitConfig *)config {
+  self.currentDynamicUIConfig = nil;
   BOOL enableSingleToGroupCall =
       config.uiConfig.singleToGroupInviteMode != NECallSingleToGroupInviteModeDisabled;
   if (nil != config.config) {
@@ -196,7 +222,9 @@ const NSInteger kGroupCallMaxUsers = 10;
       self.transcodingDelegate = instance;
     }
   }
-
+  if (self.transcodingDelegate == nil) {
+    NEXKitBaseLogInfo(@"[PIP_DEBUG] setup.transcoding unavailable");
+  }
   self.bundle = [NSBundle bundleForClass:NERtcCallUIKit.class];
   self.ringFile = [[NERingFile alloc] initWithBundle:self.bundle language:config.uiConfig.language];
   [NECallKitUtil setLanguage:config.uiConfig.language];
@@ -233,8 +261,17 @@ const NSInteger kGroupCallMaxUsers = 10;
                                                object:nil];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appWillResignActive)
+                                                 name:UIApplicationWillResignActiveNotification
+                                               object:nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(appDidEnterForeground)
                                                  name:UIApplicationWillEnterForegroundNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(onInAppFloatWindowStateChanged:)
+                                                 name:kEventInAppFloatWindowStateChanged
                                                object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(onSystemIncomingCallAccepting:)
@@ -390,6 +427,13 @@ const NSInteger kGroupCallMaxUsers = 10;
   if (info.callType == NECallTypeVideo) {
     [self createPipController];
   }
+  if (self.config.uiConfig.disableShowCalleeView == YES) {
+    self.incomingBannerAccepting = NO;
+    self.incomingBannerCallParam = nil;
+    self.incomingBannerChannelId = nil;
+    [NEIncomingCallBannerWindow.sharedInstance dismiss];
+    return;
+  }
   [self showFullScreenAfterSystemAcceptIfNeededWithCallInfo:info source:@"onCallConnected"];
 }
 
@@ -397,9 +441,6 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)onReceiveInvited:(NEInviteInfo *)info {
-  if (self.config.uiConfig.disableShowCalleeView == YES) {
-    return;
-  }
   NEXKitBaseLogInfo(@"call uikit onReceiveInvited calling : %d", self.isCalling);
   if (self.isCalling == YES) {
     NEHangupParam *param = [[NEHangupParam alloc] init];
@@ -411,6 +452,9 @@ const NSInteger kGroupCallMaxUsers = 10;
     return;
   }
   self.isCalled = YES;
+  if (self.config.uiConfig.disableShowCalleeView == YES && self.incomingBannerEnabled != YES) {
+    return;
+  }
   NSString *inviteChannelId = info.channelId ?: @"";
   NSString *inviteCallerAccId = info.callerAccId ?: @"";
   [NIMSDK.sharedSDK.userManager
@@ -477,6 +521,16 @@ const NSInteger kGroupCallMaxUsers = 10;
                 callerInfo.multiCallInvite = info.multiCallInvite;
                 __weak typeof(self) weakSelf = self;
                 void (^acceptBlock)(void) = ^{
+                  if (weakSelf.config.uiConfig.disableShowCalleeView == YES) {
+                    weakSelf.incomingBannerCallParam = nil;
+                    weakSelf.incomingBannerChannelId = nil;
+                    [NEIncomingCallBannerWindow.sharedInstance dismiss];
+                    [[NSNotificationCenter defaultCenter]
+                        postNotificationName:kEventTapIncomingBanner
+                                      object:nil
+                                    userInfo:@{@"action" : @"accept"}];
+                    return;
+                  }
                   weakSelf.incomingBannerCallParam = nil;
                   weakSelf.incomingBannerChannelId = nil;
                   UIViewController *permissionViewController =
@@ -549,6 +603,14 @@ const NSInteger kGroupCallMaxUsers = 10;
                   weakSelf.isCalled = NO;
                 };
                 void (^bodyTapBlock)(void) = ^{
+                  if (weakSelf.config.uiConfig.disableShowCalleeView == YES) {
+                    [NEIncomingCallBannerWindow.sharedInstance dismiss];
+                    [[NSNotificationCenter defaultCenter]
+                        postNotificationName:kEventTapIncomingBanner
+                                      object:nil
+                                    userInfo:@{@"action" : @"tap"}];
+                    return;
+                  }
                   dispatch_async(dispatch_get_main_queue(), ^{
                     NECallViewController *calledVC = [[NECallViewController alloc] init];
                     calledVC.callParam   = callParam;
@@ -564,6 +626,9 @@ const NSInteger kGroupCallMaxUsers = 10;
                                                                      onAccept:acceptBlock
                                                                      onReject:rejectBlock
                                                                     onBodyTap:bodyTapBlock];
+                return;
+              }
+              if (self.config.uiConfig.disableShowCalleeView == YES) {
                 return;
               }
               if (self.customControllerClass != nil) {
@@ -605,6 +670,9 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)showCalled:(NIMUser *)imUser callType:(NECallType)type attachment:(NSString *)attachment {
+  if (self.config.uiConfig.disableShowCalleeView == YES) {
+    return;
+  }
   if (self.keywindow != nil) {
     return;
   }
@@ -680,6 +748,14 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 - (void)showFullScreenAfterSystemAcceptIfNeededWithCallInfo:(NECallInfo *)callInfo
                                                      source:(NSString *)source {
+  if (self.config.uiConfig.disableShowCalleeView == YES) {
+    NEXKitBaseLogInfo(@"call ui kit skip show full screen after system accept for uts source:%@",
+                      source);
+    self.incomingBannerAccepting = NO;
+    self.incomingBannerCallParam = nil;
+    self.incomingBannerChannelId = nil;
+    return;
+  }
   NECallEngine *engine = [NECallEngine sharedInstance];
   BOOL connectedEvent = [source isEqualToString:@"onCallConnected"];
   if (connectedEvent && [self.callViewController isKindOfClass:NECallViewController.class]) {
@@ -746,10 +822,12 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)stopPip {
+  self.utsBackgroundPipStartRequested = NO;
   if (self.pipController != nil && [self.pipController isPictureInPictureActive]) {
     [self.pipController stopPictureInPicture];
   }
   self.pipController = nil;
+  self.canvas = nil;
 }
 
 - (UINavigationController *)getKeyWindowNav {
@@ -833,6 +911,7 @@ const NSInteger kGroupCallMaxUsers = 10;
   self.callViewController = nil;
   [self.pipController stopPictureInPicture];
   self.pipController = nil;
+  self.inAppFloatWindowActive = NO;
   self.isCalled = NO;
   self.isCalling = NO;
   self.callWindowDismissing = NO;
@@ -854,45 +933,109 @@ const NSInteger kGroupCallMaxUsers = 10;
 #pragma mark - Small Window
 
 - (void)tryOpenWindowOutApp {
-  // 处理应用程序进入后台的操作
+  [self startPictureInPictureImmediatelyIfPossible:NO];
+}
+
+- (BOOL)startPictureInPictureImmediatelyIfPossible:(BOOL)immediately {
   NECallInfo *callInfo = [[NECallEngine sharedInstance] getCallInfo];
-  uint64_t remoteUid = self.isCalled ? callInfo.callerInfo.uid : callInfo.calleeInfo.uid;
-  self.hasLoggedPipRenderFrame = NO;
-  NEXKitBaseLogInfo(
-      @"call ui kit tryOpenWindowOutApp callId:%@ isCalled:%d remoteUid:%llu cover:%@ "
-       @"coverHidden:%d pip:%@ pipActive:%d",
-      callInfo.callId, self.isCalled, (unsigned long long)remoteUid, self.coverView,
-      self.coverView ? self.coverView.hidden : -1, self.pipController,
-      self.pipController ? self.pipController.isPictureInPictureActive : 0);
+  NECallType effectiveCallType =
+      [NECallUTSBackgroundPipAdapter effectiveCallTypeForUTSVideoPipWithEngineCallInfo:callInfo];
+  BOOL outOfAppWindowEnabled = [self checkoutOutOfAppWindownEnable];
+  if (effectiveCallType != NECallTypeVideo || outOfAppWindowEnabled == NO) {
+    NEXKitBaseLogInfo(@"call ui kit startPictureInPicture skip callType:%lu enable:%d",
+                      (unsigned long)effectiveCallType, outOfAppWindowEnabled);
+    return NO;
+  }
+  [self createPipController];
+  if (self.pipController == nil) {
+    NEXKitBaseLogInfo(@"call ui kit startPictureInPicture skip nil pip");
+    return NO;
+  }
   NERtcVideoCanvas *canvas = [[NERtcVideoCanvas alloc] init];
   canvas.renderMode = kNERtcVideoRenderScaleCropFill;
   canvas.useExternalRender = YES;
   canvas.externalVideoRender = self;
-  [NERtcEngine.sharedEngine setupRemoteVideoCanvas:canvas forUserID:remoteUid];
+  self.canvas = canvas;
+  [[NECallEngine sharedInstance] setupRemoteCanvas:canvas];
+  BOOL pipPossible = NO;
+  if (@available(iOS 14.2, *)) {
+    pipPossible = self.pipController.isPictureInPicturePossible;
+  }
+  NEXKitBaseLogInfo(@"call ui kit startPictureInPicture ready pip:%@ active:%d possible:%d "
+                    @"displayView:%@ displayWindow:%@ transcoding:%@ appState:%ld immediate:%d",
+                    self.pipController, self.pipController.isPictureInPictureActive, pipPossible,
+                    self.displayView, self.displayView.window, self.transcodingDelegate,
+                    (long)UIApplication.sharedApplication.applicationState, immediately);
   if (![self.pipController isPictureInPictureActive]) {
-    NEXKitBaseLogInfo(@"call ui kit startPictureInPicture request remoteUid:%llu pip:%@",
-                      (unsigned long long)remoteUid, self.pipController);
-    dispatch_async(dispatch_get_main_queue(), ^{
+    void (^startPip)(void) = ^{
+      BOOL possibleOnMain = NO;
+      if (@available(iOS 14.2, *)) {
+        possibleOnMain = self.pipController.isPictureInPicturePossible;
+      }
+      NEXKitBaseLogInfo(@"call ui kit startPictureInPicture invoke pip:%@ active:%d possible:%d "
+                        @"displayWindow:%@ appState:%ld immediate:%d",
+                        self.pipController, self.pipController.isPictureInPictureActive,
+                        possibleOnMain, self.displayView.window,
+                        (long)UIApplication.sharedApplication.applicationState, immediately);
       [self.pipController startPictureInPicture];
-    });
+    };
+    if (immediately && [NSThread isMainThread]) {
+      startPip();
+    } else {
+      dispatch_async(dispatch_get_main_queue(), startPip);
+    }
+  }
+  return YES;
+}
+
+- (void)appWillResignActive {
+  if ([NECallUTSBackgroundPipAdapter
+          shouldStartPipBeforeBackgroundWithInAppFloatWindowActive:self.inAppFloatWindowActive
+                                           forceForDirectVideoCall:YES]) {
+    self.utsBackgroundPipStartRequested = [self startPictureInPictureImmediatelyIfPossible:YES];
   }
 }
 
 - (void)appDidEnterBackground {
-  NECallEngine *engine = [NECallEngine sharedInstance];
-  NECallInfo *callInfo = [engine getCallInfo];
-  NEXKitBaseLogInfo(
-      @"call ui kit appDidEnterBackground callStatus:%lu callType:%lu callId:%@ "
-       @"enableFloat:%d enableFloatOut:%d cover:%@ coverHidden:%d",
-      (unsigned long)engine.callStatus, (unsigned long)callInfo.callType, callInfo.callId,
-      self.config.uiConfig.enableFloatingWindow, self.config.uiConfig.enableFloatingWindowOutOfApp,
-      self.coverView, self.coverView ? self.coverView.hidden : -1);
-
-  if ([self checkoutOutOfAppWindownEnable] == NO) {
-    NEXKitBaseLogInfo(@"call ui kit appDidEnterBackground skip out-app floating window");
+  if (self.config.uiConfig.disableShowCalleeView == YES && self.inAppFloatWindowActive == NO &&
+      self.config.uiConfig.enableFloatingWindowOutOfApp != YES) {
+    [self stopPip];
     return;
   }
+
+  if ([self checkoutOutOfAppWindownEnable] == NO) {
+    return;
+  }
+  [NECallUTSBackgroundPipAdapter prepareForBackgroundPipIfNeeded];
+  if (self.utsBackgroundPipStartRequested &&
+      [NECallUTSBackgroundPipAdapter shouldStartPipBeforeBackgroundWithInAppFloatWindowActive:
+                                         self.inAppFloatWindowActive
+                                                                       forceForDirectVideoCall:YES]) {
+    BOOL pipActive = self.pipController ? self.pipController.isPictureInPictureActive : NO;
+    NEXKitBaseLogInfo(@"call ui kit appDidEnterBackground skip duplicated UTS PiP start "
+                      @"pip:%@ active:%d",
+                      self.pipController, pipActive);
+    if (pipActive) {
+      return;
+    }
+    NEXKitBaseLogInfo(@"call ui kit appDidEnterBackground retry UTS PiP start");
+  }
   [self tryOpenWindowOutApp];
+}
+
+- (void)onInAppFloatWindowStateChanged:(NSNotification *)notification {
+  NSNumber *active = notification.userInfo[@"active"];
+  self.inAppFloatWindowActive = active.boolValue;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (self.inAppFloatWindowActive == YES) {
+      [self createPipController];
+    } else if ([NECallUTSBackgroundPipAdapter
+                   shouldKeepPipControllerWhenInAppFloatWindowInactive]) {
+      return;
+    } else {
+      [self stopPip];
+    }
+  });
 }
 
 - (void)appDidEnterForeground {
@@ -905,6 +1048,12 @@ const NSInteger kGroupCallMaxUsers = 10;
       (unsigned long)engine.callStatus, (unsigned long)callInfo.callType, callInfo.callId,
       self.pipController, pipActive, self.coverView, self.coverView ? self.coverView.hidden : -1,
       self.callViewController);
+  if ([NECallUTSBackgroundPipAdapter
+          shouldSuppressInAppSmallWindowForegroundRecoveryWithPipActive:pipActive]) {
+    [NECallUTSBackgroundPipAdapter
+        suppressInAppSmallWindowForegroundRecoveryUntil:[NSDate dateWithTimeIntervalSinceNow:1.5]];
+  }
+  self.utsBackgroundPipStartRequested = NO;
   [self showFullScreenAfterSystemAcceptIfNeededWithCallInfo:callInfo source:@"foreground"];
   // T040: 若有待显示的来电横幅（App 在后台收到来电），回到前台后重新展示
   if ([self shouldReshowIncomingBannerOnForegroundWithCallStatus:engine.callStatus]) {
@@ -929,11 +1078,17 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)onSystemIncomingCallAccepting:(NSNotification *)notification {
+  NEXKitBaseLogInfo(@"call ui kit system incoming call accepting");
   if (self.incomingBannerCallParam == nil) {
+    [NEIncomingCallBannerWindow.sharedInstance dismiss];
     return;
   }
   self.incomingBannerAccepting = YES;
-  NEXKitBaseLogInfo(@"call ui kit system incoming call accepting");
+  if (self.config.uiConfig.disableShowCalleeView == YES) {
+    NEXKitBaseLogInfo(@"call ui kit skip system accepting connecting view for uts");
+    [NEIncomingCallBannerWindow.sharedInstance dismiss];
+    return;
+  }
   [self showIncomingBannerAcceptConnectingViewIfNeededWithCallParam:self.incomingBannerCallParam];
 }
 
@@ -1049,19 +1204,38 @@ const NSInteger kGroupCallMaxUsers = 10;
 }
 
 - (void)createPipController {
+  NECallInfo *callInfo = [[NECallEngine sharedInstance] getCallInfo];
+  NECallType effectiveCallType =
+      [NECallUTSBackgroundPipAdapter effectiveCallTypeForUTSVideoPipWithEngineCallInfo:callInfo];
+  if (effectiveCallType != NECallTypeVideo) {
+    NEXKitBaseLogInfo(@"call ui kit createPipController stop for callType:%lu",
+                      (unsigned long)effectiveCallType);
+    [self stopPip];
+    return;
+  }
+
+  if (self.config.uiConfig.disableShowCalleeView == YES && self.inAppFloatWindowActive == NO &&
+      self.config.uiConfig.enableFloatingWindowOutOfApp != YES) {
+    NEXKitBaseLogInfo(@"call ui kit createPipController skip disableShowCalleeView:%d "
+                      @"inAppFloat:%d enableOut:%d",
+                      self.config.uiConfig.disableShowCalleeView, self.inAppFloatWindowActive,
+                      self.config.uiConfig.enableFloatingWindowOutOfApp);
+    return;
+  }
+
   if (self.config.uiConfig.enableFloatingWindow == NO) {
-    NEXKitBaseLogInfo(@"call ui kit createPipController skip enableFloatingWindow=NO");
+    NEXKitBaseLogInfo(@"call ui kit createPipController skip enableFloatingWindow false");
     return;
   }
 
   if (self.config.uiConfig.enableFloatingWindowOutOfApp == NO) {
-    NEXKitBaseLogInfo(@"call ui kit createPipController skip enableFloatingWindowOutOfApp=NO");
+    NEXKitBaseLogInfo(@"call ui kit createPipController skip enableFloatingWindowOutOfApp false");
     return;
   }
 
   if (!_pipController) {
     if (![AVPictureInPictureController isPictureInPictureSupported]) {
-      NEXKitBaseLogInfo(@"call ui kit createPipController skip PiP unsupported");
+      NEXKitBaseLogInfo(@"call ui kit createPipController skip unsupported");
       return;
     }
     UIView *sourceView = nil;
@@ -1070,7 +1244,14 @@ const NSInteger kGroupCallMaxUsers = 10;
     } else {
       sourceView = UIApplication.sharedApplication.keyWindow.rootViewController.view;
     }
+    sourceView = [NECallUTSBackgroundPipAdapter
+        pipSourceViewWithDefaultSourceView:sourceView
+                   inAppFloatWindowActive:self.inAppFloatWindowActive];
     if (@available(iOS 15.0, *)) {
+      NEXKitBaseLogInfo(@"call ui kit createPipController sourceView:%@ sourceWindow:%@ "
+                        @"previousWindow:%@ keyWindow:%@",
+                        sourceView, sourceView.window, self.preiousKeywindow,
+                        UIApplication.sharedApplication.keyWindow);
       AVPictureInPictureControllerContentSource *contentSource =
           [[AVPictureInPictureControllerContentSource alloc]
               initWithActiveVideoCallSourceView:sourceView
@@ -1080,18 +1261,18 @@ const NSInteger kGroupCallMaxUsers = 10;
 
       _pipController.canStartPictureInPictureAutomaticallyFromInline = NO;
       [_pipController stopPictureInPicture];
-      NEXKitBaseLogInfo(@"call ui kit createPipController success sourceView:%@ pip:%@ cover:%@ "
-                        @"coverHidden:%d displayView:%@",
-                        sourceView, _pipController, self.coverView,
-                        self.coverView ? self.coverView.hidden : -1, self.displayView);
+      BOOL pipPossible = NO;
+      if (@available(iOS 14.2, *)) {
+        pipPossible = _pipController.isPictureInPicturePossible;
+      }
+      NEXKitBaseLogInfo(@"call ui kit createPipController created pip:%@ possible:%d "
+                        @"autoInline:%d displayView:%@ displayWindow:%@",
+                        _pipController, pipPossible,
+                        _pipController.canStartPictureInPictureAutomaticallyFromInline,
+                        self.displayView, self.displayView.window);
     } else {
-      NEXKitBaseLogInfo(@"call ui kit createPipController skip iOS < 15");
+      NEXKitBaseLogInfo(@"call ui kit createPipController skip iOS below 15");
     }
-  } else {
-    NEXKitBaseLogInfo(@"call ui kit createPipController reuse pip:%@ active:%d cover:%@ "
-                      @"coverHidden:%d",
-                      _pipController, _pipController.isPictureInPictureActive, self.coverView,
-                      self.coverView ? self.coverView.hidden : -1);
   }
 }
 
@@ -1146,7 +1327,9 @@ const NSInteger kGroupCallMaxUsers = 10;
     return NO;
   }
 
-  NECallType calltype = [[NECallEngine sharedInstance] getCallInfo].callType;
+  NECallInfo *callInfo = [[NECallEngine sharedInstance] getCallInfo];
+  NECallType calltype =
+      [NECallUTSBackgroundPipAdapter effectiveCallTypeForUTSVideoPipWithEngineCallInfo:callInfo];
   if (calltype != NECallTypeVideo) {
     // 音频呼叫没有应用外小窗
     NEXKitBaseLogInfo(@"call ui kit checkoutOutOfAppWindownEnable false callType:%lu",
@@ -1168,16 +1351,10 @@ const NSInteger kGroupCallMaxUsers = 10;
 #pragma mark - Rtc Delegate
 
 - (void)onNERtcEngineRenderFrame:(NERtcVideoFrame *_Nonnull)frame {
-  BOOL pipActive = self.pipController != nil && [self.pipController isPictureInPictureActive];
-  if (pipActive && !self.hasLoggedPipRenderFrame) {
-    self.hasLoggedPipRenderFrame = YES;
-    NEXKitBaseLogInfo(@"call ui kit pip first render frame displayView:%@ cover:%@ coverHidden:%d "
-                      @"transcodingDelegate:%@",
-                      self.displayView, self.coverView, self.coverView ? self.coverView.hidden : -1,
-                      self.transcodingDelegate);
-  }
-  if (self.transcodingDelegate != nil && self.pipController != nil && pipActive) {
-    [self.transcodingDelegate renderFrame:frame withLayer:self.displayView.getLayer];
+  BOOL canRenderPip = self.pipController != nil && self.displayView != nil;
+  AVSampleBufferDisplayLayer *displayLayer = self.displayView ? self.displayView.getLayer : nil;
+  if (self.transcodingDelegate != nil && canRenderPip) {
+    [self.transcodingDelegate renderFrame:frame withLayer:displayLayer];
   }
 }
 
@@ -1224,7 +1401,6 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 - (void)pictureInPictureControllerDidStopPictureInPicture:
     (AVPictureInPictureController *)pictureInPictureController {
-  self.hasLoggedPipRenderFrame = NO;
   NEXKitBaseLogInfo(@"call ui kit pictureInPictureControllerDidStopPictureInPicture pip:%@ "
                     @"cover:%@ coverHidden:%d",
                     pictureInPictureController, self.coverView,
@@ -1233,7 +1409,6 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 - (void)pictureInPictureControllerDidStartPictureInPicture:
     (AVPictureInPictureController *)pictureInPictureController {
-  self.hasLoggedPipRenderFrame = NO;
   NEXKitBaseLogInfo(@"call ui kit pictureInPictureControllerDidStartPictureInPicture pip:%@ "
                     @"cover:%@ coverHidden:%d displayView:%@",
                     pictureInPictureController, self.coverView,
@@ -1271,6 +1446,22 @@ const NSInteger kGroupCallMaxUsers = 10;
                     @"coverHidden:%d",
                     pictureInPictureController, self.callViewController, self.coverView,
                     self.coverView ? self.coverView.hidden : -1);
+  BOOL pipActive = pictureInPictureController == self.pipController &&
+                   pictureInPictureController.isPictureInPictureActive;
+  if ([NECallUTSBackgroundPipAdapter shouldCompleteSystemPipRestoreUIWithPipActive:pipActive]) {
+    NEXKitBaseLogInfo(@"call ui kit complete UTS PiP restore UI pip:%@ active:%d",
+                      pictureInPictureController, pipActive);
+    if (completionHandler) {
+      completionHandler(YES);
+    }
+    return;
+  }
+  if (self.config.uiConfig.disableShowCalleeView == YES) {
+    if (completionHandler) {
+      completionHandler(YES);
+    }
+    return;
+  }
   if (self.callViewController != nil) {
     [self.callViewController changeToNormal];
   }
@@ -1286,7 +1477,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 #pragma mark - Version
 
 + (NSString *)version {
-  return @"4.7.0";
+  return @"4.8.1";
 
 }
 
@@ -1432,6 +1623,12 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 #pragma mark group call delegate
 - (void)onGroupInvitedWithInfo:(NEGroupCallInfo *)info {
+  if (self.config.uiConfig.disableShowGroupCallInviteView == YES) {
+    NEXKitBaseLogInfo(
+        @"call uikit skip group invite view, disableShowGroupCallInviteView enabled callId:%@",
+        info.callId);
+    return;
+  }
   NSMutableArray<GroupCallMember *> *members = [[NSMutableArray alloc] init];
   for (GroupCallMember *member in info.calleeList) {
     NEXKitBaseLogInfo(@"current member accid : %@", member.imAccid);

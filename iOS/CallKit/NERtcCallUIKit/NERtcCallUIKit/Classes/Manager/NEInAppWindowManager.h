@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 #import <Foundation/Foundation.h>
+#import <NERtcCallKit/NERtcCallKit.h>
 #import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
@@ -15,6 +16,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// 显示应用内小窗（自动从 NECallStateManager 获取通话类型）
 - (void)showInAppSmallWindow;
+
+/// 显示指定通话类型的应用内小窗
+- (void)showInAppSmallWindowWithCallType:(NECallType)callType;
 
 /// 关闭应用内小窗
 - (void)closeInAppSmallWindow;

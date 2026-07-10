@@ -11,6 +11,7 @@
   if (self) {
     self.enableAudioToVideo = YES;
     self.enableVideoToAudio = YES;
+    self.enableNativeIncomingRing = YES;
   }
   return self;
 }

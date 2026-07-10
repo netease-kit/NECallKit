@@ -8,6 +8,7 @@
 #import <NEXKitBase/NEXKitBase.h>
 #import <NIMSDK/NIMSDK.h>
 #import <SDWebImage/SDWebImage.h>
+#import "NECallUTSBackgroundPipAdapter.h"
 #import "NECallKitUtil.h"
 #import "NECallStateManager.h"
 #import "NERtcCallUIKit.h"
@@ -89,8 +90,20 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
     _smallAudioSize = CGSizeMake(70, 70);
     _bundle = [NSBundle bundleForClass:[NERtcCallUIKit class]];
     _timerCount = 0;
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appDidEnterForeground)
+                                                 name:UIApplicationWillEnterForegroundNotification
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appDidEnterForeground)
+                                                 name:UIApplicationDidBecomeActiveNotification
+                                               object:nil];
   }
   return self;
+}
+
+- (void)dealloc {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 #pragma mark - Public Methods
@@ -98,8 +111,10 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
 - (void)showInAppSmallWindow {
   // 从 NECallStateManager 获取通话类型
   NECallStateManager *stateManager = [NECallStateManager sharedInstance];
-  NECallType callType = stateManager.callType;
+  [self showInAppSmallWindowWithCallType:stateManager.callType];
+}
 
+- (void)showInAppSmallWindowWithCallType:(NECallType)callType {
   NEXKitBaseLogInfo(@"[%@] showInAppSmallWindow, callType = %lu", kInAppWindowManagerTag,
                     (unsigned long)callType);
 
@@ -240,6 +255,30 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
 
   // 停止定时器
   [self stopTimer];
+}
+
+- (void)appDidEnterForeground {
+  if (self.inAppSmallWindow == nil || self.recoveryView == nil) {
+    return;
+  }
+  if ([NECallUTSBackgroundPipAdapter isInAppSmallWindowForegroundRecoverySuppressed]) {
+    NEXKitBaseLogInfo(@"[%@] appDidEnterForeground skip suppressed recovery",
+                      kInAppWindowManagerTag);
+    return;
+  }
+
+  NECallStateManager *stateManager = [NECallStateManager sharedInstance];
+  if (stateManager.callStatus != NERtcCallStatusInCall ||
+      stateManager.callType != NECallTypeVideo) {
+    return;
+  }
+
+  NEXKitBaseLogInfo(@"[%@] appDidEnterForeground restore video small window render:%@",
+                    kInAppWindowManagerTag, self.recoveryView);
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [[NECallEngine sharedInstance] setupRemoteView:self.recoveryView];
+    [self syncRemoteVideoState];
+  });
 }
 
 #pragma mark - Private Methods
@@ -539,36 +578,40 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
     return;
   }
 
-  // 计算远端视频是否启用：available && !muted
+  // 同步时只使用 VideoAvailable 缓存；mute 回调只做当次 UI 刷新，避免历史 mute 污染状态
   NSDictionary *remoteVideoAvailable = stateManager.remoteVideoAvailable;
-  NSDictionary *remoteVideoMuted = stateManager.remoteVideoMuted;
 
-  BOOL available = NO;
+  BOOL available = YES;
   if (remoteVideoAvailable[remoteUserId]) {
     available = [remoteVideoAvailable[remoteUserId] boolValue];
   }
 
-  BOOL muted = NO;
-  if (remoteVideoMuted[remoteUserId]) {
-    muted = [remoteVideoMuted[remoteUserId] boolValue];
-  }
-
-  BOOL remoteVideoEnabled = available && !muted;
-
   // 如果远端视频未启用，显示 coverView（头像）
-  self.videoCoverView.hidden = remoteVideoEnabled;
+  self.videoCoverView.hidden = available;
 
-  NEXKitBaseLogInfo(@"[%@] syncRemoteVideoState: remoteUserId=%@, available=%d, muted=%d, "
+  NEXKitBaseLogInfo(@"[%@] syncRemoteVideoState: remoteUserId=%@, available=%d, "
                     @"remoteVideoEnabled=%d, coverView.hidden=%d",
-                    kInAppWindowManagerTag, remoteUserId, available, muted, remoteVideoEnabled,
-                    remoteVideoEnabled);
+                    kInAppWindowManagerTag, remoteUserId, available, available, available);
 }
 
 #pragma mark - NECallStateManagerDelegate
 
-- (void)callStateManagerDidChangeRemoteVideoState:(NSString *)userId {
-  NEXKitBaseLogInfo(@"[%@] callStateManagerDidChangeRemoteVideoState: userId=%@",
-                    kInAppWindowManagerTag, userId);
+- (void)callStateManagerDidChangeCallType:(NECallType)callType {
+  NEXKitBaseLogInfo(@"[%@] callStateManagerDidChangeCallType: callType=%lu",
+                    kInAppWindowManagerTag, (unsigned long)callType);
+
+  if (!self.inAppSmallWindow) {
+    return;
+  }
+
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [self showInAppSmallWindowWithCallType:callType];
+  });
+}
+
+- (void)callStateManagerDidChangeRemoteVideoState:(NSString *)userId available:(BOOL)available {
+  NEXKitBaseLogInfo(@"[%@] callStateManagerDidChangeRemoteVideoState: userId=%@, available=%d",
+                    kInAppWindowManagerTag, userId, available);
 
   // 只在视频小窗模式下处理
   if (!self.inAppSmallWindow || !self.recoveryView || !self.videoCoverView) {
@@ -595,8 +638,7 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
       return;
     }
 
-    // 同步远端视频状态（会同时检查 available 和 muted）
-    [self syncRemoteVideoState];
+    self.videoCoverView.hidden = available;
   });
 }
 

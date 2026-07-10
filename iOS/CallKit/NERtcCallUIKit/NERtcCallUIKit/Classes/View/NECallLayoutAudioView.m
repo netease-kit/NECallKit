@@ -13,6 +13,12 @@
 
 static NSString *const kCallLayoutAudioViewTag = @"CallLayoutAudioView";
 
+@interface NERtcCallUIKit (NECallUIDynamicConfigAccess)
+
+@property(nonatomic, strong, readonly) NECallUIDynamicConfig *dynamicUIConfig;
+
+@end
+
 @interface NECallLayoutAudioView ()
 
 /// 远端用户头像视图（通话中状态使用）
@@ -29,6 +35,15 @@ static NSString *const kCallLayoutAudioViewTag = @"CallLayoutAudioView";
 
 /// 中心远端用户头像视图（呼叫中/接听中状态使用）
 @property(nonatomic, strong, nullable) UIImageView *remoteBigAvatorView;
+
+/// 呼叫中/接听中背景头像
+@property(nonatomic, strong, nullable) UIImageView *backgroundAvatarView;
+
+/// 背景虚化层
+@property(nonatomic, strong, nullable) UIVisualEffectView *backgroundBlurView;
+
+/// 背景压暗遮罩
+@property(nonatomic, strong, nullable) UIView *backgroundDimView;
 
 /// 资源包context
 @property(nonatomic, strong) NSBundle *bundle;
@@ -63,6 +78,7 @@ static NSString *const kCallLayoutAudioViewTag = @"CallLayoutAudioView";
 }
 
 - (void)setupCallingUI {
+  [self setupCallingBackground];
   // 添加中心远端头像视图
   if (!self.remoteBigAvatorView) {
     self.remoteBigAvatorView = [[UIImageView alloc] init];
@@ -125,6 +141,14 @@ static NSString *const kCallLayoutAudioViewTag = @"CallLayoutAudioView";
 }
 
 - (void)setupInCallUI {
+  if (self.callStatus == NERtcCallStatusInCall) {
+    [self setupCallingBackground];
+  } else {
+    self.backgroundAvatarView.hidden = YES;
+    self.backgroundBlurView.hidden = YES;
+    self.backgroundDimView.hidden = YES;
+  }
+
   // 添加头像视图
   [self addSubview:self.remoteAvatarView];
   [NSLayoutConstraint activateConstraints:@[
@@ -156,10 +180,142 @@ static NSString *const kCallLayoutAudioViewTag = @"CallLayoutAudioView";
   }
 }
 
+- (void)setupCallingBackground {
+  if (!self.backgroundAvatarView) {
+    self.backgroundAvatarView = [[UIImageView alloc] init];
+    self.backgroundAvatarView.image = [UIImage imageNamed:@"avator"
+                                                  inBundle:self.bundle
+                             compatibleWithTraitCollection:nil];
+    self.backgroundAvatarView.contentMode = UIViewContentModeScaleAspectFill;
+    self.backgroundAvatarView.clipsToBounds = YES;
+    self.backgroundAvatarView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self insertSubview:self.backgroundAvatarView atIndex:0];
+    [NSLayoutConstraint activateConstraints:@[
+      [self.backgroundAvatarView.leftAnchor constraintEqualToAnchor:self.leftAnchor],
+      [self.backgroundAvatarView.rightAnchor constraintEqualToAnchor:self.rightAnchor],
+      [self.backgroundAvatarView.topAnchor constraintEqualToAnchor:self.topAnchor],
+      [self.backgroundAvatarView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor]
+    ]];
+  }
+
+  if (!self.backgroundBlurView) {
+    UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleLight];
+    self.backgroundBlurView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+    self.backgroundBlurView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self insertSubview:self.backgroundBlurView aboveSubview:self.backgroundAvatarView];
+    [NSLayoutConstraint activateConstraints:@[
+      [self.backgroundBlurView.leftAnchor constraintEqualToAnchor:self.leftAnchor],
+      [self.backgroundBlurView.rightAnchor constraintEqualToAnchor:self.rightAnchor],
+      [self.backgroundBlurView.topAnchor constraintEqualToAnchor:self.topAnchor],
+      [self.backgroundBlurView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor]
+    ]];
+  }
+
+  if (!self.backgroundDimView) {
+    self.backgroundDimView = [[UIView alloc] init];
+    self.backgroundDimView.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.35];
+    self.backgroundDimView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self insertSubview:self.backgroundDimView aboveSubview:self.backgroundBlurView];
+    [NSLayoutConstraint activateConstraints:@[
+      [self.backgroundDimView.leftAnchor constraintEqualToAnchor:self.leftAnchor],
+      [self.backgroundDimView.rightAnchor constraintEqualToAnchor:self.rightAnchor],
+      [self.backgroundDimView.topAnchor constraintEqualToAnchor:self.topAnchor],
+      [self.backgroundDimView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor]
+    ]];
+  }
+
+  self.backgroundAvatarView.hidden = NO;
+  self.backgroundBlurView.hidden = NO;
+  self.backgroundDimView.hidden = NO;
+  [self updateCallingBackground];
+}
+
+- (void)updateCallingBackground {
+  if (self.callStatus != NERtcCallStatusCalling &&
+      self.callStatus != NERtcCallStatusCalled &&
+      self.callStatus != NERtcCallStatusInCall) {
+    return;
+  }
+  if (!self.backgroundAvatarView) {
+    return;
+  }
+
+  if (self.remoteAvatar.length > 0) {
+    [self.backgroundAvatarView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [self.backgroundAvatarView
+        sd_setImageWithURL:[NSURL URLWithString:self.remoteAvatar]
+          placeholderImage:[UIImage imageNamed:@"avator"
+                                                    inBundle:self.bundle
+                               compatibleWithTraitCollection:nil]];
+  } else if (self.remoteUserAccid.length > 0) {
+    UIView *cover = [self getDefaultHeaderView:self.remoteUserAccid
+                                          font:[UIFont systemFontOfSize:200]
+                                      showName:self.remoteShowName];
+    [self.backgroundAvatarView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    self.backgroundAvatarView.image = nil;
+    [self.backgroundAvatarView addSubview:cover];
+    [NSLayoutConstraint activateConstraints:@[
+      [cover.leftAnchor constraintEqualToAnchor:self.backgroundAvatarView.leftAnchor],
+      [cover.rightAnchor constraintEqualToAnchor:self.backgroundAvatarView.rightAnchor],
+      [cover.topAnchor constraintEqualToAnchor:self.backgroundAvatarView.topAnchor],
+      [cover.bottomAnchor constraintEqualToAnchor:self.backgroundAvatarView.bottomAnchor]
+    ]];
+  }
+  [self applyDynamicIncomingBackgroundIfNeeded];
+}
+
+- (void)applyDynamicIncomingBackgroundIfNeeded {
+  if (self.callStatus != NERtcCallStatusCalled || !self.backgroundAvatarView) {
+    return;
+  }
+  NECallUIIncomingBackgroundSource *source =
+      [NERtcCallUIKit sharedInstance].dynamicUIConfig.incomingCallBackground;
+  if (!source) {
+    return;
+  }
+  self.backgroundAvatarView.contentMode = UIViewContentModeScaleAspectFill;
+  self.backgroundAvatarView.clipsToBounds = YES;
+  __weak typeof(self) weakSelf = self;
+  switch (source.type) {
+    case NECallUIIncomingBackgroundSourceTypeImage:
+      if (source.image) {
+        [self.backgroundAvatarView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        self.backgroundBlurView.hidden = YES;
+        self.backgroundAvatarView.image = source.image;
+      }
+      break;
+    case NECallUIIncomingBackgroundSourceTypeURL: {
+      NSURL *url = source.url;
+      NSString *scheme = url.scheme.lowercaseString;
+      if (![scheme isEqualToString:@"http"] && ![scheme isEqualToString:@"https"]) {
+        return;
+      }
+      [self.backgroundAvatarView sd_setImageWithURL:url
+                                   placeholderImage:self.backgroundAvatarView.image
+                                            options:0
+                                          completed:^(UIImage *_Nullable image,
+                                                      NSError *_Nullable error,
+                                                      SDImageCacheType cacheType,
+                                                      NSURL *_Nullable imageURL) {
+                                            if (weakSelf == nil ||
+                                                weakSelf.callStatus != NERtcCallStatusCalled ||
+                                                weakSelf.backgroundAvatarView == nil ||
+                                                image == nil || error != nil) {
+                                              return;
+                                            }
+                                            [weakSelf.backgroundAvatarView.subviews
+                                                makeObjectsPerformSelector:@selector(removeFromSuperview)];
+                                            weakSelf.backgroundBlurView.hidden = YES;
+                                          }];
+    } break;
+  }
+}
+
 - (void)updateCallingUI {
   if (self.callStatus != NERtcCallStatusCalling && self.callStatus != NERtcCallStatusCalled) {
     return;
   }
+  [self updateCallingBackground];
 
   NEXKitBaseLogInfo(@"[%@] updateCallingUI, isCaller=%d, remoteShowName=%@",
                     kCallLayoutAudioViewTag, self.isCaller, self.remoteShowName);
@@ -324,6 +480,7 @@ static NSString *const kCallLayoutAudioViewTag = @"CallLayoutAudioView";
       [cover.bottomAnchor constraintEqualToAnchor:self.remoteAvatarView.bottomAnchor]
     ]];
   }
+  [self updateCallingBackground];
 }
 
 - (UIView *)getDefaultHeaderView:(NSString *)accid

@@ -18,7 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// 远端视频状态变化回调
 /// @param userId 远端用户ID
-- (void)callStateManagerDidChangeRemoteVideoState:(NSString *)userId;
+/// @param available 本次回调对应的远端视频 UI 可用状态
+- (void)callStateManagerDidChangeRemoteVideoState:(NSString *)userId available:(BOOL)available;
 
 /// 通话状态变化回调
 /// @param callStatus 新的通话状态
@@ -56,9 +57,6 @@ NS_ASSUME_NONNULL_BEGIN
 /// 本地视频是否静音
 @property(nonatomic, assign, readonly) BOOL localVideoMuted;
 
-/// 远端视频是否静音（key: userId, value: BOOL）
-@property(nonatomic, strong, readonly) NSDictionary<NSString *, NSNumber *> *remoteVideoMuted;
-
 /// 本地音频是否静音
 @property(nonatomic, assign, readonly) BOOL localAudioMuted;
 
@@ -87,6 +85,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// 同步本端视频启用状态（由 NECallKitBridge 调用）
 /// @param enabled 是否启用
 - (void)syncLocalVideoEnabled:(BOOL)enabled;
+
+/// 同步已同意的通话类型切换（由 NECallKitBridge 调用）
+/// @param callType 已同意切换到的通话类型
+- (void)syncAcceptedCallType:(NECallType)callType;
 
 /// 同步本端视频静音状态（由 NECallKitBridge 调用）
 /// @param muted 是否静音

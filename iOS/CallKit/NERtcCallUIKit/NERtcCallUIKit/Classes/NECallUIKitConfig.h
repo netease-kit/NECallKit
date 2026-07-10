@@ -36,6 +36,12 @@ typedef NS_ENUM(NSInteger, NECallSingleToGroupInviteMode) {
 /// 收到呼叫时是否禁止弹出被叫页面，默认NO，弹出被叫页面，用户可以通过此配置禁止组件弹出，自己通过继承以及监听被叫回调实现相关功能
 @property(nonatomic, assign) BOOL disableShowCalleeView;
 
+/// 收到群呼邀请时是否禁止弹出多人通话邀请页面，默认NO，弹出多人通话邀请页面
+@property(nonatomic, assign) BOOL disableShowGroupCallInviteView;
+
+/// 是否由 native CallUIKit 播放来电铃声，默认YES。UTS 等外部 UI 接入可关闭后自行统一控制铃声。
+@property(nonatomic, assign) BOOL enableNativeIncomingRing;
+
 /// 通话前音视频切换按钮是否显示，默认NO，不显示，开启此配置前需要开启 NERtcCallOptions 中
 /// supportAutoJoinWhenCalled 属性
 @property(nonatomic, assign) BOOL showCallingSwitchCallType;

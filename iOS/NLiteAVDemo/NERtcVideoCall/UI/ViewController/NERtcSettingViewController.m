@@ -52,6 +52,8 @@
 
 @property(nonatomic, strong) UITextField *modeTextField;
 
+@property(nonatomic, strong) UITextField *privateConfigUrlField;
+
 @end
 
 @implementation NERtcSettingViewController
@@ -69,6 +71,16 @@
 
 - (void)loadView {
   self.view = self.contentScroll;
+}
+
+- (void)viewDidLayoutSubviews {
+  [super viewDidLayoutSubviews];
+  // 更新 contentScroll 的 contentSize
+  UIView *lastView = self.privateConfigUrlField;
+  if (lastView) {
+    CGFloat contentHeight = CGRectGetMaxY(lastView.frame) + 20;
+    self.contentScroll.contentSize = CGSizeMake(self.view.bounds.size.width, contentHeight);
+  }
 }
 
 - (void)setupUI {
@@ -93,11 +105,36 @@
     make.width.mas_equalTo(UIApplication.sharedApplication.keyWindow.bounds.size.width);
   }];
 
+  // 私有化配置地址 - 第一行
+  UILabel *privateConfigLabel = [self createLabelWithText:@"私有化配置地址"];
+  [self.view addSubview:privateConfigLabel];
+  [privateConfigLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.left.mas_equalTo(20);
+    make.top.mas_equalTo(20);
+  }];
+
+  self.privateConfigUrlField = [self createTextField];
+  [self.view addSubview:self.privateConfigUrlField];
+  [self.privateConfigUrlField mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.left.equalTo(privateConfigLabel.mas_right).offset(10);
+    make.centerY.equalTo(privateConfigLabel);
+    make.right.mas_equalTo(-20);
+  }];
+  self.privateConfigUrlField.attributedPlaceholder = [self getPlaceholderWithFont:self.privateConfigUrlField.font
+                                                                        withText:@"输入私有化配置地址URL"];
+  self.privateConfigUrlField.keyboardType = UIKeyboardTypeURL;
+  self.privateConfigUrlField.autocapitalizationType = UITextAutocapitalizationTypeNone;
+  self.privateConfigUrlField.autocorrectionType = UITextAutocorrectionTypeNo;
+
+  if ([[SettingManager shareInstance] privateConfigUrl].length > 0) {
+    self.privateConfigUrlField.text = [[SettingManager shareInstance] privateConfigUrl];
+  }
+
   UILabel *joinRtcLabel = [self createLabelWithText:@"主叫是否提前加入Rtc房间"];
   [self.view addSubview:joinRtcLabel];
   [joinRtcLabel mas_makeConstraints:^(MASConstraintMaker *make) {
     make.left.mas_equalTo(20);
-    make.top.mas_equalTo(20);
+    make.top.equalTo(privateConfigLabel.mas_bottom).offset(20);
   }];
 
   UISwitch *joinRtcSwitch = [[UISwitch alloc] init];
@@ -403,7 +440,6 @@
     make.left.equalTo(self.view).offset(20);
     make.top.equalTo(self.photoBtn.mas_bottom).offset(20);
     make.right.equalTo(self.view).offset(-20);
-    make.bottom.equalTo(self.view.mas_bottom).offset(-20);
     make.height.mas_equalTo(40);
   }];
 }
@@ -462,8 +498,80 @@
     [[SettingManager shareInstance] setGlobalExtra:@""];
   }
 
-  [self.navigationController popViewControllerAnimated:YES];
-  [[UIApplication sharedApplication].keyWindow ne_makeToast:@"保存成功"];
+  // 保存私有化配置地址
+  NSString *privateConfigUrl = self.privateConfigUrlField.text;
+  if (privateConfigUrl.length > 0) {
+    [[SettingManager shareInstance] setPrivateConfigUrl:privateConfigUrl];
+    // 请求配置
+    [self fetchPrivateConfig:privateConfigUrl];
+  } else {
+    [[SettingManager shareInstance] setPrivateConfigUrl:@""];
+    [[SettingManager shareInstance] clearPrivateConfig];
+    [self.navigationController popViewControllerAnimated:YES];
+    [[UIApplication sharedApplication].keyWindow ne_makeToast:@"保存成功"];
+  }
+}
+
+- (void)fetchPrivateConfig:(NSString *)urlString {
+  if (urlString.length == 0) {
+    return;
+  }
+
+  NSURL *url = [NSURL URLWithString:urlString];
+  if (!url) {
+    [UIApplication.sharedApplication.keyWindow ne_makeToast:@"无效的URL地址"];
+    return;
+  }
+
+  NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+  config.timeoutIntervalForRequest = 10.0;
+  NSURLSession *session = [NSURLSession sessionWithConfiguration:config];
+
+  NSURLRequest *request = [NSURLRequest requestWithURL:url];
+  NSURLSessionDataTask *task = [session dataTaskWithRequest:request
+                                          completionHandler:^(NSData *_Nullable data,
+                                                              NSURLResponse *_Nullable response,
+                                                              NSError *_Nullable error) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+      if (error) {
+        [UIApplication.sharedApplication.keyWindow
+            ne_makeToast:[NSString stringWithFormat:@"获取配置失败: %@", error.localizedDescription]];
+        return;
+      }
+
+      if (!data) {
+        [UIApplication.sharedApplication.keyWindow ne_makeToast:@"获取配置失败: 数据为空"];
+        return;
+      }
+
+      NSError *jsonError = nil;
+      NSDictionary *jsonDict = [NSJSONSerialization JSONObjectWithData:data
+                                                                options:NSJSONReadingMutableContainers
+                                                                  error:&jsonError];
+      if (jsonError || !jsonDict) {
+        [UIApplication.sharedApplication.keyWindow
+            ne_makeToast:[NSString stringWithFormat:@"解析配置失败: %@", jsonError.localizedDescription]];
+        return;
+      }
+
+      // 提取 im 和 rtc 字段
+      NSDictionary *imConfig = jsonDict[@"im"];
+      NSDictionary *rtcConfig = jsonDict[@"rtc"];
+
+      if (imConfig) {
+        [[SettingManager shareInstance] setPrivateIMConfig:imConfig];
+      }
+
+      if (rtcConfig) {
+        [[SettingManager shareInstance] setPrivateRTCConfig:rtcConfig];
+      }
+
+      [self.navigationController popViewControllerAnimated:YES];
+      [UIApplication.sharedApplication.keyWindow ne_makeToast:@"保存成功"];
+    });
+  }];
+
+  [task resume];
 }
 
 - (void)hideKeyboard {

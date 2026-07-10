@@ -7,6 +7,7 @@
 
 #import <AVKit/AVKit.h>
 #import "NECallUIKitConfig.h"
+#import "NECallUIDynamicConfig.h"
 #import "NECallInviteUIContext.h"
 #import "NECallViewController.h"
 #import "NECustomButton.h"
@@ -115,6 +116,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// 开启后收到来电时以顶部悬浮横幅替代原全屏来电界面；关闭后恢复原有行为。
 /// 可动态调用，下一次来电时生效。
 - (void)enableIncomingBanner:(BOOL)enable;
+
+/// 设置动态 UI 配置快照。传 nil 清除动态配置；仅保证后续来电页生效，不承诺刷新当前已展示页面。
+- (void)setDynamicUIConfig:(nullable NECallUIDynamicConfig *)config;
+
+/// 当前是否由 native CallUIKit 播放来电铃声。
+- (BOOL)isNativeIncomingRingEnabled;
 
 @end
 
