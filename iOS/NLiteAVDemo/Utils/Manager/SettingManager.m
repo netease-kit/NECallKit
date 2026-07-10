@@ -8,6 +8,12 @@ NSString *const kYXOTOTimeOut = @"kYXOTOTimeOut";
 
 NSString *const kShowCName = @"kShowCName";
 
+NSString *const kPrivateConfigUrl = @"kPrivateConfigUrl";
+
+NSString *const kPrivateIMConfig = @"kPrivateIMConfig";
+
+NSString *const kPrivateRTCConfig = @"kPrivateRTCConfig";
+
 NSString *const kEnableSingleToGroupCall = @"kEnableSingleToGroupCall";
 
 @interface SettingManager ()
@@ -81,9 +87,25 @@ NSString *const kEnableSingleToGroupCall = @"kEnableSingleToGroupCall";
     if (showCname != nil) {
       self.incallShowCName = [showCname boolValue];
     }
+    
+    // 加载私有化配置
+    NSString *configUrl = [userDefault objectForKey:kPrivateConfigUrl];
+    if (configUrl.length > 0) {
+      _privateConfigUrl = configUrl;
+    }
+    
+    NSDictionary *imConfig = [userDefault objectForKey:kPrivateIMConfig];
+    if (imConfig) {
+      _privateIMConfig = imConfig;
+    }
+    
+    NSDictionary *rtcConfig = [userDefault objectForKey:kPrivateRTCConfig];
+    if (rtcConfig) {
+      _privateRTCConfig = rtcConfig;
+    }
     NSNumber *enableSingleToGroupCall = [userDefault objectForKey:kEnableSingleToGroupCall];
     _enableSingleToGroupCall = [enableSingleToGroupCall boolValue];
-
+    
     NSLog(@"current accid : %@", [NIMSDK.sharedSDK.v2LoginService getLoginUser]);
   }
   return self;
@@ -159,6 +181,45 @@ NSString *const kEnableSingleToGroupCall = @"kEnableSingleToGroupCall";
   NSUserDefaults *userDefault = [NSUserDefaults standardUserDefaults];
   [userDefault setObject:@(enable) forKey:kEnableSingleToGroupCall];
   [userDefault synchronize];
+}
+
+- (void)setPrivateConfigUrl:(NSString *)url {
+  _privateConfigUrl = url;
+  NSUserDefaults *userDefault = [NSUserDefaults standardUserDefaults];
+  if (url.length > 0) {
+    [userDefault setObject:url forKey:kPrivateConfigUrl];
+  } else {
+    [userDefault removeObjectForKey:kPrivateConfigUrl];
+  }
+  [userDefault synchronize];
+}
+
+- (void)setPrivateIMConfig:(NSDictionary *)config {
+  _privateIMConfig = config;
+  NSUserDefaults *userDefault = [NSUserDefaults standardUserDefaults];
+  if (config) {
+    [userDefault setObject:config forKey:kPrivateIMConfig];
+  } else {
+    [userDefault removeObjectForKey:kPrivateIMConfig];
+  }
+  [userDefault synchronize];
+}
+
+- (void)setPrivateRTCConfig:(NSDictionary *)config {
+  _privateRTCConfig = config;
+  NSUserDefaults *userDefault = [NSUserDefaults standardUserDefaults];
+  if (config) {
+    [userDefault setObject:config forKey:kPrivateRTCConfig];
+  } else {
+    [userDefault removeObjectForKey:kPrivateRTCConfig];
+  }
+  [userDefault synchronize];
+}
+
+- (void)clearPrivateConfig {
+  self.privateConfigUrl = nil;
+  self.privateIMConfig = nil;
+  self.privateRTCConfig = nil;
 }
 
 @end

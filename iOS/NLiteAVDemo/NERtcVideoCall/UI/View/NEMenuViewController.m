@@ -40,6 +40,7 @@ static NSString *cellID = @"menuCellID";
 }
 #pragma mark - private
 - (void)setupUI {
+  [NetManager shareInstance];
   [self.view addSubview:self.bgImageView];
   [self.bgImageView mas_makeConstraints:^(MASConstraintMaker *make) {
     make.edges.mas_equalTo(UIEdgeInsetsZero);

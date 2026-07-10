@@ -6,6 +6,7 @@
 #import <NERtcCallKit/NECallEngine.h>
 #import <YXAlog_iOS/YXAlog.h>
 #import "NECallKitUtil.h"
+#import "NERtcCallUIKit.h"
 #import "NERingPlayerManager.h"
 
 /// 横幅高度
@@ -121,9 +122,11 @@ static NSString *NEIncomingBannerToastKeyForCallEndReason(NSInteger reasonCode) 
                      }
                      completion:nil];
 
-    // 播放被叫来电铃声（与全屏来电流程一致）
-    [[NERingPlayerManager shareInstance] playRingWithRingType:CRTCalleeRing isRtcPlay:NO];
-    YXAlogInfo(@"bannerRingStart");
+    // 播放被叫来电铃声（与全屏来电流程一致）。UTS 等外部 UI 接入可关闭 native 铃声。
+    if ([[NERtcCallUIKit sharedInstance] isNativeIncomingRingEnabled]) {
+      [[NERingPlayerManager shareInstance] playRingWithRingType:CRTCalleeRing isRtcPlay:NO];
+      YXAlogInfo(@"bannerRingStart");
+    }
 
     // 绑定回调。接听前可能需要在横幅窗口上展示权限引导，因此由业务回调决定何时 dismiss。
     __weak typeof(self) weakSelf = self;

@@ -17,7 +17,6 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
 @property(nonatomic, assign) BOOL localVideoAvailable;
 @property(nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *> *remoteVideoAvailable;
 @property(nonatomic, assign) BOOL localVideoMuted;
-@property(nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *> *remoteVideoMuted;
 @property(nonatomic, assign) BOOL localAudioMuted;
 @property(nonatomic, strong) NSMutableDictionary<NSString *, NSNumber *> *remoteAudioMuted;
 /// 通话开始时间
@@ -49,7 +48,6 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
     _callType = NECallTypeAudio;
     _localVideoAvailable = YES;  // 默认视频可用
     _remoteVideoAvailable = [NSMutableDictionary dictionary];
-    _remoteVideoMuted = [NSMutableDictionary dictionary];
     _remoteAudioMuted = [NSMutableDictionary dictionary];
     // 使用弱引用存储代理，避免循环引用
     _delegates = [NSHashTable hashTableWithOptions:NSPointerFunctionsWeakMemory];
@@ -77,10 +75,10 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
   }
 }
 
-- (void)notifyDelegatesRemoteVideoStateChanged:(NSString *)userId {
+- (void)notifyDelegatesRemoteVideoStateChanged:(NSString *)userId available:(BOOL)available {
   for (id<NECallStateManagerDelegate> delegate in self.delegates) {
-    if ([delegate respondsToSelector:@selector(callStateManagerDidChangeRemoteVideoState:)]) {
-      [delegate callStateManagerDidChangeRemoteVideoState:userId];
+    if ([delegate respondsToSelector:@selector(callStateManagerDidChangeRemoteVideoState:available:)]) {
+      [delegate callStateManagerDidChangeRemoteVideoState:userId available:available];
     }
   }
 }
@@ -160,21 +158,26 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
 }
 
 - (void)ensureCallStartTime {
-  NSDate *inferredStartTime = [self inferredCallStartTimeFromCurrentMembers];
+  NSDate *inferredStartTime = [self inferredCallStartTimeForMultiCallFromCurrentMembers];
   if (_callStartTime != nil) {
     if (!_callStartTimeFromConnectedEvent &&
         inferredStartTime != nil &&
         [_callStartTime timeIntervalSinceDate:inferredStartTime] > 1) {
       _callStartTime = inferredStartTime;
-      NEXKitBaseLogInfo(@"[%@] ensureCallStartTime: adjusted callStartTime from members",
+      NEXKitBaseLogInfo(@"[%@] ensureCallStartTime: adjusted multi callStartTime from members",
                         kCallStateManagerTag);
     }
+    return;
+  }
+  if (inferredStartTime == nil && [[NECallEngine sharedInstance] isInMultiCall]) {
+    NEXKitBaseLogInfo(@"[%@] ensureCallStartTime: wait for multi members joinedAt",
+                      kCallStateManagerTag);
     return;
   }
   _callStartTime = inferredStartTime ?: [NSDate date];
   _callStartTimeFromConnectedEvent = NO;
   NEXKitBaseLogInfo(@"[%@] ensureCallStartTime: recorded callStartTime source:%@",
-                    kCallStateManagerTag, inferredStartTime != nil ? @"members" : @"now");
+                    kCallStateManagerTag, inferredStartTime != nil ? @"multiMembers" : @"now");
 }
 
 - (void)recordCallStartTimeFromConnectedEvent {
@@ -186,9 +189,12 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
   NEXKitBaseLogInfo(@"[%@] onCallConnected: recorded callStartTime", kCallStateManagerTag);
 }
 
-- (NSDate *)inferredCallStartTimeFromCurrentMembers {
+- (NSDate *)inferredCallStartTimeForMultiCallFromCurrentMembers {
+  if (![[NECallEngine sharedInstance] isInMultiCall]) {
+    return nil;
+  }
   NSArray<NECallMemberInfo *> *members = [[NECallEngine sharedInstance] currentMembers];
-  if (members.count <= 0) {
+  if (members.count <= 2) {
     return nil;
   }
   NSInteger joinedMemberCount = 0;
@@ -224,7 +230,6 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
   _callStartTime = nil;
   _callStartTimeFromConnectedEvent = NO;
   [_remoteVideoAvailable removeAllObjects];
-  [_remoteVideoMuted removeAllObjects];
   [_remoteAudioMuted removeAllObjects];
 }
 
@@ -310,16 +315,25 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
 
   // 只有在同意切换时才更新 callType
   if (info.state == NECallSwitchStateAgree) {
-    _callType = info.callType;
-    NERtcCallStatus oldStatus = _callStatus;
-    // 同步最新的 callInfo
-    [self syncCurrentState];
+    [self syncAcceptedCallType:info.callType];
+  }
+}
 
-    // 通知代理
-    [self notifyDelegatesCallTypeChanged:info.callType];
-    if (oldStatus != _callStatus) {
-      [self notifyDelegatesCallStatusChanged:_callStatus];
-    }
+- (void)syncAcceptedCallType:(NECallType)callType {
+  NEXKitBaseLogInfo(@"[%@] syncAcceptedCallType, callType = %lu", kCallStateManagerTag,
+                    (unsigned long)callType);
+
+  NECallType oldCallType = _callType;
+  _callType = callType;
+  NERtcCallStatus oldStatus = _callStatus;
+  [self syncCurrentState];
+  _callType = callType;
+
+  if (oldCallType != callType) {
+    [self notifyDelegatesCallTypeChanged:callType];
+  }
+  if (oldStatus != _callStatus) {
+    [self notifyDelegatesCallStatusChanged:_callStatus];
   }
 }
 
@@ -327,27 +341,42 @@ static NSString *const kCallStateManagerTag = @"CallStateManager";
   NEXKitBaseLogInfo(@"[%@] onVideoAvailable, available = %d, userId = %@", kCallStateManagerTag,
                     available, userId);
 
+  if (userId.length <= 0) {
+    NEXKitBaseLogInfo(@"[%@] ignore onVideoAvailable because userId is empty",
+                      kCallStateManagerTag);
+    return;
+  }
+
   // 这些回调都是远端的状态，直接存储到远端字典
   _remoteVideoAvailable[userId] = @(available);
 
   // 通知代理远端视频状态变化
-  [self notifyDelegatesRemoteVideoStateChanged:userId];
+  [self notifyDelegatesRemoteVideoStateChanged:userId available:available];
 }
 
 - (void)onVideoMuted:(BOOL)muted userID:(NSString *)userId {
   NEXKitBaseLogInfo(@"[%@] onVideoMuted, muted = %d, userId = %@", kCallStateManagerTag, muted,
                     userId);
 
-  // 这些回调都是远端的状态，直接存储到远端字典
-  _remoteVideoMuted[userId] = @(muted);
+  if (userId.length <= 0) {
+    NEXKitBaseLogInfo(@"[%@] ignore onVideoMuted because userId is empty",
+                      kCallStateManagerTag);
+    return;
+  }
 
   // 通知代理远端视频状态变化
-  [self notifyDelegatesRemoteVideoStateChanged:userId];
+  [self notifyDelegatesRemoteVideoStateChanged:userId available:!muted];
 }
 
 - (void)onAudioMuted:(BOOL)muted userID:(NSString *)userId {
   NEXKitBaseLogInfo(@"[%@] onAudioMuted, muted = %d, userId = %@", kCallStateManagerTag, muted,
                     userId);
+
+  if (userId.length <= 0) {
+    NEXKitBaseLogInfo(@"[%@] ignore onAudioMuted because userId is empty",
+                      kCallStateManagerTag);
+    return;
+  }
 
   // 这些回调都是远端的状态，直接存储到远端字典
   _remoteAudioMuted[userId] = @(muted);

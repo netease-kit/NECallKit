@@ -4,7 +4,12 @@
 
 #import "NECallUISettingViewController.h"
 
+static NSString *const kDemoIncomingBackgroundURL =
+    @"https://picsum.photos/id/1018/900/1600.jpg";
+
 @interface NECallUISettingViewController ()
+
+@property(nonatomic, strong) UILabel *incomingBackgroundStatusLabel;
 
 @end
 
@@ -165,6 +170,68 @@
   BOOL bannerValue = [[NSUserDefaults standardUserDefaults] boolForKey:@"kEnableIncomingBanner"];
   [bannerSwitch setOn:bannerValue];
   [[NERtcCallUIKit sharedInstance] enableIncomingBanner:bannerValue];
+
+  UILabel *incomingBackgroundLabel = [[UILabel alloc] init];
+  incomingBackgroundLabel.translatesAutoresizingMaskIntoConstraints = NO;
+  incomingBackgroundLabel.textColor = [UIColor whiteColor];
+  incomingBackgroundLabel.text = @"来电背景测试";
+  [self.view addSubview:incomingBackgroundLabel];
+  [NSLayoutConstraint activateConstraints:@[
+    [incomingBackgroundLabel.topAnchor constraintEqualToAnchor:bannerLabel.bottomAnchor constant:24],
+    [incomingBackgroundLabel.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:20],
+    [incomingBackgroundLabel.heightAnchor constraintEqualToConstant:30]
+  ]];
+
+  UIButton *localBackgroundButton = [self incomingBackgroundButtonWithTitle:@"使用本地风景图"];
+  [localBackgroundButton addTarget:self
+                            action:@selector(applyLocalIncomingBackground)
+                  forControlEvents:UIControlEventTouchUpInside];
+  [self.view addSubview:localBackgroundButton];
+  [NSLayoutConstraint activateConstraints:@[
+    [localBackgroundButton.topAnchor constraintEqualToAnchor:incomingBackgroundLabel.bottomAnchor constant:12],
+    [localBackgroundButton.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:20],
+    [localBackgroundButton.rightAnchor constraintEqualToAnchor:self.view.rightAnchor constant:-20],
+    [localBackgroundButton.heightAnchor constraintEqualToConstant:42]
+  ]];
+
+  UIButton *urlBackgroundButton = [self incomingBackgroundButtonWithTitle:@"使用 URL 风景图"];
+  [urlBackgroundButton addTarget:self
+                          action:@selector(applyURLIncomingBackground)
+                forControlEvents:UIControlEventTouchUpInside];
+  [self.view addSubview:urlBackgroundButton];
+  [NSLayoutConstraint activateConstraints:@[
+    [urlBackgroundButton.topAnchor constraintEqualToAnchor:localBackgroundButton.bottomAnchor constant:10],
+    [urlBackgroundButton.leftAnchor constraintEqualToAnchor:localBackgroundButton.leftAnchor],
+    [urlBackgroundButton.rightAnchor constraintEqualToAnchor:localBackgroundButton.rightAnchor],
+    [urlBackgroundButton.heightAnchor constraintEqualToConstant:42]
+  ]];
+
+  UIButton *clearBackgroundButton = [self incomingBackgroundButtonWithTitle:@"清空来电背景"];
+  [clearBackgroundButton addTarget:self
+                            action:@selector(clearIncomingBackground)
+                  forControlEvents:UIControlEventTouchUpInside];
+  [self.view addSubview:clearBackgroundButton];
+  [NSLayoutConstraint activateConstraints:@[
+    [clearBackgroundButton.topAnchor constraintEqualToAnchor:urlBackgroundButton.bottomAnchor constant:10],
+    [clearBackgroundButton.leftAnchor constraintEqualToAnchor:localBackgroundButton.leftAnchor],
+    [clearBackgroundButton.rightAnchor constraintEqualToAnchor:localBackgroundButton.rightAnchor],
+    [clearBackgroundButton.heightAnchor constraintEqualToConstant:42]
+  ]];
+
+  self.incomingBackgroundStatusLabel = [[UILabel alloc] init];
+  self.incomingBackgroundStatusLabel.translatesAutoresizingMaskIntoConstraints = NO;
+  self.incomingBackgroundStatusLabel.textColor = [UIColor colorWithWhite:0.75 alpha:1.0];
+  self.incomingBackgroundStatusLabel.font = [UIFont systemFontOfSize:13];
+  self.incomingBackgroundStatusLabel.numberOfLines = 0;
+  self.incomingBackgroundStatusLabel.text = @"当前：默认头像背景";
+  [self.view addSubview:self.incomingBackgroundStatusLabel];
+  [NSLayoutConstraint activateConstraints:@[
+    [self.incomingBackgroundStatusLabel.topAnchor
+        constraintEqualToAnchor:clearBackgroundButton.bottomAnchor
+                       constant:10],
+    [self.incomingBackgroundStatusLabel.leftAnchor constraintEqualToAnchor:localBackgroundButton.leftAnchor],
+    [self.incomingBackgroundStatusLabel.rightAnchor constraintEqualToAnchor:localBackgroundButton.rightAnchor]
+  ]];
 }
 
 // 小窗开关的响应函数
@@ -204,6 +271,51 @@
   [[NSUserDefaults standardUserDefaults] setBool:sender.isOn forKey:@"kEnableIncomingBanner"];
   [[NSUserDefaults standardUserDefaults] synchronize];
   [[NERtcCallUIKit sharedInstance] enableIncomingBanner:sender.isOn];
+}
+
+- (UIButton *)incomingBackgroundButtonWithTitle:(NSString *)title {
+  UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+  button.translatesAutoresizingMaskIntoConstraints = NO;
+  [button setTitle:title forState:UIControlStateNormal];
+  [button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+  button.titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightMedium];
+  button.backgroundColor = [UIColor colorWithRed:64 / 255.0
+                                           green:64 / 255.0
+                                            blue:78 / 255.0
+                                           alpha:1.0];
+  button.layer.cornerRadius = 6;
+  button.layer.borderWidth = 1;
+  button.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.16].CGColor;
+  return button;
+}
+
+- (void)applyLocalIncomingBackground {
+  UIImage *image = [UIImage imageNamed:@"custom_answer_bg_local"];
+  if (!image) {
+    [UIApplication.sharedApplication.keyWindow ne_makeToast:@"本地风景图加载失败"];
+    return;
+  }
+  NECallUIDynamicConfig *config = [[NECallUIDynamicConfig alloc] init];
+  config.incomingCallBackground = [NECallUIIncomingBackgroundSource imageSource:image];
+  [[NERtcCallUIKit sharedInstance] setDynamicUIConfig:config];
+  self.incomingBackgroundStatusLabel.text = @"当前：本地风景图，下一次来电页生效";
+  [UIApplication.sharedApplication.keyWindow ne_makeToast:@"已设置本地风景图"];
+}
+
+- (void)applyURLIncomingBackground {
+  NSURL *url = [NSURL URLWithString:kDemoIncomingBackgroundURL];
+  NECallUIDynamicConfig *config = [[NECallUIDynamicConfig alloc] init];
+  config.incomingCallBackground = [NECallUIIncomingBackgroundSource urlSource:url];
+  [[NERtcCallUIKit sharedInstance] setDynamicUIConfig:config];
+  self.incomingBackgroundStatusLabel.text =
+      [NSString stringWithFormat:@"当前：URL 风景图，下一次来电页生效\n%@", kDemoIncomingBackgroundURL];
+  [UIApplication.sharedApplication.keyWindow ne_makeToast:@"已设置 URL 风景图"];
+}
+
+- (void)clearIncomingBackground {
+  [[NERtcCallUIKit sharedInstance] setDynamicUIConfig:nil];
+  self.incomingBackgroundStatusLabel.text = @"当前：默认头像背景";
+  [UIApplication.sharedApplication.keyWindow ne_makeToast:@"已清空来电背景"];
 }
 
 /*

@@ -23,7 +23,9 @@ static NSInteger const NEGroupInviteHistoryLimit = 20;
 static NSString *const NEGroupInviteHistoryFileName = @"groupInviteHistory";
 
 static NSArray<NSString *> *NEGroupInvitePresetAccounts(void) {
-  return @[];
+  return @[
+    @"yuan01", @"yuan02", @"yuan03", @"yuan04", @"yuan05", @"yuan06", @"yuan07", @"yuan08"
+  ];
 }
 
 @interface NEGroupContactsController () <UITextFieldDelegate,

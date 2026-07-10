@@ -51,6 +51,10 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
 
 @implementation NEGroupCallViewController
 
+- (void)dealloc {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (instancetype)initWithCalled:(BOOL)isCalled withCaller:(NEGroupUser *)caller {
   self = [super init];
   if (self) {
@@ -72,6 +76,10 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
     self.factor = 0.5;
   }
   [[NEGroupCallKit sharedInstance] addDelegate:self];
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(appWillEnterForeground:)
+                                               name:UIApplicationWillEnterForegroundNotification
+                                             object:nil];
   [[NERtcCallKit sharedInstance] muteLocalVideo:YES];
   [[NERtcCallKit sharedInstance] enableLocalVideo:NO];
   [self setupInCallUI];
@@ -81,7 +89,9 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
     make.top.equalTo(self.view).offset(60 * self.factor);
   }];
   if (self.isCalled == YES) {
-    [self playRingWithType:CRTCalleeRing];
+    if ([[NERtcCallUIKit sharedInstance] isNativeIncomingRingEnabled]) {
+      [self playRingWithType:CRTCalleeRing];
+    }
     [self setupCalledMaskUI];
   } else {
     [self playRingWithType:CRTCallerRing];
@@ -275,11 +285,72 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
   [[NERingPlayerManager shareInstance] stopCurrentPlaying];
 }
 
+- (BOOL)isCurrentUserAcceptedInMembers:(NSArray<GroupCallMember *> *)members {
+  NSString *currentAccid = [NIMSDK.sharedSDK.v2LoginService getLoginUser];
+  if (currentAccid.length == 0) {
+    return NO;
+  }
+  for (GroupCallMember *member in members) {
+    if (![member.imAccid isEqualToString:currentAccid]) {
+      continue;
+    }
+    if (member.state == GroupMemberStateAccept || member.state == GroupMemberStateInChannel) {
+      return YES;
+    }
+  }
+  return NO;
+}
+
+- (void)syncCalledUIAfterExternalGroupAcceptWithMembers:(NSArray<GroupCallMember *> *)members {
+  if (!self.isCalled || self.calledController == nil) {
+    return;
+  }
+  if (![self isCurrentUserAcceptedInMembers:members]) {
+    return;
+  }
+
+  NEXKitBaseLogInfo(@"sync called UI after external group accept, callId: %@", self.callId);
+  [self stopCurrentPlaying];
+  [self.calledController removeFromParentViewController];
+  [self.calledController.view removeFromSuperview];
+  self.calledController = nil;
+  [self startTimer];
+}
+
+- (void)queryCurrentGroupMembersForExternalAccept {
+  if (!self.isCalled || self.calledController == nil) {
+    return;
+  }
+  NSString *callId = self.callId ?: [NEGroupCallKit sharedInstance].callId;
+  if (callId.length == 0) {
+    return;
+  }
+
+  GroupQueryMembersParam *param = [[GroupQueryMembersParam alloc] init];
+  param.callId = callId;
+  __weak typeof(self) weakSelf = self;
+  [[NEGroupCallKit sharedInstance]
+      groupQueryMembers:param
+             completion:^(NSError *_Nullable error, GroupQueryMembersResult *_Nullable result) {
+               if (error != nil) {
+                 NEXKitBaseLogInfo(@"query group members for external accept failed: %@",
+                                   error.localizedDescription);
+                 return;
+               }
+               [weakSelf syncCalledUIAfterExternalGroupAcceptWithMembers:result.calleeList];
+             }];
+}
+
+- (void)appWillEnterForeground:(NSNotification *)notification {
+  [self queryCurrentGroupMembersForExternalAccept];
+}
+
 #pragma mark - delegate
 
 - (void)calledDidAccept {
   [self.calledController removeFromParentViewController];
   [self.calledController.view removeFromSuperview];
+  self.calledController = nil;
   GroupAcceptParam *param = [[GroupAcceptParam alloc] init];
   param.callId = self.callId;
   __weak typeof(self) weakSelf = self;
@@ -557,6 +628,7 @@ navigation
 
 - (void)onGroupUserDidChange:(NSArray<GroupCallMember *> *)members {
   NEXKitBaseLogInfo(@"onGroupUserDidChange member count %ld", [members count]);
+  [self syncCalledUIAfterExternalGroupAcceptWithMembers:members];
   __weak typeof(self) weakSelf = self;
   NSMutableArray *filters = [[NSMutableArray alloc] init];
   for (GroupCallMember *member in members) {
@@ -620,6 +692,7 @@ navigation
 - (void)didBack {
   [self stopCurrentPlaying];
   [[NEGroupCallKit sharedInstance] removeDelegate:self];
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
   [[NSNotificationCenter defaultCenter] postNotificationName:kGroupCallKitDismissNoti object:nil];
 
   NEXKitBaseLogInfo(@"didback : %@", self.presentedViewController);

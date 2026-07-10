@@ -15,12 +15,28 @@ NS_ASSUME_NONNULL_BEGIN
 /// 回调 Block 定义
 typedef void (^NECallKitSuccessBlock)(id _Nullable data);
 typedef void (^NECallKitFailBlock)(NSInteger code, NSString *_Nullable message);
+typedef void (^NECallKitLiveCommunicationKitIncomingStateBlock)(BOOL isIncoming);
+
+/// UTS iOS 内部 LiveCommunicationKit 配置。
+@interface NECallKitLiveCommunicationKitConfig : NSObject
+
+/// 是否开启 iOS LiveCommunicationKit 系统来电能力。
+@property(nonatomic, assign) BOOL enabled;
+
+/// iOS LiveCommunicationKit 系统来电铃声文件名，需要位于 App main bundle。
+@property(nonatomic, copy, nullable) NSString *ringtoneName;
+
+@end
 
 /// 悬浮窗观察者协议
 @protocol NEFloatWindowObserver <NSObject>
 
 /// 点击悬浮窗的回调
 - (void)tapFloatWindow;
+
+@optional
+/// 点击来电横幅的回调
+- (void)tapIncomingBanner:(NSString *)action;
 
 @end
 
@@ -41,6 +57,17 @@ typedef void (^NECallKitFailBlock)(NSInteger code, NSString *_Nullable message);
            apnsCername:(NSString *)apnsCername
            voipCerName:(NSString *)voipCerName
      currentUserRtcUid:(uint64_t)currentUserRtcUid;
+
+/// UTS iOS 内部入口：设置 LiveCommunicationKit 配置。
+- (void)setLiveCommunicationKitConfig:(NECallKitLiveCommunicationKitConfig *)config;
+
+/// UTS iOS 内部入口：开启/关闭 LiveCommunicationKit 系统来电能力。保留兼容，新增配置走
+/// setLiveCommunicationKitConfig:。
+- (void)enableLiveCommunicationKit:(BOOL)enabled;
+
+/// UTS iOS 内部入口：监听 LiveCommunicationKit incoming 状态变化。
+- (void)setLiveCommunicationKitIncomingStateChangedHandler:
+    (nullable NECallKitLiveCommunicationKitIncomingStateBlock)handler;
 
 /// 登录
 /// @param accountId IM用户accid

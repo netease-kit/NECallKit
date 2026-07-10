@@ -44,13 +44,40 @@ static NSString *const kCallLayoutTag = @"CallLayout";
                       (unsigned long)_callType, (unsigned long)_callStatus);
 
     [self setupUI];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(appDidBecomeActive)
+                                                 name:UIApplicationDidBecomeActiveNotification
+                                               object:nil];
   }
   return self;
 }
 
 - (void)dealloc {
+  [[NSNotificationCenter defaultCenter] removeObserver:self];
   // 移除代理
   [[NECallStateManager sharedInstance] removeDelegate:self];
+}
+
+- (void)appDidBecomeActive {
+  if (self.window == nil || self.hidden || self.alpha <= 0.01) {
+    return;
+  }
+  if (self.callStatus != NERtcCallStatusInCall || self.callType != NECallTypeVideo ||
+      self.videoView == nil) {
+    return;
+  }
+
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (self.window == nil || self.hidden || self.alpha <= 0.01 ||
+        self.callStatus != NERtcCallStatusInCall || self.callType != NECallTypeVideo ||
+        self.videoView == nil) {
+      return;
+    }
+    NEXKitBaseLogInfo(@"[%@] appDidBecomeActive refresh video layout:%@", kCallLayoutTag,
+                      self);
+    [self syncRemoteVideoState];
+    [self.videoView refreshVideoView];
+  });
 }
 
 - (void)setupUI {
@@ -290,9 +317,9 @@ static NSString *const kCallLayoutTag = @"CallLayout";
   }
 }
 
-- (void)callStateManagerDidChangeRemoteVideoState:(NSString *)userId {
-  NEXKitBaseLogInfo(@"[%@] callStateManagerDidChangeRemoteVideoState: userId = %@", kCallLayoutTag,
-                    userId);
+- (void)callStateManagerDidChangeRemoteVideoState:(NSString *)userId available:(BOOL)available {
+  NEXKitBaseLogInfo(@"[%@] callStateManagerDidChangeRemoteVideoState: userId = %@, available = %d",
+                    kCallLayoutTag, userId, available);
 
   // 只处理视频通话的情况
   if (self.callType != NECallTypeVideo || !self.videoView) {
@@ -324,27 +351,20 @@ static NSString *const kCallLayoutTag = @"CallLayout";
     return;
   }
 
-  // 计算远端视频是否启用：available && !muted
-  NSDictionary *remoteVideoAvailable = stateManager.remoteVideoAvailable;
-  NSDictionary *remoteVideoMuted = stateManager.remoteVideoMuted;
-
-  BOOL available = NO;
-  if (remoteVideoAvailable[userId]) {
-    available = [remoteVideoAvailable[userId] boolValue];
-  }
-
-  BOOL muted = NO;
-  if (remoteVideoMuted[userId]) {
-    muted = [remoteVideoMuted[userId] boolValue];
-  }
-
-  BOOL remoteVideoEnabled = available && !muted;
   NEXKitBaseLogInfo(@"[%@] callStateManagerDidChangeRemoteVideoState: remoteUserId=%@, "
-                    @"available=%d, muted=%d, remoteVideoEnabled=%d",
-                    kCallLayoutTag, remoteUserId, available, muted, remoteVideoEnabled);
+                    @"remoteVideoEnabled=%d",
+                    kCallLayoutTag, remoteUserId, available);
+
+  BOOL shouldRetryRemoteViewBinding = available && self.videoView.remoteVideoEnabled == available;
 
   // 更新 videoView 的 remoteVideoEnabled，这会自动触发 refreshVideoView
-  self.videoView.remoteVideoEnabled = remoteVideoEnabled;
+  self.videoView.remoteVideoEnabled = available;
+  if (shouldRetryRemoteViewBinding) {
+    NEXKitBaseLogInfo(@"[%@] callStateManagerDidChangeRemoteVideoState: retry remote video "
+                      @"view binding for available video",
+                      kCallLayoutTag);
+    [self.videoView refreshVideoView];
+  }
 }
 
 - (void)callStateManagerDidChangeLocalVideoState {
@@ -395,27 +415,20 @@ static NSString *const kCallLayoutTag = @"CallLayout";
     return;
   }
 
-  // 计算远端视频是否启用：available && !muted
+  // 同步时只使用 VideoAvailable 缓存；mute 回调只做当次 UI 刷新，避免历史 mute 污染状态
   NSDictionary *remoteVideoAvailable = stateManager.remoteVideoAvailable;
-  NSDictionary *remoteVideoMuted = stateManager.remoteVideoMuted;
 
-  BOOL available = NO;
+  BOOL available = YES;
   if (remoteVideoAvailable[remoteUserId]) {
     available = [remoteVideoAvailable[remoteUserId] boolValue];
   }
 
-  BOOL muted = NO;
-  if (remoteVideoMuted[remoteUserId]) {
-    muted = [remoteVideoMuted[remoteUserId] boolValue];
-  }
-
-  BOOL remoteVideoEnabled = available && !muted;
   NEXKitBaseLogInfo(
-      @"[%@] syncRemoteVideoState: remoteUserId=%@, available=%d, muted=%d, remoteVideoEnabled=%d",
-      kCallLayoutTag, remoteUserId, available, muted, remoteVideoEnabled);
+      @"[%@] syncRemoteVideoState: remoteUserId=%@, available=%d, remoteVideoEnabled=%d",
+      kCallLayoutTag, remoteUserId, available, available);
 
   // 更新 videoView 的 remoteVideoEnabled，这会自动触发 refreshVideoView
-  self.videoView.remoteVideoEnabled = remoteVideoEnabled;
+  self.videoView.remoteVideoEnabled = available;
 }
 
 - (void)syncLocalVideoState {

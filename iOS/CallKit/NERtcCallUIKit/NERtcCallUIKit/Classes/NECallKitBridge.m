@@ -8,19 +8,28 @@
 #import <NERtcCallKit/NERtcCallOptions.h>
 #import <NEXKitBase/NEXKitBase.h>
 #import <NIMSDK/NIMSDK.h>
+#import "NECallUILiveCommunicationKitBridge.h"
+#import "NECallUTSBackgroundPipAdapter.h"
 #import "NECallKitUtil.h"
 #import "NECallStateManager.h"
 #import "NEInAppWindowManager.h"
+#import "NERtcCallUIKit.h"
 
 //
 static NSString *const kCallBridgeTag = @"CallBridge";
 static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
+static NSString *const kEventTapIncomingBanner = @"EVENT_TAP_INCOMING_BANNER";
+static NSString *const kEventInAppFloatWindowStateChanged =
+    @"EVENT_IN_APP_FLOATWINDOW_STATE_CHANGED";
 
 @interface NECallKitBridge ()
 
 /// 悬浮窗观察者列表（弱引用）
 @property(nonatomic, strong) NSHashTable<id<NEFloatWindowObserver>> *floatWindowObservers;
 
+@end
+
+@implementation NECallKitLiveCommunicationKitConfig
 @end
 
 @implementation NECallKitBridge
@@ -44,6 +53,10 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleTapFloatWindow:)
                                                  name:kEventTapFloatWindow
+                                               object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleTapIncomingBanner:)
+                                                 name:kEventTapIncomingBanner
                                                object:nil];
   }
   return self;
@@ -85,6 +98,29 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
     // 初始化并开始监听状态管理器
     [[NECallStateManager sharedInstance] startObserving];
   });
+}
+
+- (void)setLiveCommunicationKitConfig:(NECallKitLiveCommunicationKitConfig *)config {
+  NEXKitBaseLogInfo(@"[%@] setLiveCommunicationKitConfig enabled = %d, ringtoneName = %@",
+                    kCallBridgeTag, config.enabled, config.ringtoneName);
+  [[NECallUILiveCommunicationKitBridge shared] setLiveCommunicationKitConfig:config];
+}
+
+- (void)enableLiveCommunicationKit:(BOOL)enabled {
+  NEXKitBaseLogInfo(@"[%@] enableLiveCommunicationKit = %d", kCallBridgeTag, enabled);
+  NECallKitLiveCommunicationKitConfig *config = [[NECallKitLiveCommunicationKitConfig alloc] init];
+  config.enabled = enabled;
+  [[NECallUILiveCommunicationKitBridge shared] setLiveCommunicationKitConfig:config];
+}
+
+- (void)setLiveCommunicationKitIncomingStateChangedHandler:
+    (nullable NECallKitLiveCommunicationKitIncomingStateBlock)handler {
+  [[NECallUILiveCommunicationKitBridge shared]
+      setIncomingStateChangedHandler:^(BOOL isIncoming) {
+        if (handler) {
+          handler(isIncoming);
+        }
+      }];
 }
 
 - (void)loginWithAccountId:(NSString *)accountId
@@ -239,16 +275,32 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
 - (void)switchCallTypeWithParam:(NESwitchParam *)param {
   NEXKitBaseLogInfo(@"[%@] switchCallType.start, callType: %lu", kCallBridgeTag,
                     (unsigned long)param.callType);
+  BOOL switchingToAudio = param.state == NECallSwitchStateAgree && param.callType == NECallTypeAudio;
+  if (switchingToAudio) {
+    [NECallUTSBackgroundPipAdapter setSwitchingToAudio:YES];
+  }
 
   necallkit_async_main_safe(^{
     [[NECallEngine sharedInstance]
         switchCallType:param
             completion:^(NSError *_Nullable error) {
+              if (switchingToAudio) {
+                [NECallUTSBackgroundPipAdapter setSwitchingToAudio:NO];
+              }
               if (error) {
                 NEXKitBaseLogInfo(@"[%@] switchCallType failed code = %ld, msg = %@",
                                   kCallBridgeTag, (long)error.code, error.localizedDescription);
               } else {
                 NEXKitBaseLogInfo(@"[%@] switchCallType success", kCallBridgeTag);
+                if (param.state == NECallSwitchStateAgree) {
+                  [[NECallStateManager sharedInstance] syncAcceptedCallType:param.callType];
+                  if (param.callType == NECallTypeVideo &&
+                      [NERtcCallUIKit.sharedInstance respondsToSelector:@selector(createPipController)]) {
+                    NEXKitBaseLogInfo(@"[%@] switchCallType prepare pip after video accepted",
+                                      kCallBridgeTag);
+                    [NERtcCallUIKit.sharedInstance performSelector:@selector(createPipController)];
+                  }
+                }
               }
             }];
   });
@@ -311,7 +363,16 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
   NEXKitBaseLogInfo(@"[%@] startFloatWindow.start", kCallBridgeTag);
 
   necallkit_async_main_safe(^{
+    if (UIApplication.sharedApplication.applicationState != UIApplicationStateActive) {
+      NEXKitBaseLogInfo(@"[%@] startFloatWindow skip appState:%ld", kCallBridgeTag,
+                        (long)UIApplication.sharedApplication.applicationState);
+      return;
+    }
     [[NEInAppWindowManager sharedInstance] showInAppSmallWindow];
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:kEventInAppFloatWindowStateChanged
+                      object:nil
+                    userInfo:@{@"active" : @YES}];
   });
 }
 
@@ -320,6 +381,10 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
 
   necallkit_async_main_safe(^{
     [[NEInAppWindowManager sharedInstance] closeInAppSmallWindow];
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:kEventInAppFloatWindowStateChanged
+                      object:nil
+                    userInfo:@{@"active" : @NO}];
   });
 }
 
@@ -420,6 +485,17 @@ static NSString *const kEventTapFloatWindow = @"EVENT_TAP_FLOATWINDOW";
   for (id<NEFloatWindowObserver> observer in self.floatWindowObservers) {
     if ([observer respondsToSelector:@selector(tapFloatWindow)]) {
       [observer tapFloatWindow];
+    }
+  }
+}
+
+- (void)handleTapIncomingBanner:(NSNotification *)notification {
+  NSString *action = notification.userInfo[@"action"] ?: @"tap";
+  NEXKitBaseLogInfo(@"[%@] handleTapIncomingBanner action:%@", kCallBridgeTag, action);
+
+  for (id<NEFloatWindowObserver> observer in self.floatWindowObservers) {
+    if ([observer respondsToSelector:@selector(tapIncomingBanner:)]) {
+      [observer tapIncomingBanner:action];
     }
   }
 }
