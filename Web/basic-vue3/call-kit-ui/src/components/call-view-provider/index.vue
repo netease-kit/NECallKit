@@ -354,6 +354,19 @@ export default defineComponent({
       callInstance.setLocalView?.(smallViewRef.value)
       callInstance.setRemoteView?.(largeViewRef.value)
       localViewTarget.value = 'small'
+
+      if (callInstance.rtcController?.localStream) {
+        callInstance.rtcController.playLocalStream?.()
+      }
+
+      const rtcUid = callInstance.getUidByAccId?.(account)
+      const remoteStream = callInstance.rtcController?.remoteStreams?.find(
+        (item: { getId: () => unknown }) => item.getId() === rtcUid
+      )
+
+      if (remoteStream) {
+        callInstance.rtcController?.playRemoteStream?.(remoteStream)
+      }
     }
 
     async function handleCall(
@@ -567,10 +580,25 @@ export default defineComponent({
       await loadRemoteUser(value.callerAccId)
     }
 
-    const handleCallConnected = () => {
+    const handleCallConnected = async () => {
       noticeText.value = ''
       isAccepting.value = false
       callStatus.value = 3
+
+      await nextTick()
+      bindCallViews()
+
+      const callInstance = neCall.value as any
+
+      if (!callInstance || !smallViewRef.value) {
+        return
+      }
+
+      try {
+        await callInstance.initAndPlayLocalSteam?.(smallViewRef.value)
+      } catch (err: unknown) {
+        logConsoleError('本地画面播放失败', remoteAccount.value, err)
+      }
     }
 
     const handleCallEnd = () => {

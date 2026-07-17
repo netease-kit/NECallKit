@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react'
 import { CallViewProvider, CallViewProviderRef } from '@xkit-yx/call-kit-react-ui'
-import '@xkit-yx/call-kit-react-ui/es/style'
+import '@xkit-yx/call-kit-react-ui/style'
 import V2NIM from 'nim-web-sdk-ng'
 import Login from '../components/Login'
 import Call from '../components/Call'
