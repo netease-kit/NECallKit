@@ -505,8 +505,22 @@ const CallViewProvider = forwardRef<
           })
       }
 
-      const handleCallConnected = () => {
+      const handleCallConnected = async () => {
         setCallStatus(3)
+
+        if (!smallViewRef.current || !largeViewRef.current) {
+          return
+        }
+
+        neCall.setLocalView(smallViewRef.current)
+        neCall.setRemoteView(largeViewRef.current)
+        localViewRef.current = smallViewRef.current
+
+        try {
+          await (neCall as any).initAndPlayLocalSteam?.(smallViewRef.current)
+        } catch (err: unknown) {
+          console.error('本地画面播放失败', err)
+        }
       }
 
       const handleCallEnd = () => {

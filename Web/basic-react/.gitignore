@@ -3,6 +3,9 @@ build/
 dist/
 es/
 lib/
+.umi/
+.umi-production/
+.mfsu/
 *.log
 .env*
 .DS_Store
