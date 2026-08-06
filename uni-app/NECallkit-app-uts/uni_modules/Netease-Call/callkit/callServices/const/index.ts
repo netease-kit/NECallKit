@@ -45,4 +45,9 @@ export const NAME = {
 export const MAX_NUMBER_ROOM_ID = 2147483647;
 export const DEFAULT_BLUR_LEVEL = 3;
 export const NETWORK_QUALITY_THRESHOLD = 4;
+// #ifdef APP-HARMONY
+export const CALL_PAGE_PATH = "/uni_modules/Netease-Call/callkit/callPageHarmony";
+// #endif
+// #ifndef APP-HARMONY
 export const CALL_PAGE_PATH = "/uni_modules/Netease-Call/callkit/callPage";
+// #endif

@@ -1,0 +1,842 @@
+import { common } from '@kit.AbilityKit';
+import window from '@ohos.window';
+import {
+  NECallConfig,
+  NECallEngineDelegate,
+  NECallInfo,
+  NECallParam,
+  NECallPushConfig,
+  NECallSwitchState,
+  NECallType
+} from '@yunxin/callkit';
+import {
+  NECallKitBridge,
+  NEFloatWindowObserver,
+  NEHangupParam,
+  NESwitchParam
+} from '@yunxin/callkit_ui';
+import {
+  AcceptParams,
+  CallParams,
+  CallbackParams,
+  HangupParams,
+  InitParams,
+  LoginParams,
+  PermissionOptions,
+  SwitchCallTypeParams
+} from '../interface.uts';
+import {
+  createCallEngineDelegate,
+  createFloatWindowObserver,
+  emitCallEngineError,
+  HarmonyCallEventSink,
+  toCallInfoRecord
+} from './CallEngineObserver.ets';
+import { registerCallLayoutNativeEmbed } from './CallLayoutNativeEmbed.ets';
+import { harmonyCallRuntime } from './HarmonyCallRuntime.ets';
+
+const HARMONY_ERROR_GENERIC = -1;
+const HARMONY_ERROR_UNSUPPORTED = -10004;
+const HARMONY_ERROR_CANCELED = -10005;
+const SWITCH_CALL_STATE_AGREE = 2;
+
+registerCallLayoutNativeEmbed();
+
+interface HarmonyBridgeError extends Error {
+  code?: number;
+}
+
+class PendingHarmonySetup {
+  param: InitParams;
+  generation: number;
+
+  constructor(param: InitParams, generation: number) {
+    this.param = param;
+    this.generation = generation;
+  }
+}
+
+class PendingHarmonyLogin {
+  param: LoginParams;
+  generation: number;
+
+  constructor(param: LoginParams, generation: number) {
+    this.param = param;
+    this.generation = generation;
+  }
+}
+
+function errorMessage(error: any): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function errorCode(error: any): number {
+  return error instanceof Error
+    ? ((error as HarmonyBridgeError).code ?? HARMONY_ERROR_GENERIC)
+    : HARMONY_ERROR_GENERIC;
+}
+
+export class CallEngine {
+  private readonly bridge: NECallKitBridge = NECallKitBridge.getInstance();
+  private delegate: NECallEngineDelegate;
+  private floatWindowObserver: NEFloatWindowObserver;
+  private readonly eventSink: HarmonyCallEventSink;
+  private delegateRegistered: boolean = false;
+  private floatWindowObserverRegistered: boolean = false;
+  private listeners = new Map<string, Array<(res: any) => void>>();
+  private setupRequested: boolean = false;
+  private setupReady: boolean = false;
+  private setupInFlightCount: number = 0;
+  private lifecycleGeneration: number = 0;
+  private observerGeneration: number = -1;
+  private setupFailureMessage: string = '';
+  private pendingSetups: PendingHarmonySetup[] = [];
+  private pendingLogins: PendingHarmonyLogin[] = [];
+  private lastCallInfo: NECallInfo | null = null;
+  private callConfig: NECallConfig | null = null;
+  private serviceCallType: number = 0;
+
+  constructor() {
+    this.eventSink = (eventName: string, payloadJson: string, callInfo?: NECallInfo): void => {
+      this.dispatchEvent(eventName, payloadJson, this.lifecycleGeneration, callInfo);
+    };
+    this.delegate = createCallEngineDelegate(this.eventSink);
+    this.floatWindowObserver = createFloatWindowObserver(this.eventSink);
+    this.createObserversForGeneration(this.lifecycleGeneration);
+    UTSHarmony.onAppAbilityWindowStageCreate((_windowStage) => {
+      const pending = this.pendingSetups;
+      this.pendingSetups = [];
+      pending.forEach((item) => this.configure(item.param, item.generation));
+    });
+  }
+
+  private dispatchEvent(
+    eventName: string,
+    payloadJson: string,
+    generation: number,
+    callInfo?: NECallInfo
+  ): void {
+    if (generation !== this.lifecycleGeneration) {
+      return;
+    }
+    const payload = JSON.parseObject(payloadJson);
+    if (payload === null) {
+      console.error(`[Netease-Call][HarmonyOS] invalid event payload: ${eventName}`);
+      return;
+    }
+    if (eventName === 'onCallConnected') {
+      this.lastCallInfo = callInfo ?? this.lastCallInfo;
+    } else if (eventName === 'onCallTypeChange' && this.lastCallInfo !== null) {
+      const info = payload.getJSON('info');
+      if (info?.getNumber('state') === SWITCH_CALL_STATE_AGREE) {
+        this.lastCallInfo!.callType = info.getNumber('callType') as NECallType;
+      }
+    } else if (eventName === 'onFloatWindowClick' && this.lastCallInfo !== null) {
+      payloadJson = JSON.stringify({ 'callId': this.lastCallInfo.callId });
+    } else if (eventName === 'onCallEnd') {
+      this.lastCallInfo = null;
+    }
+    this.listeners.get(eventName)?.forEach((listener) => listener(payloadJson));
+  }
+
+  private createObserversForGeneration(generation: number): void {
+    const sink: HarmonyCallEventSink = (
+      eventName: string,
+      payloadJson: string,
+      callInfo?: NECallInfo
+    ): void => {
+      this.dispatchEvent(eventName, payloadJson, generation, callInfo);
+    };
+    this.delegate = createCallEngineDelegate(sink);
+    this.floatWindowObserver = createFloatWindowObserver(sink);
+    this.observerGeneration = generation;
+  }
+
+  private async configure(param: InitParams, generation: number): Promise<void> {
+    let context: common.UIAbilityContext | null | undefined = null;
+    try {
+      context = UTSHarmony.getUIAbilityContext();
+    } catch (error) {
+      this.deferSetup(param, generation, errorMessage(error));
+      return;
+    }
+
+    if (context === null || context === undefined) {
+      this.deferSetup(param, generation, 'UIAbilityContext is not ready');
+      return;
+    }
+
+    try {
+      const currentUserRtcUid = this.getCurrentUserRtcUid(param);
+      await harmonyCallRuntime.configure(
+        context,
+        param.appKey,
+        currentUserRtcUid,
+        param.enableIncomingBanner ?? false,
+        param.enableAutoFloatingWindowWhenHome ?? false
+      );
+      if (generation !== this.lifecycleGeneration) {
+        this.failCanceled(param.fail);
+        return;
+      }
+      this.setupInFlightCount = Math.max(0, this.setupInFlightCount - 1);
+      this.setupReady = true;
+      this.setupFailureMessage = '';
+      param.success?.();
+      this.flushPendingLogins();
+    } catch (error) {
+      const code = errorCode(error);
+      const message = errorMessage(error);
+      if (generation !== this.lifecycleGeneration) {
+        this.failCanceled(param.fail);
+        return;
+      }
+      this.setupInFlightCount = Math.max(0, this.setupInFlightCount - 1);
+      this.setupReady = harmonyCallRuntime.isConfigured();
+      this.setupFailureMessage = message;
+      param.fail?.(code, message);
+      this.reportError(code, message, 'setup');
+      this.cancelPendingLogins(message);
+    }
+  }
+
+  private deferSetup(param: InitParams, generation: number, message: string): void {
+    if (generation !== this.lifecycleGeneration) {
+      this.failCanceled(param.fail);
+      return;
+    }
+    this.pendingSetups.push(new PendingHarmonySetup(param, generation));
+    console.warn(`[Netease-Call][HarmonyOS] waiting for UIAbilityContext: ${message}`);
+  }
+
+  private getCurrentUserRtcUid(param: InitParams): number {
+    if (param.params === null || param.params === undefined) {
+      return 0;
+    }
+    const options = new UTSJSONObject(param.params);
+    const uidValue = options.getNumber('currentUserRtcUid');
+    if (uidValue === null) {
+      return 0;
+    }
+    if (!Number.isFinite(uidValue) || uidValue < 0 || Math.floor(uidValue) !== uidValue) {
+      throw new Error('currentUserRtcUid must be a non-negative integer');
+    }
+    return uidValue;
+  }
+
+  private async executeLogin(param: LoginParams, generation: number): Promise<void> {
+    try {
+      await harmonyCallRuntime.login(param.accountId, param.token);
+      if (generation !== this.lifecycleGeneration) {
+        this.failCanceled(param.fail);
+        return;
+      }
+      this.removeObserversIfNeeded();
+      this.createObserversForGeneration(generation);
+      this.addObserversIfNeeded();
+      this.refreshCallConfig(generation);
+      param.success?.();
+    } catch (error) {
+      const code = errorCode(error);
+      const message = errorMessage(error);
+      if (generation !== this.lifecycleGeneration) {
+        this.failCanceled(param.fail);
+        return;
+      }
+      param.fail?.(code, message);
+      this.reportError(code, message, 'login');
+    }
+  }
+
+  private async executeLogout(param: CallbackParams, generation: number): Promise<void> {
+    try {
+      await harmonyCallRuntime.logout();
+      if (generation !== this.lifecycleGeneration) {
+        this.failCanceled(param.fail);
+        return;
+      }
+      this.lastCallInfo = null;
+      param.success?.();
+    } catch (error) {
+      const code = errorCode(error);
+      const message = errorMessage(error);
+      if (generation !== this.lifecycleGeneration) {
+        this.failCanceled(param.fail);
+        return;
+      }
+      param.fail?.(code, message);
+      this.reportError(code, message, 'logout');
+    }
+  }
+
+  private async executeDestroy(generation: number): Promise<void> {
+    try {
+      await harmonyCallRuntime.destroy();
+    } catch (error) {
+      const code = errorCode(error);
+      const message = errorMessage(error);
+      if (generation !== this.lifecycleGeneration) {
+        return;
+      }
+      console.error(`[Netease-Call][HarmonyOS] destroy failed: ${message}`);
+      this.reportError(code, message, 'destroy');
+    }
+  }
+
+  private flushPendingLogins(): void {
+    const pending = this.pendingLogins;
+    this.pendingLogins = [];
+    pending.forEach((item) => {
+      if (item.generation === this.lifecycleGeneration) {
+        this.executeLogin(item.param, item.generation);
+      }
+    });
+  }
+
+  private cancelPendingLogins(message: string): void {
+    const pending = this.pendingLogins;
+    this.pendingLogins = [];
+    pending.forEach((item) => item.param.fail?.(HARMONY_ERROR_CANCELED, message));
+  }
+
+  private addObserversIfNeeded(): void {
+    if (this.listeners.size === 0) {
+      return;
+    }
+    if (this.observerGeneration !== this.lifecycleGeneration) {
+      this.createObserversForGeneration(this.lifecycleGeneration);
+    }
+    if (!this.delegateRegistered) {
+      this.bridge.addCallDelegate(this.delegate);
+      this.delegateRegistered = true;
+    }
+    if (!this.floatWindowObserverRegistered) {
+      this.bridge.addFloatWindowObserver(this.floatWindowObserver);
+      this.floatWindowObserverRegistered = true;
+    }
+  }
+
+  private removeObserversIfNeeded(): void {
+    if (this.delegateRegistered) {
+      this.bridge.removeCallDelegate(this.delegate);
+      this.delegateRegistered = false;
+    }
+    if (this.floatWindowObserverRegistered) {
+      this.bridge.removeFloatWindowObserver(this.floatWindowObserver);
+      this.floatWindowObserverRegistered = false;
+    }
+  }
+
+  private reportError(code: number, message: string, apiName?: string): void {
+    emitCallEngineError(this.eventSink, code, message, apiName ?? undefined);
+  }
+
+  private failCanceled(fail?: (code: number, message: string) => void): void {
+    fail?.(HARMONY_ERROR_CANCELED, 'Lifecycle operation canceled');
+  }
+
+  private reportResult(code: number, apiName: string): number {
+    if (code !== 0) {
+      this.reportError(code, `${apiName} failed`, apiName);
+    }
+    return code;
+  }
+
+  private refreshCallConfig(generation: number): void {
+    this.bridge.getCallConfig()
+      .then((config: NECallConfig | null): void => {
+        if (generation !== this.lifecycleGeneration) {
+          return;
+        }
+        this.callConfig = config;
+      })
+      .catch((error: Error): void => {
+        if (generation !== this.lifecycleGeneration) {
+          return;
+        }
+        this.reportError(errorCode(error), error.message, 'getCallConfig');
+      });
+  }
+
+  private refreshCallInfo(generation: number): void {
+    this.bridge.getCallInfo()
+      .then((info: NECallInfo | null): void => {
+        if (generation !== this.lifecycleGeneration) {
+          return;
+        }
+        this.lastCallInfo = info;
+      })
+      .catch((error: Error): void => {
+        if (generation !== this.lifecycleGeneration) {
+          return;
+        }
+        this.reportError(errorCode(error), error.message, 'getCallInfo');
+      });
+  }
+
+  private getPushOptions(options: UTSJSONObject | null): UTSJSONObject | null {
+    if (options === null) {
+      return null;
+    }
+    const pushOptions = options.getJSON('pushConfig');
+    if (pushOptions !== null) {
+      return pushOptions;
+    }
+    const needPush = options.getBoolean('needPush');
+    const pushTitle = options.getString('pushTitle');
+    const pushContent = options.getString('pushContent');
+    const pushPayload = options.getString('pushPayload');
+    if (needPush !== null || pushTitle !== null || pushContent !== null || pushPayload !== null) {
+      return options;
+    }
+    return null;
+  }
+
+  public setup(param: InitParams): void {
+    this.setupRequested = true;
+    this.setupFailureMessage = '';
+    this.setupInFlightCount++;
+    this.configure(param, this.lifecycleGeneration);
+  }
+
+  public login(param: LoginParams): void {
+    if (!this.setupRequested) {
+      param.fail?.(HARMONY_ERROR_GENERIC, 'please call setup method first');
+      return;
+    }
+    if (this.setupReady) {
+      this.executeLogin(param, this.lifecycleGeneration);
+      return;
+    }
+    if (this.setupInFlightCount > 0 || this.pendingSetups.length > 0) {
+      this.pendingLogins.push(new PendingHarmonyLogin(param, this.lifecycleGeneration));
+      return;
+    }
+    param.fail?.(
+      HARMONY_ERROR_GENERIC,
+      this.setupFailureMessage || 'CallEngine.setup did not complete'
+    );
+  }
+
+  public logout(param: CallbackParams): void {
+    this.lifecycleGeneration++;
+    const generation = this.lifecycleGeneration;
+    const pendingSetups = this.pendingSetups;
+    this.pendingSetups = [];
+    pendingSetups.forEach((item) => {
+      item.param.fail?.(HARMONY_ERROR_CANCELED, 'setup canceled by logout');
+    });
+    this.setupInFlightCount = 0;
+    this.setupRequested = this.setupReady;
+    this.cancelPendingLogins('login canceled by logout');
+    this.removeObserversIfNeeded();
+    this.executeLogout(param, generation);
+  }
+
+  public call(param: CallParams): void {
+    if (!harmonyCallRuntime.isReady()) {
+      param.fail?.(HARMONY_ERROR_GENERIC, 'please call login method first');
+      return;
+    }
+    const generation = this.lifecycleGeneration;
+
+    const nativeParam = new NECallParam(param.accountId, param.callType as NECallType);
+    if (param.params !== null && param.params !== undefined) {
+      const options = new UTSJSONObject(param.params);
+      const rtcChannelName = options.getString('rtcChannelName');
+      if (rtcChannelName !== null) {
+        nativeParam.rtcChannelName = rtcChannelName;
+      }
+      const extraInfo = options.getString('extraInfo');
+      if (extraInfo !== null) {
+        nativeParam.extraInfo = extraInfo;
+      }
+      const globalExtraCopy = options.getString('globalExtraCopy');
+      if (globalExtraCopy !== null) {
+        nativeParam.globalExtraCopy = globalExtraCopy;
+      }
+      const pushOptions = this.getPushOptions(options);
+      if (pushOptions !== null) {
+        const pushConfig = new NECallPushConfig();
+        pushConfig.pushEnabled = pushOptions.getBoolean('needPush') ?? true;
+        const pushTitle = pushOptions.getString('pushTitle');
+        if (pushTitle !== null) {
+          pushConfig.pushTitle = pushTitle;
+        }
+        const pushContent = pushOptions.getString('pushContent');
+        if (pushContent !== null) {
+          pushConfig.pushContent = pushContent;
+        }
+        const pushPayload = pushOptions.getString('pushPayload');
+        if (pushPayload !== null) {
+          pushConfig.pushPayload = pushPayload;
+        }
+        nativeParam.pushConfig = pushConfig;
+      }
+    }
+
+    this.bridge.callWithParam(
+      nativeParam,
+      (info?: NECallInfo): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(param.fail);
+          return;
+        }
+        this.lastCallInfo = info ?? this.lastCallInfo;
+        param.success?.();
+      },
+      (code: number, message: string): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(param.fail);
+          return;
+        }
+        param.fail?.(code, message);
+        this.reportError(code, message, 'call');
+      }
+    );
+  }
+
+  public accept(param?: AcceptParams): void {
+    const generation = this.lifecycleGeneration;
+    this.bridge.acceptOnSuccess(
+      (info?: NECallInfo): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(param?.fail);
+          return;
+        }
+        this.lastCallInfo = info ?? this.lastCallInfo;
+        param?.success?.();
+      },
+      (code: number, message: string): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(param?.fail);
+          return;
+        }
+        param?.fail?.(code, message);
+        this.reportError(code, message, 'accept');
+      }
+    );
+  }
+
+  public hangup(param: HangupParams): void {
+    const generation = this.lifecycleGeneration;
+    const nativeParam: NEHangupParam = {};
+    if (param.params !== null && param.params !== undefined) {
+      const options = new UTSJSONObject(param.params);
+      nativeParam.channelId = options.getString('channelId') ?? undefined;
+      nativeParam.extraString = options.getString('extraString') ?? undefined;
+    }
+    this.bridge.hangupWithParam(
+      nativeParam,
+      (): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(param.fail);
+          return;
+        }
+        param.success?.();
+      },
+      (code: number, message: string): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(param.fail);
+          return;
+        }
+        param.fail?.(code, message);
+        this.reportError(code, message, 'hangup');
+      }
+    );
+  }
+
+  public switchCallType(param: SwitchCallTypeParams): void {
+    const generation = this.lifecycleGeneration;
+    const nativeParam: NESwitchParam = {
+      callType: param.callType as NECallType,
+      state: param.state as NECallSwitchState
+    };
+    this.bridge.switchCallTypeWithParam(
+      nativeParam,
+      (): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(param.fail);
+          return;
+        }
+        param.success?.();
+      },
+      (code: number, message: string): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(param.fail);
+          return;
+        }
+        param.fail?.(code, message);
+        this.reportError(code, message, 'switchCallType');
+      }
+    );
+  }
+
+  public setTimeout(millisecond: number): void {
+    this.bridge.setTimeout(Math.max(1, Math.floor(millisecond / 1000)));
+  }
+
+  public enableLocalVideo(enable: boolean): number {
+    return this.reportResult(this.bridge.enableLocalVideo(enable), 'enableLocalVideo');
+  }
+
+  public muteLocalVideo(mute: boolean): number {
+    if (!mute) {
+      const enableResult = this.reportResult(this.bridge.enableLocalVideo(true), 'enableLocalVideo');
+      if (enableResult !== 0) {
+        return enableResult;
+      }
+    }
+    return this.reportResult(this.bridge.muteLocalVideo(mute), 'muteLocalVideo');
+  }
+
+  public muteLocalAudio(mute: boolean): number {
+    return this.reportResult(this.bridge.muteLocalAudio(mute), 'muteLocalAudio');
+  }
+
+  public switchCamera(camera: number): void {
+    this.reportResult(this.bridge.switchCamera(camera), 'switchCamera');
+  }
+
+  public isSpeakerphoneOn(): boolean {
+    return this.bridge.isSpeakerphoneOn();
+  }
+
+  public setSpeakerphoneOn(enable: boolean): number {
+    return this.reportResult(this.bridge.setSpeakerphoneOn(enable), 'setSpeakerphoneOn');
+  }
+
+  public setCallConfig(config: NECallConfig): void {
+    const generation = this.lifecycleGeneration;
+    this.bridge.setCallConfig(config)
+      .then((): void => {
+        if (generation !== this.lifecycleGeneration) {
+          return;
+        }
+        this.callConfig = config;
+      })
+      .catch((error: Error): void => {
+        if (generation !== this.lifecycleGeneration) {
+          return;
+        }
+        this.reportError(errorCode(error), error.message, 'setCallConfig');
+      });
+  }
+
+  public setSwitchCallTypeConfirm(
+    audioToVideoConfirm: boolean,
+    videoToAudioConfirm: boolean
+  ): void {
+    const config: NECallConfig = this.callConfig ?? {
+      enableOffline: true,
+      enableSwitchVideoConfirm: false,
+      enableSwitchAudioConfirm: false
+    };
+    config.enableSwitchVideoConfirm = audioToVideoConfirm;
+    config.enableSwitchAudioConfirm = videoToAudioConfirm;
+    this.setCallConfig(config);
+  }
+
+  public getCallConfig(): NECallConfig | null {
+    this.refreshCallConfig(this.lifecycleGeneration);
+    return this.callConfig;
+  }
+
+  public getCallInfo(): string | null {
+    this.refreshCallInfo(this.lifecycleGeneration);
+    return this.lastCallInfo === null
+      ? null
+      : JSON.stringify(toCallInfoRecord(this.lastCallInfo));
+  }
+
+  public setIncomingBannerEnabled(enable: boolean): void {
+    this.bridge.setIncomingBannerEnabled(enable);
+  }
+
+  public cancelIncomingBanner(): void {
+    this.bridge.cancelIncomingBanner();
+  }
+
+  public showIncomingBanner(_caller: string, _mediaType: number): void {
+    const generation = this.lifecycleGeneration;
+    this.bridge.showIncomingBanner().catch((error: Error): void => {
+      if (generation !== this.lifecycleGeneration) {
+        return;
+      }
+      this.reportError(errorCode(error), error.message, 'showIncomingBanner');
+    });
+  }
+
+  public setAutoFloatingWindowWhenHomeEnabled(
+    enable: boolean,
+    floatingWindowEnabled: boolean = true
+  ): void {
+    this.bridge.setAutoFloatingWindowWhenHomeEnabled(enable, floatingWindowEnabled);
+  }
+
+  public handleAppEnterBackground(): void {
+    this.bridge.handleAppEnterBackground();
+  }
+
+  public handleAppEnterForeground(): void {
+    this.bridge.handleAppEnterForeground();
+  }
+
+  public startFloatWindow(options: CallbackParams): void {
+    const generation = this.lifecycleGeneration;
+    this.bridge.startFloatWindow(
+      (): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(options.fail);
+          return;
+        }
+        options.success?.();
+      },
+      (code: number, message: string): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(options.fail);
+          return;
+        }
+        options.fail?.(code, message);
+        this.reportError(code, message, 'startFloatWindow');
+      }
+    );
+  }
+
+  public stopFloatWindow(): void {
+    this.bridge.stopFloatWindow();
+  }
+
+  public isFloatWindowVisible(): boolean {
+    return this.bridge.isFloatWindowVisible();
+  }
+
+  public refreshCallLayoutVideoViews(): void {
+    this.bridge.refreshCallLayoutVideoViews();
+  }
+
+  public startService(callType: number): void {
+    this.serviceCallType = callType;
+  }
+
+  public stopService(callType: number): void {
+    if (this.serviceCallType === callType) {
+      this.serviceCallType = 0;
+    }
+  }
+
+  public bringAppToForeground(): void {
+    const generation = this.lifecycleGeneration;
+    this.bridge.bringAppToForeground().catch((error: Error): void => {
+      if (generation !== this.lifecycleGeneration) {
+        return;
+      }
+      this.reportError(errorCode(error), error.message, 'bringAppToForeground');
+    });
+  }
+
+  public setCallPageFullScreen(enabled: boolean): void {
+    let context: common.UIAbilityContext | null | undefined = null;
+    try {
+      context = UTSHarmony.getUIAbilityContext();
+    } catch (error) {
+      console.error(`[Netease-Call][HarmonyOS] get window context failed: ${errorMessage(error)}`);
+      return;
+    }
+    if (context === null || context === undefined || context.windowStage === undefined) {
+      console.error('[Netease-Call][HarmonyOS] window stage is not ready');
+      return;
+    }
+    context.windowStage.getMainWindow().then((mainWindow): void => {
+      mainWindow.setWindowLayoutFullScreen(enabled).catch((error: Error): void => {
+        console.error(
+          `[Netease-Call][HarmonyOS] setWindowLayoutFullScreen failed: ${error.message}`
+        );
+      });
+      if (!enabled) {
+        return;
+      }
+      const systemBarProperties: window.SystemBarProperties = {
+        statusBarColor: '#00000000',
+        navigationBarColor: '#00000000',
+        statusBarContentColor: '#FFFFFFFF',
+        navigationBarContentColor: '#FFFFFFFF'
+      };
+      mainWindow.setWindowSystemBarProperties(systemBarProperties).catch((error: Error): void => {
+        console.error(
+          `[Netease-Call][HarmonyOS] setWindowSystemBarProperties failed: ${error.message}`
+        );
+      });
+    }).catch((error: Error): void => {
+      console.error(`[Netease-Call][HarmonyOS] getMainWindow failed: ${error.message}`);
+    });
+  }
+
+  public hasPermission(options: PermissionOptions): void {
+    const generation = this.lifecycleGeneration;
+    this.bridge.hasPermissionWithCallType(
+      options.type as NECallType,
+      (): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(options.fail);
+          return;
+        }
+        options.success();
+      },
+      (code: number, message: string): void => {
+        if (generation !== this.lifecycleGeneration) {
+          this.failCanceled(options.fail);
+          return;
+        }
+        options.fail(code, message);
+        this.reportError(code, message, 'hasPermission');
+      }
+    );
+  }
+
+  public setAINSMode(_mode: number): number {
+    this.reportError(
+      HARMONY_ERROR_UNSUPPORTED,
+      'HarmonyOS AINS mode is not supported',
+      'setAINSMode'
+    );
+    return HARMONY_ERROR_UNSUPPORTED;
+  }
+
+  public destroy(): void {
+    this.lifecycleGeneration++;
+    const generation = this.lifecycleGeneration;
+    const pendingSetups = this.pendingSetups;
+    this.pendingSetups = [];
+    this.setupRequested = false;
+    this.setupReady = false;
+    this.setupInFlightCount = 0;
+    this.setupFailureMessage = '';
+    pendingSetups.forEach((item) => {
+      item.param.fail?.(HARMONY_ERROR_CANCELED, 'setup canceled by destroy');
+    });
+    this.cancelPendingLogins('login canceled by destroy');
+    this.removeObserversIfNeeded();
+    this.lastCallInfo = null;
+    this.callConfig = null;
+    this.executeDestroy(generation);
+  }
+
+  public static getVersion(): string {
+    return NECallKitBridge.getInstance().getVersion();
+  }
+
+  public on(eventName: string, listener: (res: any) => void): void {
+    const eventListeners = this.listeners.get(eventName) ?? [];
+    eventListeners.push(listener);
+    this.listeners.set(eventName, eventListeners);
+    this.addObserversIfNeeded();
+  }
+
+  public off(eventName: string): void {
+    this.listeners.delete(eventName);
+    if (this.listeners.size === 0) {
+      this.removeObserversIfNeeded();
+    }
+  }
+}

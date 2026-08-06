@@ -4,34 +4,30 @@ export type CallType = number
 export type CallRole = number
 export type CallStatus = number
 
-export const CALL_TYPE = {
-  AUDIO: 1,
-  VIDEO: 2,
-} as const
+export const CALL_TYPE_AUDIO: CallType = 1
+export const CALL_TYPE_VIDEO: CallType = 2
 
-export const CALL_ROLE = {
-  UNKNOWN: 0,
-  CALLER: 1,
-  CALLEE: 2,
-} as const
+export const CALL_ROLE_UNKNOWN: CallRole = 0
+export const CALL_ROLE_CALLER: CallRole = 1
+export const CALL_ROLE_CALLEE: CallRole = 2
 
-export const CALL_STATUS = {
-  IDLE: 0,
-  CALLING: 1,
-  CONNECTED: 2,
-} as const
+export const CALL_STATUS_IDLE: CallStatus = 0
+export const CALL_STATUS_CALLING: CallStatus = 1
+export const CALL_STATUS_CONNECTED: CallStatus = 2
 
 export type State = {
   callType: CallType
   callRole: CallRole
   callStatus: CallStatus
+  callConnectedAt: number
 }
 
-export const state: State = reactive({
-  callType: CALL_TYPE.VIDEO as CallType,
-  callRole: CALL_ROLE.UNKNOWN as CallRole,
-  callStatus: CALL_STATUS.IDLE as CallStatus,
-})
+export const state = reactive({
+  callType: CALL_TYPE_VIDEO,
+  callRole: CALL_ROLE_UNKNOWN,
+  callStatus: CALL_STATUS_IDLE,
+  callConnectedAt: 0,
+} as State)
 
 export const setCallType = (callType: CallType) => {
   state.callType = callType
@@ -43,4 +39,12 @@ export const setCallRole = (callRole: CallRole) => {
 
 export const setCallStatus = (callStatus: CallStatus) => {
   state.callStatus = callStatus
+}
+
+export const setCallConnectedAt = (callConnectedAt: number) => {
+  state.callConnectedAt = callConnectedAt
+}
+
+export const resetCallConnectedAt = () => {
+  state.callConnectedAt = 0
 }

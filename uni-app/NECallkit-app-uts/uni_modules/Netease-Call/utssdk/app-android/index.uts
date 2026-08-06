@@ -40,10 +40,10 @@ import {
   ICallObserve,
   CallEngineObserver,
   CallFloatWindowObserver,
-  NAME,
   ParamsCovert,
   isIMLogined
 } from "./utils/index.uts";
+import { LOG_PREFIX } from "./utils/const.uts";
 
 const context: Context = UTSAndroid.getAppContext() as Context;
 
@@ -56,10 +56,10 @@ export class CallEngine {
   bannerEnabledFlag: boolean = false;
 
   constructor() {
-    console.log(`${NAME.PREFIX} constructor.start`);
+    console.log(`${LOG_PREFIX} constructor.start`);
     const callObserve: ICallObserve = {
       listener: (eventName: string, data: any) => {
-        console.log(`${NAME.PREFIX} callObserve listener ${eventName}`);
+        console.log(`${LOG_PREFIX} callObserve listener ${eventName}`);
         listenerMap.get(eventName)?.forEach((cb) => {
           cb(data);
         });
@@ -91,7 +91,7 @@ export class CallEngine {
   }
   
   public login (param: LoginParams) {
-    console.log(`${NAME.PREFIX} login.start, data: ${JSON.stringify(param)}`);
+    console.log(`${LOG_PREFIX} login.start, accountId: ${param.accountId}`);
     const cb: ICallback = {
       apiName: "login",
       success: () => {
@@ -107,7 +107,7 @@ export class CallEngine {
   
   public logout(param: CallbackParams) : void {
     console.log(
-      `${NAME.PREFIX} logout.start, data: ${JSON.stringify(param)}`
+      `${LOG_PREFIX} logout.start, data: ${JSON.stringify(param)}`
     );
     const cb: ICallback = {
       apiName: "logout",
@@ -122,7 +122,7 @@ export class CallEngine {
   }
   
   public call(param: CallParams) {
-    console.log(`${NAME.PREFIX} call.start, data: ${JSON.stringify(param)}`);
+    console.log(`${LOG_PREFIX} call.start, data: ${JSON.stringify(param)}`);
     if (!isIMLogined()) {
       param?.fail?.(-1, "please call login method first");
       return;
@@ -150,15 +150,15 @@ export class CallEngine {
 	 * 接受当前通话
 	 */
   public accept(param?: AcceptParams) {
-    console.log(`${NAME.PREFIX} accept.start, data: ${param}`);
+    console.log(`${LOG_PREFIX} accept.start, data: ${param}`);
     const cb: ICallback = {
       apiName: "accept",
       success: () => {
-        console.log(`${NAME.PREFIX} accept success`);
+        console.log(`${LOG_PREFIX} accept success`);
         param?.success?.();
       },
       fail: (errCode: number, errMsg: string) => {
-        console.error(`${NAME.PREFIX} accept fail, code: ${errCode}, msg: ${errMsg}`);
+        console.error(`${LOG_PREFIX} accept fail, code: ${errCode}, msg: ${errMsg}`);
         param?.fail?.(errCode, errMsg);
       },
     };
@@ -170,17 +170,17 @@ export class CallEngine {
    * 挂断当前通话
    */
   public hangup(param: HangupParams): void {
-    console.log(`${NAME.PREFIX} hangup.start, data: ${JSON.stringify(param)}`);
+    console.log(`${LOG_PREFIX} hangup.start, data: ${JSON.stringify(param)}`);
     const hangupParam = new NEHangupParam();
     
     const cb: ICallback = {
       apiName: "hangup",
       success: () => {
-        console.log(`${NAME.PREFIX} hangup success`);
+        console.log(`${LOG_PREFIX} hangup success`);
         param?.success?.();
       },
       fail: (errCode: number, errMsg: string) => {
-        console.error(`${NAME.PREFIX} hangup fail, code: ${errCode}, msg: ${errMsg}`);
+        console.error(`${LOG_PREFIX} hangup fail, code: ${errCode}, msg: ${errMsg}`);
         param?.fail?.(errCode, errMsg);
       },
     };
@@ -193,7 +193,7 @@ export class CallEngine {
   public switchCallType(param: SwitchCallTypeParams): void {
     const currentConfig = this.callBridge.getCallConfig();
     console.log(
-      `${NAME.PREFIX} switchCallType.start, callType: ${param.callType}, state: ${param.state}, ` +
+      `${LOG_PREFIX} switchCallType.start, callType: ${param.callType}, state: ${param.state}, ` +
         `config: ${currentConfig}`
     );
     const switchParam = new NESwitchParam(param.callType as Int, param.state as Int);
@@ -201,11 +201,11 @@ export class CallEngine {
     const cb: ICallback = {
       apiName: "switchCallType",
       success: () => {
-        console.log(`${NAME.PREFIX} switchCallType success`);
+        console.log(`${LOG_PREFIX} switchCallType success`);
         param?.success?.();
       },
       fail: (errCode: number, errMsg: string) => {
-        console.error(`${NAME.PREFIX} switchCallType fail, code: ${errCode}, msg: ${errMsg}`);
+        console.error(`${LOG_PREFIX} switchCallType fail, code: ${errCode}, msg: ${errMsg}`);
         const message = errMsg === "signal control." ? "网络异常" : errMsg;
         param?.fail?.(errCode, message);
       },
@@ -217,7 +217,7 @@ export class CallEngine {
    * 设置呼叫超时时间
    */
   public setTimeout(millisecond: number): void {
-    console.log(`${NAME.PREFIX} setTimeout, millisecond: ${millisecond}`);
+    console.log(`${LOG_PREFIX} setTimeout, millisecond: ${millisecond}`);
     this.callBridge.setTimeout(millisecond.toLong());
   }
   
@@ -225,32 +225,32 @@ export class CallEngine {
    * 开始悬浮窗
    */
   public startFloatWindow(options: CallbackParams) {
-    console.log(`${NAME.PREFIX} startFloatWindow`);
+    console.log(`${LOG_PREFIX} startFloatWindow`);
     this.callBridge.startFloatWindow(UTSAndroid.getUniActivity() as Context);
     const floatPermission = PermissionRequester.newInstance(
       PermissionRequester.FLOAT_PERMISSION
     ).has();
     if (floatPermission) {
       options?.success?.();
-      console.log(`${NAME.PREFIX} startFloatWindow.success`);
+      console.log(`${LOG_PREFIX} startFloatWindow.success`);
     } else {
       options?.fail?.(0, "");
-      console.error(`${NAME.PREFIX} startFloatWindow.fail`);
+      console.error(`${LOG_PREFIX} startFloatWindow.fail`);
     }
     FloatWindowManager.addFloatWindowObserver(this.floatWindowObserver);
   }
 
   public startPictureInPicture(options: CallbackParams) {
-    console.log(`${NAME.PREFIX} startPictureInPicture`);
+    console.log(`${LOG_PREFIX} startPictureInPicture`);
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-      console.error(`${NAME.PREFIX} startPictureInPicture fail, unsupported sdk`);
+      console.error(`${LOG_PREFIX} startPictureInPicture fail, unsupported sdk`);
       options?.fail?.(-1, "picture in picture unsupported");
       return;
     }
 
     const activity = UTSAndroid.getUniActivity() as Activity;
     if (activity == null) {
-      console.error(`${NAME.PREFIX} startPictureInPicture fail, activity is null`);
+      console.error(`${LOG_PREFIX} startPictureInPicture fail, activity is null`);
       options?.fail?.(-1, "activity is null");
       return;
     }
@@ -261,14 +261,14 @@ export class CallEngine {
         .build();
       const entered = activity.enterPictureInPictureMode(params);
       if (entered) {
-        console.log(`${NAME.PREFIX} startPictureInPicture.success`);
+        console.log(`${LOG_PREFIX} startPictureInPicture.success`);
         options?.success?.();
       } else {
-        console.error(`${NAME.PREFIX} startPictureInPicture fail, enter returned false`);
+        console.error(`${LOG_PREFIX} startPictureInPicture fail, enter returned false`);
         options?.fail?.(-1, "enter picture in picture failed");
       }
     } catch (error) {
-      console.error(`${NAME.PREFIX} startPictureInPicture fail, error: ${error}`);
+      console.error(`${LOG_PREFIX} startPictureInPicture fail, error: ${error}`);
       options?.fail?.(-1, `${error}`);
     }
   }
@@ -277,18 +277,18 @@ export class CallEngine {
    * 开始悬浮窗
    */
   public stopFloatWindow() {
-    console.log(`${NAME.PREFIX} stopFloatWindow`);
+    console.log(`${LOG_PREFIX} stopFloatWindow`);
     this.callBridge.stopFloatWindow();
   }
 
   public isFloatWindowVisible(): boolean {
     const isFloating = FloatWindowManager.isFloating();
-    console.log(`${NAME.PREFIX} isFloatWindowVisible, isFloating: ${isFloating}`);
+    console.log(`${LOG_PREFIX} isFloatWindowVisible, isFloating: ${isFloating}`);
     return isFloating;
   }
 
   public setIncomingBannerEnabled(enable: boolean): boolean {
-    console.log(`${NAME.PREFIX} setIncomingBannerEnabled, enable: ${enable}`);
+    console.log(`${LOG_PREFIX} setIncomingBannerEnabled, enable: ${enable}`);
     this.bannerEnabledFlag = enable;
     if (enable) {
       const activity = UTSAndroid.getUniActivity();
@@ -304,9 +304,9 @@ export class CallEngine {
   }
 
   public showIncomingBanner(caller: string, mediaType: number): void {
-    console.log(`${NAME.PREFIX} showIncomingBanner, caller: ${caller}, mediaType: ${mediaType}`);
+    console.log(`${LOG_PREFIX} showIncomingBanner, caller: ${caller}, mediaType: ${mediaType}`);
     if (!this.bannerEnabledFlag) {
-      console.log(`${NAME.PREFIX} showIncomingBanner skipped, disabled`);
+      console.log(`${LOG_PREFIX} showIncomingBanner skipped, disabled`);
       return;
     }
     const appContext = UTSAndroid.getAppContext() as Context;
@@ -321,7 +321,7 @@ export class CallEngine {
   }
 
   public cancelIncomingBanner(): void {
-    console.log(`${NAME.PREFIX} cancelIncomingBanner`);
+    console.log(`${LOG_PREFIX} cancelIncomingBanner`);
     IncomingCallBannerManager.dismiss();
   }
 
@@ -329,7 +329,7 @@ export class CallEngine {
    * 开启摄像头
    */
   public enableLocalVideo(enable: boolean): number {
-    console.log(`${NAME.PREFIX} enableLocalVideo, enable: ${enable}`);
+    console.log(`${LOG_PREFIX} enableLocalVideo, enable: ${enable}`);
 	return Number.from(this.callBridge.enableLocalVideo(enable));
   }
 
@@ -337,9 +337,9 @@ export class CallEngine {
    * 开启/关闭视频采集
    */
   public muteLocalVideo(mute: boolean): number {
-    console.log(`${NAME.PREFIX} muteLocalVideo, mute: ${mute}`);
+    console.log(`${LOG_PREFIX} muteLocalVideo, mute: ${mute}`);
     if (!mute) {
-      console.log(`${NAME.PREFIX} muteLocalVideo enableLocalVideo before unmute`);
+      console.log(`${LOG_PREFIX} muteLocalVideo enableLocalVideo before unmute`);
       this.callBridge.enableLocalVideo(true);
     }
     return Number.from(this.callBridge.muteLocalVideo(mute));
@@ -349,7 +349,7 @@ export class CallEngine {
    * 静音本地音频采集
    */
   public muteLocalAudio(mute: boolean): number {
-    console.log(`${NAME.PREFIX} muteLocalAudio, mute: ${mute}`);
+    console.log(`${LOG_PREFIX} muteLocalAudio, mute: ${mute}`);
     return Number.from(this.callBridge.muteLocalAudio(mute));
   }
 
@@ -357,7 +357,7 @@ export class CallEngine {
    * 设置话单控制
    */
   public setCallRecordProvider(recordProvider: NERecordProvider): void {
-    console.log(`${NAME.PREFIX} setCallRecordProvider`);
+    console.log(`${LOG_PREFIX} setCallRecordProvider`);
     const engine = NECallEngine.sharedInstance();
     engine.setCallRecordProvider(recordProvider);
   }
@@ -367,7 +367,7 @@ export class CallEngine {
    * @param camera 摄像头类型，0=前置，1=后置
    */
   public switchCamera(camera: number) {
-    console.log(`${NAME.PREFIX} switchCamera.start, data: ${camera}`);
+    console.log(`${LOG_PREFIX} switchCamera.start, data: ${camera}`);
     this.callBridge.switchCamera(camera as Int);
   }
 
@@ -375,7 +375,7 @@ export class CallEngine {
    * 获取扬声器是否开启
    */
   public isSpeakerphoneOn(): boolean {
-	console.log(`${NAME.PREFIX} isSpeakerphoneOn`);
+	console.log(`${LOG_PREFIX} isSpeakerphoneOn`);
     return this.callBridge.isSpeakerphoneOn();
   }
 
@@ -383,7 +383,7 @@ export class CallEngine {
    * 设置扬声器开关
    */
   public setSpeakerphoneOn(enable: boolean): number {
-    console.log(`${NAME.PREFIX} setSpeakerphoneOn, enable: ${enable}`);
+    console.log(`${LOG_PREFIX} setSpeakerphoneOn, enable: ${enable}`);
     return Number.from(this.callBridge.setSpeakerphoneOn(enable));
   }
 
@@ -391,7 +391,7 @@ export class CallEngine {
    * 设置呼叫时的配置参数
    */
   public setCallConfig(config: NECallConfig): void {
-    console.log(`${NAME.PREFIX} setCallConfig`);
+    console.log(`${LOG_PREFIX} setCallConfig`);
     this.callBridge.setCallConfig(config);
   }
 
@@ -404,7 +404,7 @@ export class CallEngine {
       videoToAudioConfirm
     );
     console.log(
-      `${NAME.PREFIX} setSwitchCallTypeConfirm, audioToVideoConfirm: ${audioToVideoConfirm}, ` +
+      `${LOG_PREFIX} setSwitchCallTypeConfirm, audioToVideoConfirm: ${audioToVideoConfirm}, ` +
         `videoToAudioConfirm: ${videoToAudioConfirm}, enableOffline: ${enableOffline}, ` +
         `currentConfig: ${currentConfig}, nextConfig: ${nextConfig}`
     );
@@ -412,14 +412,14 @@ export class CallEngine {
   }
 
   public setAutoFloatingWindowWhenHomeEnabled(enable: boolean): void {
-    console.log(`${NAME.PREFIX} setAutoFloatingWindowWhenHomeEnabled, enable: ${enable}`);
+    console.log(`${LOG_PREFIX} setAutoFloatingWindowWhenHomeEnabled, enable: ${enable}`);
   }
 
   /**
    * 获取呼叫时的配置参数
    */
   public getCallConfig(): NECallConfig | null {
-	console.log(`${NAME.PREFIX} getCallConfig`);
+	console.log(`${LOG_PREFIX} getCallConfig`);
     return this.callBridge.getCallConfig();
   }
 
@@ -427,7 +427,7 @@ export class CallEngine {
    * 通话过程中获取通话信息
    */
   public getCallInfo(): NECallInfo | null {
-    console.log(`${NAME.PREFIX} getCallInfo`);
+    console.log(`${LOG_PREFIX} getCallInfo`);
     return this.callBridge.getCallInfo();
   }
 
@@ -435,7 +435,7 @@ export class CallEngine {
    * 设置AI降噪模式
    */
   public setAINSMode(mode: NERtcAudioAINSMode): number {
-    console.log(`${NAME.PREFIX} setAINSMode, mode: ${mode}`);
+    console.log(`${LOG_PREFIX} setAINSMode, mode: ${mode}`);
     return Number.from(this.callBridge.setAINSMode(mode));
   }
 
@@ -443,7 +443,7 @@ export class CallEngine {
    * 组件销毁
    */
   public destroy(): void {
-    console.log(`${NAME.PREFIX} destroy`);
+    console.log(`${LOG_PREFIX} destroy`);
     this.callBridge.destroy();
   }
   
@@ -453,16 +453,16 @@ export class CallEngine {
    */
   public hasPermission(options: PermissionOptions): void {
     console.log(
-      `${NAME.PREFIX} hasPermission.start, data: ${JSON.stringify(options)}`
+      `${LOG_PREFIX} hasPermission.start, data: ${JSON.stringify(options)}`
     );
     const cb: ICallback = {
       apiName: "hasPermission",
       success: () => {
-        console.log(`${NAME.PREFIX} hasPermission success`);
+        console.log(`${LOG_PREFIX} hasPermission success`);
         options?.success?.();
       },
       fail: (errCode: number, errMsg: string) => {
-        console.error(`${NAME.PREFIX} hasPermission fail, code: ${errCode}, msg: ${errMsg}`);
+        console.error(`${LOG_PREFIX} hasPermission fail, code: ${errCode}, msg: ${errMsg}`);
         options?.fail?.(errCode, errMsg);
       },
     };
@@ -471,14 +471,14 @@ export class CallEngine {
   
   public startService(callType: number): void {
 	  console.log(
-	    `${NAME.PREFIX} startService.start, data: ${JSON.stringify(callType)}`
+	    `${LOG_PREFIX} startService.start, data: ${JSON.stringify(callType)}`
 	  );
     this.callBridge.startForegroundService(UTSAndroid.getAppContext() as Context, callType as Int, "", "");
   }
   
   public stopService(callType: number): void {
     console.log(
-      `${NAME.PREFIX} stopService.start, data: ${JSON.stringify(callType)}`
+      `${LOG_PREFIX} stopService.start, data: ${JSON.stringify(callType)}`
     );
     this.callBridge.stopForegroundService(UTSAndroid.getAppContext() as Context);
   }
@@ -493,7 +493,7 @@ export class CallEngine {
   public bringAppToForeground() {
     console.log(
       `${
-        NAME.PREFIX
+        LOG_PREFIX
       } bringAppToForeground.start, data: ${UTSAndroid.getAppContext()} | ${
         UTSAndroid.getUniActivity()!.javaClass
       }`

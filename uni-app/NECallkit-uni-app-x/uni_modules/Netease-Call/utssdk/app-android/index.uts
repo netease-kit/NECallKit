@@ -491,21 +491,33 @@ export class CallEngine {
   }
 
   public bringAppToForeground() {
+    const appContext = UTSAndroid.getAppContext() as Context;
+    const currentActivity = UTSAndroid.getUniActivity();
     console.log(
       `${
         NAME.PREFIX
-      } bringAppToForeground.start, data: ${UTSAndroid.getAppContext()} | ${
-        UTSAndroid.getUniActivity()!.javaClass
+      } bringAppToForeground.start, data: ${appContext} | ${
+        currentActivity != null ? currentActivity.javaClass : null
       }`
     );
-    const intent = new Intent(
-      UTSAndroid.getAppContext()!,
-      UTSAndroid.getUniActivity()!.javaClass
-    );
-    intent.addFlags(
-      Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-    );
-    UTSAndroid.getUniActivity()!.startActivity(intent);
+    const launchIntent = appContext.getPackageManager().getLaunchIntentForPackage(appContext.getPackageName());
+    if (launchIntent != null) {
+      launchIntent.addFlags(
+        Intent.FLAG_ACTIVITY_NEW_TASK |
+          Intent.FLAG_ACTIVITY_REORDER_TO_FRONT |
+          Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
+      );
+      appContext.startActivity(launchIntent);
+      return;
+    }
+
+    if (currentActivity != null) {
+      const intent = new Intent(appContext, currentActivity.javaClass);
+      intent.addFlags(
+        Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+      );
+      appContext.startActivity(intent);
+    }
   }
 
   @UTSJS.keepAlive

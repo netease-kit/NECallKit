@@ -28,9 +28,9 @@ assert(
   'setup should still propagate enableAutoFloatingWindowWhenHome to the iOS bridge'
 );
 
-const connectedHandlerStart = source.indexOf('this.callEngine.on("onCallConnected"');
+const connectedHandlerStart = source.indexOf('this._onCallEngineEvent("onCallConnected"');
 assert.notStrictEqual(connectedHandlerStart, -1, 'UTS onCallConnected handler should exist');
-const connectedHandlerEnd = source.indexOf('this.callEngine.on("onCallTypeChange"', connectedHandlerStart);
+const connectedHandlerEnd = source.indexOf('this._onCallEngineEvent("onCallTypeChange"', connectedHandlerStart);
 assert.notStrictEqual(connectedHandlerEnd, -1, 'UTS onCallConnected handler should be bounded');
 const connectedHandler = source.slice(connectedHandlerStart, connectedHandlerEnd);
 assert(
@@ -105,7 +105,8 @@ const floatStateEnd = source.indexOf('  private _syncConnectedCallStoreFromNativ
 assert.notStrictEqual(floatStateEnd, -1, 'UTS floating-window active-state helper should be bounded');
 const floatStateBody = source.slice(floatStateStart, floatStateEnd);
 assert(
-  floatStateBody.includes('this.callEngine.isFloatWindowVisible?.()') &&
+  floatStateBody.includes('this.callEngine.isFloatWindowVisible()') &&
+    !floatStateBody.includes('this.callEngine.isFloatWindowVisible?.()') &&
     floatStateBody.includes('typeof nativeFloatWindowVisible === "boolean"') &&
     floatStateBody.includes('return nativeFloatWindowVisible || storeFloatWindowActive;') &&
     floatStateBody.includes('return storeFloatWindowActive;'),

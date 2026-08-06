@@ -122,6 +122,11 @@ const isCalling = () => {
   return uni.$NEStore.getData(StoreName.CALL, NAME.CALL_STATUS) != CallStatus.IDLE;
 }
 
+const isHarmonyPlatform = () => {
+  const platform = String(uni.getSystemInfoSync().platform ?? '').toLowerCase();
+  return platform === 'harmony' || platform === 'harmonyos';
+};
+
 const buildCallParams = () => {
   const globalData = getApp().globalData;
   const params = {
@@ -131,7 +136,23 @@ const buildCallParams = () => {
     params.extraInfo = globalData.pushPayload;
   }
 
-  if (globalData.pushEnabled) {
+  const hasCustomPushConfig = Boolean(
+    globalData.pushTitle || globalData.pushContent || globalData.pushPayload
+  );
+  if (isHarmonyPlatform()) {
+    if (globalData.pushEnabled && hasCustomPushConfig) {
+      params.needPush = true;
+      if (globalData.pushTitle) {
+        params.pushTitle = globalData.pushTitle;
+      }
+      if (globalData.pushContent) {
+        params.pushContent = globalData.pushContent;
+      }
+      if (globalData.pushPayload) {
+        params.pushPayload = globalData.pushPayload;
+      }
+    }
+  } else if (globalData.pushEnabled) {
     params.pushConfig = {
       needPush: true,
       pushTitle: globalData.pushTitle,

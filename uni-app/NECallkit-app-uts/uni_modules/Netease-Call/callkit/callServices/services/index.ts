@@ -38,7 +38,6 @@ const SWITCH_CALL_STATE_ACCEPT = 2;
 const SWITCH_CALL_STATE_REJECT = 3;
 const AUDIO_PLAYBACK_DEVICE_SPEAKERPHONE = 0;
 const AUDIO_PLAYBACK_DEVICE_EARPIECE = 1;
-const SWITCH_CALL_TYPE_INVITE_TIMEOUT = 5000;
 
 class CallService {
   static instance = null;
@@ -50,8 +49,6 @@ class CallService {
   private _ringController: CallRingController = new CallRingController();
   private _pendingSwitchCallType: MediaType | null = null;
   private _switchCallTypeInviteRevision: number = 0;
-  private _pendingSwitchCallTypeInviteAt: number = 0;
-  private _switchCallTypeInviteTimeoutTimerId: number = -1;
   private _switchCallTypeConfirmModalType: MediaType | null = null;
   private _switchCallTypeConfirmModalRevision: number = 0;
   private _autoFloatingWindowWhenHomeEnabled: boolean = false;
@@ -65,13 +62,22 @@ class CallService {
 
     uni.onAppHide(() => {
       this._isInForeground = false;
+      if (this._isHarmonyPlatform()) {
+        this.callEngine.handleAppEnterBackground();
+        return;
+      }
       // #ifndef APP-IOS
+      // #ifndef APP-HARMONY
       this._startFloatWindowWhenHome();
+      // #endif
       // #endif
     });
     uni.onAppShow(() => {
       this._isInForeground = true;
-      if (this._isIOSPlatform()) {
+      if (this._isHarmonyPlatform()) {
+        this.callEngine.handleAppEnterForeground();
+      }
+      if (this._isNativeBridgePlatform()) {
         this.recoverConnectedCallPageFromNative("appShow");
       }
     });
@@ -84,13 +90,43 @@ class CallService {
     return CallService.instance;
   }
 
+  private _normalizeCallEnginePayload(payload: any): any {
+    if (!this._isHarmonyPlatform()) {
+      return payload;
+    }
+    if (typeof payload !== "string") {
+      return payload;
+    }
+    try {
+      return JSON.parse(payload);
+    } catch (error) {
+      console.error(
+        `${NAME.PREFIX} parse call engine payload failed, payload: ${payload}, error: ${error}`
+      );
+      return payload;
+    }
+  }
+
+  private _onCallEngineEvent(
+    eventName: string,
+    listener: (payload: any) => void
+  ): void {
+    if (!this._isHarmonyPlatform()) {
+      this.callEngine.on(eventName, listener);
+      return;
+    }
+    this.callEngine.on(eventName, (payload: any) => {
+      listener(this._normalizeCallEnginePayload(payload));
+    });
+  }
+
   private _addListener(): void {
     console.log(`${NAME.PREFIX} _addListener`);
 
-    this.callEngine.on("onError", (res) => {
+    this._onCallEngineEvent("onError", (res) => {
       console.error(`${NAME.PREFIX} onError, data: ${JSON.stringify(res)}`);
     });
-    this.callEngine.on("onLiveCommunicationKitIncomingStateChanged", (res) => {
+    this._onCallEngineEvent("onLiveCommunicationKitIncomingStateChanged", (res) => {
       console.log(
         `${NAME.PREFIX} onLiveCommunicationKitIncomingStateChanged, data: ${JSON.stringify(res)}`
       );
@@ -99,7 +135,7 @@ class CallService {
         this._ringController.stopLoopRing();
       }
     });
-    this.callEngine.on("onCallReceived", (res) => {
+    this._onCallEngineEvent("onCallReceived", (res) => {
       console.log(
         `${NAME.PREFIX} onCallReceived, data: ${JSON.stringify(res)}`
       );
@@ -154,7 +190,11 @@ class CallService {
             return;
           }
           this._startIncomingRingIfNeeded();
-          getApp().globalData.timeout > 0 && this._navigateToCallPage();
+          if (this._isHarmonyPlatform()) {
+            this._navigateToCallPage();
+          } else {
+            getApp().globalData.timeout > 0 && this._navigateToCallPage();
+          }
         },
         () => {
           this._hangupPermissionDeniedCall();
@@ -162,14 +202,21 @@ class CallService {
       );
     });
 
-    this.callEngine.on("onCallConnected", (res) => {
+    this._onCallEngineEvent("onCallConnected", (res) => {
       console.log(`${NAME.PREFIX} onCallConnected, data: ${JSON.stringify(res)}`);
       this._clearIOSLiveCommunicationKitIncoming();
       this._ringController.stopLoopRing();
       
       const connectedCallInfo = res?.info;
       if (
-        this._isIOSPlatform() &&
+        uni.getSystemInfoSync().platform === "android" &&
+        Number(connectedCallInfo?.callType ?? 0) === MediaType.VIDEO
+      ) {
+        console.log(`${NAME.PREFIX} onCallConnected reset Android local video mute state`);
+        this.callEngine.muteLocalVideo(false);
+      }
+      if (
+        (this._isIOSPlatform() || this._isHarmonyPlatform()) &&
         Number(connectedCallInfo?.callStatus ?? 0) === 3 &&
         !this._isCallPageVisible() &&
         this.recoverConnectedCallPageFromNative("onCallConnected", connectedCallInfo)
@@ -189,7 +236,7 @@ class CallService {
       );
       if (callStatus === CallStatus.CALLING) {
         if (
-          this._isIOSPlatform() &&
+          (this._isIOSPlatform() || this._isHarmonyPlatform()) &&
           this._incomingBannerEnabled &&
           !this._isCallPageVisible() &&
           this.recoverConnectedCallPageFromNative("onCallConnected", connectedCallInfo)
@@ -205,7 +252,10 @@ class CallService {
         this._startTimer();
         return;
       }
-      if (this._isIOSPlatform() && callStatus !== CallStatus.CONNECTED) {
+      if (
+        (this._isIOSPlatform() || this._isHarmonyPlatform()) &&
+        callStatus !== CallStatus.CONNECTED
+      ) {
         console.log(
           `${NAME.PREFIX} onCallConnected recover call page from native info, callStatus: ${callStatus}`
         );
@@ -213,7 +263,7 @@ class CallService {
       }
     });
 
-    this.callEngine.on("onCallTypeChange", (res) => {
+    this._onCallEngineEvent("onCallTypeChange", (res) => {
       console.log(
         `${NAME.PREFIX} onCallTypeChange, data: ${JSON.stringify(res)}, ` +
           `pending: ${this._pendingSwitchCallType}, revision: ${this._switchCallTypeInviteRevision}, ` +
@@ -256,22 +306,28 @@ class CallService {
       }
     });
 
-    this.callEngine.on("onCallEnd", (res) => {
+    this._onCallEngineEvent("onCallEnd", (res) => {
       console.log(`${NAME.PREFIX} onCallEnd, data: ${JSON.stringify(res)}`);
-      this._clearIOSLiveCommunicationKitIncoming();
       this._incomingCallPermissionRevision++;
-      this._ringController.stopLoopRing();
-      
       const callType = uni.$NEStore.getData(
         StoreName.CALL,
         NAME.MEDIA_TYPE
       );
-      this.stopService(callType);
-      
-      this._navigateBackCallPage();
-      this.stopFloatWindow();
-      this.cancelIncomingBanner();
-      this._resetCallStore();
+      if (!this._isHarmonyPlatform()) {
+        this._clearIOSLiveCommunicationKitIncoming();
+        this._ringController.stopLoopRing();
+        this.stopService(callType);
+        this._navigateBackCallPage();
+        this.stopFloatWindow();
+        this.cancelIncomingBanner();
+        this._resetCallStore();
+      }
+      try {
+        this._resetCallStore();
+        this.stopService(callType);
+      } finally {
+        this._navigateBackCallPage();
+      }
       
       //呼叫超时
       if (res?.info?.reasonCode == 2) {
@@ -327,22 +383,43 @@ class CallService {
       }
     });
 
-    this.callEngine.on("onCallNotConnected", (res) => {
+    this._onCallEngineEvent("onCallNotConnected", (res) => {
       console.log(
         `${NAME.PREFIX} onCallNotConnected, data: ${JSON.stringify(res)}`
       );
-      this._clearIOSLiveCommunicationKitIncoming();
-      this._ringController.stopLoopRing();
-      this._navigateBackCallPage();
-      this.stopFloatWindow();
-      this.cancelIncomingBanner();
-      this._resetCallStore();
+      if (!this._isHarmonyPlatform()) {
+        this._clearIOSLiveCommunicationKitIncoming();
+        this._ringController.stopLoopRing();
+        this._navigateBackCallPage();
+        this.stopFloatWindow();
+        this.cancelIncomingBanner();
+        this._resetCallStore();
+        return;
+      }
+      try {
+        this._resetCallStore();
+      } finally {
+        this._navigateBackCallPage();
+      }
     });
 
-    this.callEngine.on("onFloatWindowClick", (res) => {
+    this._onCallEngineEvent("onFloatWindowClick", (res) => {
       console.log(
         `${NAME.PREFIX} onFloatWindowClick, data: ${JSON.stringify(res)}`
       );
+      const restoreCallId = res?.callId;
+      if (this._isHarmonyPlatform()) {
+        const currentCallInfo = this.getCallInfo();
+        if (!restoreCallId || currentCallInfo?.callId !== restoreCallId) {
+          console.log(
+            `${NAME.PREFIX} onFloatWindowClick ignored, stale callId: ${restoreCallId}`
+          );
+          return;
+        }
+        uni.$NEStore.update(StoreName.CALL, NAME.ENABLE_FLOAT_WINDOW, false);
+        this.recoverConnectedCallPageFromNative("floatWindowClick", currentCallInfo, true);
+        return;
+      }
       this.bringAppToForeground();
       setTimeout(() => {
         this.stopFloatWindow();
@@ -350,12 +427,17 @@ class CallService {
       }, 300);
     });
 
-    this.callEngine.on("onIncomingBannerClick", (res) => {
+    this._onCallEngineEvent("onIncomingBannerClick", (res) => {
       console.log(
         `${NAME.PREFIX} onIncomingBannerClick, data: ${JSON.stringify(res)}`
       );
       if (res?.action === "accept") {
         this._handleIncomingBannerAccept();
+        return;
+      }
+      if (res?.action === "reject" && this._isHarmonyPlatform()) {
+        this.cancelIncomingBanner();
+        this.hangup();
         return;
       }
       this.cancelIncomingBanner();
@@ -388,7 +470,7 @@ class CallService {
   }
 
   public login(options: LoginParams): void {
-    console.log(`${NAME.PREFIX} login, data: ${JSON.stringify(options)}`);
+    console.log(`${NAME.PREFIX} login, accountId: ${options.accountId}`);
     const params = {
       accountId: options.accountId,
       token: options.token,
@@ -423,13 +505,14 @@ class CallService {
   public call(options: CallParams): void {
     console.log(`${NAME.PREFIX} calls, data: ${JSON.stringify(options)}`);
     const isAndroid = uni.getSystemInfoSync().platform === "android";
+    const requiresPermissionBeforeCall = isAndroid || this._isHarmonyPlatform();
     const startCall = () => {
       const params: CallParams = {
         accountId: options.accountId,
         callType: options.callType,
         params: options.params,
         success: () => {
-          if (!isAndroid) {
+          if (!requiresPermissionBeforeCall) {
             this._hasPermission(options.callType);
           }
           let callTips = CallTips.CALLER_CALLING_MSG;
@@ -458,7 +541,7 @@ class CallService {
       this.callEngine.call(params);
     };
 
-    if (isAndroid) {
+    if (requiresPermissionBeforeCall) {
       this._hasPermission(options.callType, startCall);
       return;
     }
@@ -594,6 +677,10 @@ class CallService {
         `floatingWindowEnabled: ${floatingWindowEnabled}, effectiveEnable: ${effectiveEnable}`
     );
     this._autoFloatingWindowWhenHomeEnabled = effectiveEnable;
+    if (this._isHarmonyPlatform()) {
+      this.callEngine.setAutoFloatingWindowWhenHomeEnabled(effectiveEnable, floatingWindowEnabled);
+      return;
+    }
     this.callEngine.setAutoFloatingWindowWhenHomeEnabled?.(effectiveEnable);
   }
 
@@ -640,6 +727,69 @@ class CallService {
     console.log(
       `${NAME.PREFIX} _sendSwitchCallTypeInviteAfterPermission, callType: ${callType}`
     );
+    if (!this._isHarmonyPlatform()) {
+      this._sendSwitchCallTypeInviteAfterNetworkCheck(callType);
+      return;
+    }
+    const switchName =
+      callType === MediaType.VIDEO ? "switchAudioToVideo" : "switchVideoToAudio";
+    this._hasPermission(
+      callType,
+      () => {
+        this._setPendingSwitchCallType(callType);
+        this._sendSwitchCallTypeInvite({
+          callType,
+          success: () => {
+            console.log(`${NAME.PREFIX} ${switchName} success`);
+          },
+          fail: (errCode: number, errMsg: string) => {
+            this._clearPendingSwitchCallType(callType);
+            console.error(
+              `${NAME.PREFIX} ${switchName} fail, code: ${errCode}, msg: ${errMsg}`
+            );
+            uni.showToast({
+              title: errMsg || "切换失败",
+              position: "bottom",
+            });
+          },
+        });
+      }
+    );
+  }
+
+  private _sendSwitchCallTypeInvite(options: {
+    callType: MediaType;
+    success?: () => void;
+    fail?: (errCode: number, errMsg: string) => void;
+  }): void {
+    console.log(
+      `${NAME.PREFIX} _sendSwitchCallTypeInvite prepare, callType: ${options.callType}, ` +
+        `pending: ${this._pendingSwitchCallType}`
+    );
+    if (!this._isHarmonyPlatform()) {
+      this._prepareNativeSwitchCallTypeInvite(options.callType);
+    }
+    this.callEngine.switchCallType({
+      callType: options.callType,
+      state: SWITCH_CALL_STATE_INVITE,
+      success: () => {
+        console.log(
+          `${NAME.PREFIX} _sendSwitchCallTypeInvite success, callType: ${options.callType}`
+        );
+        options.success?.();
+      },
+      fail: (errCode: number, errMsg: string) => {
+        this._restoreSwitchCallTypeConfirmConfig();
+        console.error(
+          `${NAME.PREFIX} _sendSwitchCallTypeInvite fail, callType: ${options.callType}, ` +
+            `code: ${errCode}, msg: ${errMsg}`
+        );
+        options.fail?.(errCode, errMsg);
+      },
+    });
+  }
+
+  private _sendSwitchCallTypeInviteAfterNetworkCheck(callType: MediaType): void {
     const switchName =
       callType === MediaType.VIDEO ? "switchAudioToVideo" : "switchVideoToAudio";
     this._hasPermission(
@@ -692,37 +842,11 @@ class CallService {
     });
   }
 
-  private _sendSwitchCallTypeInvite(options: {
-    callType: MediaType;
-    success?: () => void;
-    fail?: (errCode: number, errMsg: string) => void;
-  }): void {
-    console.log(
-      `${NAME.PREFIX} _sendSwitchCallTypeInvite prepare, callType: ${options.callType}, ` +
-        `pending: ${this._pendingSwitchCallType}`
-    );
+  private _prepareNativeSwitchCallTypeInvite(callType: MediaType): void {
     this._applyPendingInviteSwitchCallTypeConfirmConfig();
-    if (options.callType === MediaType.VIDEO) {
+    if (callType === MediaType.VIDEO) {
       this.callEngine.muteLocalVideo(false);
     }
-    this.callEngine.switchCallType({
-      callType: options.callType,
-      state: SWITCH_CALL_STATE_INVITE,
-      success: () => {
-        console.log(
-          `${NAME.PREFIX} _sendSwitchCallTypeInvite success, callType: ${options.callType}`
-        );
-        options.success?.();
-      },
-      fail: (errCode: number, errMsg: string) => {
-        this._restoreSwitchCallTypeConfirmConfig();
-        console.error(
-          `${NAME.PREFIX} _sendSwitchCallTypeInvite fail, callType: ${options.callType}, ` +
-            `code: ${errCode}, msg: ${errMsg}`
-        );
-        options.fail?.(errCode, errMsg);
-      },
-    });
   }
 
   public openMicrophone(): void {
@@ -822,6 +946,10 @@ class CallService {
   public bringAppToForeground(): void {
     this.callEngine.bringAppToForeground();
   }
+
+  public setCallPageFullScreen(enabled: boolean): void {
+    this.callEngine.setCallPageFullScreen(enabled);
+  }
   
   public getVersion(): string {
     return CallEngine.getVersion();
@@ -855,11 +983,18 @@ class CallService {
   }
 
   public getCallInfo(): any {
-    return this.callEngine.getCallInfo?.();
+    const callInfo = this._isHarmonyPlatform()
+      ? this.callEngine.getCallInfo()
+      : this.callEngine.getCallInfo?.();
+    return this._normalizeCallEnginePayload(callInfo);
   }
 
-  public recoverConnectedCallPageFromNative(source: string, callInfo?: any): boolean {
-    if (!this._isIOSPlatform()) {
+  public recoverConnectedCallPageFromNative(
+    source: string,
+    callInfo?: any,
+    forceNavigation: boolean = false
+  ): boolean {
+    if (!this._isNativeBridgePlatform()) {
       return false;
     }
     let nativeCallInfo = callInfo;
@@ -881,7 +1016,7 @@ class CallService {
     );
     this._syncConnectedCallStoreFromNativeInfo(nativeCallInfo);
     this.startService(nativeCallInfo?.callType);
-    if (!floatWindowActive) {
+    if (forceNavigation || !floatWindowActive) {
       this._navigateToCallPage();
     }
     this._startTimer();
@@ -891,7 +1026,9 @@ class CallService {
   private _isFloatWindowActive(): boolean {
     const storeFloatWindowActive =
       uni.$NEStore.getData(StoreName.CALL, NAME.ENABLE_FLOAT_WINDOW) === true;
-    const nativeFloatWindowVisible = this.callEngine.isFloatWindowVisible?.();
+    const nativeFloatWindowVisible = this._isHarmonyPlatform()
+      ? this.callEngine.isFloatWindowVisible()
+      : this.callEngine.isFloatWindowVisible?.();
     if (typeof nativeFloatWindowVisible === "boolean") {
       return nativeFloatWindowVisible || storeFloatWindowActive;
     }
@@ -901,8 +1038,12 @@ class CallService {
   private _syncConnectedCallStoreFromNativeInfo(callInfo: any): void {
     if (!callInfo) return;
     const currentAccId = callInfo?.currentAccId;
-    const callerAccId = callInfo?.callerInfo?.accId;
-    const calleeAccId = callInfo?.calleeInfo?.accId;
+    const callerAccId = this._isHarmonyPlatform()
+      ? callInfo?.callerInfo?.accId ?? callInfo?.callerInfo?.userId
+      : callInfo?.callerInfo?.accId;
+    const calleeAccId = this._isHarmonyPlatform()
+      ? callInfo?.calleeInfo?.accId ?? callInfo?.calleeInfo?.userId
+      : callInfo?.calleeInfo?.accId;
     const isCaller = currentAccId && callerAccId && currentAccId === callerAccId;
     const remoteAccId = isCaller ? calleeAccId : callerAccId;
     uni.$NEStore.updateStore(
@@ -921,6 +1062,15 @@ class CallService {
 
   private _isIOSPlatform(): boolean {
     return uni.getSystemInfoSync().platform === "ios";
+  }
+
+  private _isHarmonyPlatform(): boolean {
+    const platform = String(uni.getSystemInfoSync().platform ?? "").toLowerCase();
+    return platform === "harmony" || platform === "harmonyos";
+  }
+
+  private _isNativeBridgePlatform(): boolean {
+    return this._isIOSPlatform() || this._isHarmonyPlatform();
   }
 
   private _isCallPageVisible(): boolean {
@@ -1044,7 +1194,9 @@ class CallService {
     }
 
     const enableFloatWindow = uni.$NEStore.getData(StoreName.CALL, NAME.ENABLE_FLOAT_WINDOW) === true;
-    const nativeFloatWindowVisible = this.callEngine.isFloatWindowVisible?.() === true;
+    const nativeFloatWindowVisible = this._isHarmonyPlatform()
+      ? this.callEngine.isFloatWindowVisible() === true
+      : this.callEngine.isFloatWindowVisible?.() === true;
     console.log(
       `${NAME.PREFIX} _handleSwitchCallTypeInvite floatWindow state, ` +
         `store: ${enableFloatWindow}, native: ${nativeFloatWindowVisible}`
@@ -1138,70 +1290,17 @@ class CallService {
   private _setPendingSwitchCallType(callType: MediaType): void {
     this._pendingSwitchCallType = callType;
     this._switchCallTypeInviteRevision++;
-    this._pendingSwitchCallTypeInviteAt = performanceNow();
     console.log(
-      `${NAME.PREFIX} _setPendingSwitchCallType, callType: ${callType}, ` +
-        `inviteAt: ${this._pendingSwitchCallTypeInviteAt}`
+      `${NAME.PREFIX} _setPendingSwitchCallType, callType: ${callType}`
     );
-    this._startSwitchCallTypeInviteTimeout(callType, this._switchCallTypeInviteRevision);
   }
 
   private _clearPendingSwitchCallType(callType?: MediaType): void {
     if (callType == null || this._pendingSwitchCallType === callType) {
       console.log(`${NAME.PREFIX} _clearPendingSwitchCallType, callType: ${callType}`);
       this._pendingSwitchCallType = null;
-      this._pendingSwitchCallTypeInviteAt = 0;
-      this._clearSwitchCallTypeInviteTimeout();
       this._switchCallTypeInviteRevision++;
     }
-  }
-
-  private _startSwitchCallTypeInviteTimeout(
-    callType: MediaType,
-    revision: number
-  ): void {
-    this._clearSwitchCallTypeInviteTimeout();
-    console.log(
-      `${NAME.PREFIX} _startSwitchCallTypeInviteTimeout, callType: ${callType}, ` +
-        `revision: ${revision}, timeout: ${SWITCH_CALL_TYPE_INVITE_TIMEOUT}`
-    );
-    this._switchCallTypeInviteTimeoutTimerId = Timer.run(
-      NAME.TIMEOUT,
-      () => {
-        if (
-          this._pendingSwitchCallType !== callType ||
-          this._switchCallTypeInviteRevision !== revision
-        ) {
-          console.log(
-            `${NAME.PREFIX} _startSwitchCallTypeInviteTimeout skipped, ` +
-              `pending: ${this._pendingSwitchCallType}, callType: ${callType}, ` +
-              `revision: ${revision}, currentRevision: ${this._switchCallTypeInviteRevision}`
-          );
-          return;
-        }
-        console.log(
-          `${NAME.PREFIX} _startSwitchCallTypeInviteTimeout expired, callType: ${callType}`
-        );
-        this._restoreSwitchCallTypeConfirmConfig();
-        this._clearPendingSwitchCallType(callType);
-        uni.showToast({
-          title: "切换超时",
-          position: "bottom",
-        });
-      },
-      {
-        delay: SWITCH_CALL_TYPE_INVITE_TIMEOUT,
-        count: 1,
-      }
-    );
-  }
-
-  private _clearSwitchCallTypeInviteTimeout(): void {
-    if (this._switchCallTypeInviteTimeoutTimerId === -1) {
-      return;
-    }
-    Timer.clearTask(this._switchCallTypeInviteTimeoutTimerId);
-    this._switchCallTypeInviteTimeoutTimerId = -1;
   }
 
   private _nextSwitchCallTypeInviteRevision(): number {
@@ -1247,8 +1346,8 @@ class CallService {
     console.log(
       `${NAME.PREFIX} _respondSwitchCallType, callType: ${callType}, state: ${state}`
     );
-    if (callType === MediaType.VIDEO && state === SWITCH_CALL_STATE_ACCEPT) {
-      this.callEngine.muteLocalVideo(false);
+    if (!this._isHarmonyPlatform()) {
+      this._prepareNativeSwitchCallTypeAccept(callType, state);
     }
     this.callEngine.switchCallType({
       callType,
@@ -1267,6 +1366,12 @@ class CallService {
         });
       },
     });
+  }
+
+  private _prepareNativeSwitchCallTypeAccept(callType: MediaType, state: number): void {
+    if (callType === MediaType.VIDEO && state === SWITCH_CALL_STATE_ACCEPT) {
+      this.callEngine.muteLocalVideo(false);
+    }
   }
 
   private _applySwitchCallType(callType: MediaType): void {
@@ -1410,7 +1515,66 @@ class CallService {
     this._resetCallStore();
   }
 
+  private _runCallCleanupStep(step: string, cleanup: () => void): void {
+    try {
+      cleanup();
+    } catch (error) {
+      console.error(`${NAME.PREFIX} ${step} failed, error: ${error}`);
+    }
+  }
+
   private _resetCallStore(): void {
+    if (!this._isHarmonyPlatform()) {
+      this._resetCallStoreForNative();
+      return;
+    }
+    // Restore shared state before platform cleanup so a resource failure cannot leave the next call busy.
+    this._runCallCleanupStep("reset call status", () => {
+      const callStatus = uni.$NEStore.getData(StoreName.CALL, NAME.CALL_STATUS);
+      callStatus !== CallStatus.IDLE &&
+        uni.$NEStore.reset(StoreName.CALL, [NAME.CALL_STATUS], true);
+    });
+    this._runCallCleanupStep("reset call data", () => {
+      let notResetOrNotifyKeys = Object.keys(CALL_DATA_KEY).filter((key) => {
+        switch (CALL_DATA_KEY[key]) {
+          case NAME.CALL_STATUS:
+          case NAME.LANGUAGE:
+          case NAME.ENABLE_INCOMING_BANNER:
+          case NAME.LOCAL_USER_INFO: {
+            return false;
+          }
+          default: {
+            return true;
+          }
+        }
+      });
+      notResetOrNotifyKeys = notResetOrNotifyKeys.map(
+        (key) => CALL_DATA_KEY[key]
+      );
+      uni.$NEStore.reset(StoreName.CALL, notResetOrNotifyKeys);
+      uni.$NEStore.update(StoreName.CALL, NAME.REMOTE_USER_INFO_LIST, []);
+    });
+    this._runCallCleanupStep("clear iOS incoming state", () =>
+      this._clearIOSLiveCommunicationKitIncoming()
+    );
+    this._runCallCleanupStep("restore switch config", () =>
+      this._restoreSwitchCallTypeConfirmConfig()
+    );
+    this._runCallCleanupStep("clear pending switch", () =>
+      this._clearPendingSwitchCallType()
+    );
+    this._runCallCleanupStep("clear switch modal", () =>
+      this._clearSwitchCallTypeConfirmModal()
+    );
+    this._runCallCleanupStep("stop timer", () => this._stopTimer());
+    this._runCallCleanupStep("reset ring", () => {
+      this._ringController.reset();
+    });
+    this._runCallCleanupStep("stop float window", () => this.stopFloatWindow());
+    this._runCallCleanupStep("cancel incoming banner", () => this.cancelIncomingBanner());
+  }
+
+  private _resetCallStoreForNative(): void {
     this._clearIOSLiveCommunicationKitIncoming();
     this._restoreSwitchCallTypeConfirmConfig();
     this._clearPendingSwitchCallType();

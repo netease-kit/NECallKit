@@ -1,0 +1,23 @@
+{
+  "module": {
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.CAMERA",
+        "reason": "$string:camera_auth_reason",
+        "usedScene": {
+          "when": "inuse"
+        }
+      },
+      {
+        "name": "ohos.permission.MICROPHONE",
+        "reason": "$string:microphone_auth_reason",
+        "usedScene": {
+          "when": "inuse"
+        }
+      },
+      {
+        "name": "ohos.permission.GET_NETWORK_INFO"
+      }
+    ]
+  }
+}

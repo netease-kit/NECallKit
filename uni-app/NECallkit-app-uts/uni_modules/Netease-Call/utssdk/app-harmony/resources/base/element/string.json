@@ -1,0 +1,12 @@
+{
+  "string": [
+    {
+      "name": "camera_auth_reason",
+      "value": "用于视频通话时采集本地画面"
+    },
+    {
+      "name": "microphone_auth_reason",
+      "value": "用于音视频通话时采集本地声音"
+    }
+  ]
+}

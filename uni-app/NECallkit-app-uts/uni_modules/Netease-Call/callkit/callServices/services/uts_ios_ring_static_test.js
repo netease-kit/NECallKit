@@ -144,9 +144,11 @@ assert(
 );
 
 assert(
-  serviceSource.includes('const SWITCH_CALL_TYPE_INVITE_TIMEOUT = 5000;') &&
-    serviceSource.includes('private _switchCallTypeInviteTimeoutTimerId: number = -1;'),
-  'UTS active switch call type should define a local invite timeout'
+  !serviceSource.includes('SWITCH_CALL_TYPE_INVITE_TIMEOUT') &&
+    !serviceSource.includes('_switchCallTypeInviteTimeoutTimerId') &&
+    !serviceSource.includes('_startSwitchCallTypeInviteTimeout') &&
+    !serviceSource.includes('_clearSwitchCallTypeInviteTimeout'),
+  'UTS switch pending state should not have a local timer'
 );
 
 [
@@ -169,32 +171,21 @@ const setPendingSwitchEnd = serviceSource.indexOf('  private _clearPendingSwitch
 assert.notStrictEqual(setPendingSwitchEnd, -1, 'UTS pending switch setter should be bounded');
 const setPendingSwitchBody = serviceSource.slice(setPendingSwitchStart, setPendingSwitchEnd);
 assert(
-  setPendingSwitchBody.includes('this._startSwitchCallTypeInviteTimeout(callType, this._switchCallTypeInviteRevision);'),
-  'UTS active switch call type should start timeout after entering pending state'
+  setPendingSwitchBody.includes('this._switchCallTypeInviteRevision++;') &&
+    !setPendingSwitchBody.includes('Timer.run('),
+  'UTS active switch call type should enter pending state without starting a timer'
 );
 
 const clearPendingSwitchStart = serviceSource.indexOf('private _clearPendingSwitchCallType');
 assert.notStrictEqual(clearPendingSwitchStart, -1, 'UTS pending switch clearer should exist');
-const clearPendingSwitchEnd = serviceSource.indexOf('  private _startSwitchCallTypeInviteTimeout', clearPendingSwitchStart);
+const clearPendingSwitchEnd = serviceSource.indexOf('  private _nextSwitchCallTypeInviteRevision', clearPendingSwitchStart);
 assert.notStrictEqual(clearPendingSwitchEnd, -1, 'UTS pending switch clearer should be bounded');
 const clearPendingSwitchBody = serviceSource.slice(clearPendingSwitchStart, clearPendingSwitchEnd);
 assert(
-  clearPendingSwitchBody.includes('this._clearSwitchCallTypeInviteTimeout();'),
-  'UTS clearing pending switch call type should also clear the timeout'
-);
-
-const switchTimeoutStart = serviceSource.indexOf('private _startSwitchCallTypeInviteTimeout');
-assert.notStrictEqual(switchTimeoutStart, -1, 'UTS switch invite timeout starter should exist');
-const switchTimeoutEnd = serviceSource.indexOf('  private _clearSwitchCallTypeInviteTimeout', switchTimeoutStart);
-assert.notStrictEqual(switchTimeoutEnd, -1, 'UTS switch invite timeout starter should be bounded');
-const switchTimeoutBody = serviceSource.slice(switchTimeoutStart, switchTimeoutEnd);
-assert(
-  switchTimeoutBody.includes('Timer.run(') &&
-    switchTimeoutBody.includes('count: 1') &&
-    switchTimeoutBody.includes('this._restoreSwitchCallTypeConfirmConfig();') &&
-    switchTimeoutBody.includes('this._clearPendingSwitchCallType(callType);') &&
-    switchTimeoutBody.includes('title: "切换超时"'),
-  'UTS switch invite timeout should be one-shot and recover pending state'
+  clearPendingSwitchBody.includes('this._pendingSwitchCallType = null;') &&
+    clearPendingSwitchBody.includes('this._switchCallTypeInviteRevision++;') &&
+    !clearPendingSwitchBody.includes('Timer.clearTask('),
+  'UTS clearing pending switch call type should stay revision-driven without timer cleanup'
 );
 
 console.log('UTS iOS ring ownership static checks passed');

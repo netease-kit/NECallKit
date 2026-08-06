@@ -2,7 +2,7 @@ import NECallInfo from 'com.netease.yunxin.kit.call.p2p.model.NECallInfo';
 import NECallback from 'com.netease.yunxin.nertc.ui.callback.NECallback';
 import NEResultObserver from 'com.netease.yunxin.kit.call.NEResultObserver';
 import CommonResult from 'com.netease.yunxin.nertc.nertcvideocall.bean.CommonResult';
-import { NAME } from './const.uts';
+import { LOG_PREFIX } from './const.uts';
 
 export type ICallback = {
   apiName : string,
@@ -21,12 +21,12 @@ export class Callback implements NECallback<any> {
   }
 
   override onSuccess(data ?: any) : void {
-    console.log(`${NAME.PREFIX} ${this.apiName} success, data: ${data}`);
+    console.log(`${LOG_PREFIX} ${this.apiName} success, data: ${data}`);
     this.success?.();
   }
 
   override onError(errCode : Int, errMsg : string) : void {
-    console.error(`${NAME.PREFIX} ${this.apiName} fail, data:`, errCode, errMsg);
+    console.error(`${LOG_PREFIX} ${this.apiName} fail, data:`, errCode, errMsg);
     this.fail?.(errCode as number, errMsg);
   }
 }
@@ -42,12 +42,12 @@ export class CallbackVoid implements NECallback<Void> {
   }
 
   override onSuccess(data ?: Void) : void {
-    console.log(`${NAME.PREFIX} ${this.apiName} success`);
+    console.log(`${LOG_PREFIX} ${this.apiName} success`);
     this.success?.();
   }
 
   override onError(errCode : Int, errMsg : string) : void {
-    console.error(`${NAME.PREFIX} ${this.apiName} fail, data:`, errCode, errMsg);
+    console.error(`${LOG_PREFIX} ${this.apiName} fail, data:`, errCode, errMsg);
     this.fail?.(errCode as number, errMsg);
   }
 }
@@ -63,12 +63,12 @@ export class CallbackNECallInfo implements NECallback<NECallInfo> {
   }
 
   override onSuccess(data ?: NECallInfo) : void {
-    console.log(`${NAME.PREFIX} ${this.apiName} success, data: ${data}`);
+    console.log(`${LOG_PREFIX} ${this.apiName} success, data: ${data}`);
     this.success?.();
   }
 
   override onError(errCode : Int, errMsg : string) : void {
-    console.error(`${NAME.PREFIX} ${this.apiName} fail, data:`, errCode, errMsg);
+    console.error(`${LOG_PREFIX} ${this.apiName} fail, data:`, errCode, errMsg);
     this.fail?.(errCode as number, errMsg);
   }
 }
@@ -84,12 +84,12 @@ export class CallResultObserver implements NEResultObserver<CommonResult<NECallI
 	}
 	
 	override onResult(result: CommonResult<NECallInfo>) : void {
-		console.log(`${NAME.PREFIX} result: ${result}`);
+		console.log(`${LOG_PREFIX} result: ${result}`);
 		if (result.isSuccessful()) {
-			console.log(`${NAME.PREFIX} ${this.apiName} success, data: ${result.data}`);
+			console.log(`${LOG_PREFIX} ${this.apiName} success, data: ${result.data}`);
 			this.success?.();
 		} else {
-			console.error(`${NAME.PREFIX} ${this.apiName} fail, data:`, result.code, result.msg);
+			console.error(`${LOG_PREFIX} ${this.apiName} fail, data:`, result.code, result.msg);
 			this.fail?.(result.code as number, result.msg);
 		}
 	}
@@ -106,12 +106,12 @@ export class CallResultVoidObserver implements NEResultObserver<CommonResult<Voi
 	}
 	
 	override onResult(result: CommonResult<Void>) : void {
-		console.log(`${NAME.PREFIX} result: ${result}`);
+		console.log(`${LOG_PREFIX} result: ${result}`);
 		if (result.isSuccessful()) {
-			console.log(`${NAME.PREFIX} ${this.apiName} success`);
+			console.log(`${LOG_PREFIX} ${this.apiName} success`);
 			this.success?.();
 		} else {
-			console.error(`${NAME.PREFIX} ${this.apiName} fail, data:`, result.code, result.msg);
+			console.error(`${LOG_PREFIX} ${this.apiName} fail, data:`, result.code, result.msg);
 			this.fail?.(result.code as number, result.msg);
 		}
 	}

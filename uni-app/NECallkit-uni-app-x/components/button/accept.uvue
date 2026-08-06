@@ -9,10 +9,11 @@
 
 <script setup>
 import { AcceptParams } from '@/uni_modules/Netease-Call'
-import { NECallKit, global } from "@/global/index.uts";
+import { NECallKit, ensureCallPermission } from "@/global/index.uts";
 import {
   state,
-  CALL_TYPE
+  CALL_TYPE_AUDIO,
+  CALL_TYPE_VIDEO
 } from "@/store/index.uts";
 import ACCEPT_AUDIO_SRC from "../assets/accept-audio.png";
 import ACCEPT_VIDEO_SRC from "../assets/accept-video.png";
@@ -25,17 +26,25 @@ const props = defineProps({
 });
 
 const imgSrc = computed(() => {
-  if (state.callType === CALL_TYPE.AUDIO) {
+  if (state.callType === CALL_TYPE_AUDIO) {
     return ACCEPT_AUDIO_SRC;
   }
-  if (state.callType === CALL_TYPE.VIDEO) {
+  if (state.callType === CALL_TYPE_VIDEO) {
     return ACCEPT_VIDEO_SRC;
   }
   return ACCEPT_AUDIO_SRC;
 });
 
 const handleAccept = () => {
-  NECallKit.accept({} as AcceptParams);
+  ensureCallPermission(
+    state.callType,
+    () => {
+      NECallKit.accept({} as AcceptParams);
+    },
+    (errCode: number, errMsg: string) => {
+      console.log(`accept skipped because permission denied, errCode=${errCode}, errMsg=${errMsg}`)
+    }
+  )
 };
 </script>
 

@@ -1,11 +1,11 @@
 <template>
-  <view v-if="state.callStatus === CALL_STATUS.CONNECTED" class="top-bar">
+  <view v-if="state.callStatus === CALL_STATUS_CONNECTED" class="top-bar">
     <view class="top-bar-time">
       <timer></timer>
     </view>
     <view class="button-group-row">
       <float-window />
-      <switch-camera v-if="state.callType === CALL_TYPE.VIDEO" />
+      <switch-camera v-if="state.callType === CALL_TYPE_VIDEO" />
     </view>
   </view>
 </template>
@@ -13,8 +13,8 @@
 <script setup>
   import {
     state,
-    CALL_TYPE,
-    CALL_STATUS,
+    CALL_TYPE_VIDEO,
+    CALL_STATUS_CONNECTED,
   } from "@/store/index.uts";
   import timer from "./timer/timer.uvue";
   import floatWindow from "./button/floatWindow.uvue";

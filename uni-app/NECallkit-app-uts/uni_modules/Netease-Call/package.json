@@ -1,7 +1,7 @@
 {
   "id": "Netease-Call",
   "displayName": "【官方】网易云信RTC音视频通话组件 Netease-Call",
-  "version": "4.8.1",
+  "version": "4.8.5",
   "description": "NECallKit 是云信官方推出的音视频通话 UTS 插件，支持 1v1 通话，简化了呼叫流程，并提供通用的通话UI交互，开发者也可以根据自己的业务需求进行 UI 定制。",
   "keywords": [
     "Call",
@@ -13,8 +13,8 @@
   "repository": "https://github.com/netease-kit/NECallKit/tree/main/uni-app",
   "engines": {
     "HBuilderX": "^4.53",
-    "uni-app": "^3.7.12",
-    "uni-app-x": "^3.7.12"
+    "uni-app": "^3.8.1",
+    "uni-app-x": "^3.8.1"
   },
   "dcloudext": {
     "type": "component-uts",
@@ -32,7 +32,7 @@
     "declaration": {
       "ads": "无",
       "data": "插件使用的 NIM、NERTC SDK会采集数据，详情可参考：https://yunxin.163.com/",
-      "permissions": "安卓：摄像头，语音，本地存储空间 IOS：摄像头，语音，本地存储空间"
+      "permissions": "安卓：摄像头，语音，本地存储空间 IOS：摄像头，语音，本地存储空间  鸿蒙：摄像头，语音，本地存储空间"
     },
     "npmurl": "",
     "darkmode": "x",
@@ -69,7 +69,7 @@
                 "extVersion": "",
                 "minVersion": "13"
             },
-            "harmony": "x"
+            "harmony": "√"
           },
           "mp": {
             "weixin": "x",

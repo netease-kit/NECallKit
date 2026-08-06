@@ -1,4 +1,6 @@
 <script lang="uts">
+	import { setAppVisible } from '@/global/index.uts'
+
 	// #ifdef APP-ANDROID || APP-HARMONY
 	let firstBackTime = 0
 	// #endif
@@ -9,9 +11,11 @@
 		},
 		onShow() {
 			console.log('App Show')
+			setAppVisible(true)
 		},
 		onHide() {
 			console.log('App Hide')
+			setAppVisible(false)
 		},
 		// #ifdef APP-ANDROID || APP-HARMONY
 		onLastPageBackPress() {

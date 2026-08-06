@@ -1,22 +1,37 @@
-import { CallEngine } from '@/uni_modules/Netease-Call'
+import { CallEngine, HangupParams } from '@/uni_modules/Netease-Call'
 import {
   state,
-  CALL_ROLE,
-  CALL_STATUS,
+  CALL_ROLE_CALLEE,
+  CALL_ROLE_UNKNOWN,
+  CALL_STATUS_CALLING,
+  CALL_STATUS_CONNECTED,
+  CALL_STATUS_IDLE,
+  resetCallConnectedAt,
   setCallType,
+  setCallConnectedAt,
   setCallRole,
   setCallStatus,
-  type CallType,
-  type CallRole,
-  type CallStatus
+  type CallType
 } from '@/store/index.uts'
 
-const APP_KEY = "" // 请填写应用对应的AppKey，可在云信控制台的”AppKey管理”页面获取
+const APP_KEY = 'your AppKey' // 请填写应用对应的AppKey，可在云信控制台的”AppKey管理”页面获取
 
 export const global = {
   isLocalMicOpen: true,
   currentSpeakerStatus: null,
   isLocalCameraOpen: true,
+}
+
+let isAppVisible = false
+let shouldNavigateToCallPageOnShow = false
+let pendingCallEndToastTitle = ''
+
+export const resetLocalMediaStatus = () => {
+  global.isLocalMicOpen = true
+  global.isLocalCameraOpen = true
+  global.currentSpeakerStatus = null
+  shouldNavigateToCallPageOnShow = false
+  resetCallConnectedAt()
 }
 
 export const AudioPlaybackDevice = { Speakerphone: 0, Earpiece: 1, }
@@ -33,6 +48,31 @@ export const _navigateToCallPage = () => {
   }
 }
 
+export const navigateToCallPageWhenAppVisible = () => {
+  if (isAppVisible == true) {
+    _navigateToCallPage()
+    return
+  }
+
+  console.log('_navigateToCallPage skipped because app is not visible')
+  shouldNavigateToCallPageOnShow = true
+}
+
+const completePendingCallPageNavigation = () => {
+  shouldNavigateToCallPageOnShow = false
+  _navigateToCallPage()
+}
+
+export const setAppVisible = (visible: boolean) => {
+  isAppVisible = visible
+  if (isAppVisible == true && shouldNavigateToCallPageOnShow == true && state.callStatus != CALL_STATUS_IDLE) {
+    completePendingCallPageNavigation()
+  }
+  if (isAppVisible == true) {
+    flushPendingCallEndToast()
+  }
+}
+
 export const _navigateBackCallPage = () => {
   const pagesList = getCurrentPages()
   const currentPage = pagesList[pagesList.length - 1].route
@@ -42,111 +82,237 @@ export const _navigateBackCallPage = () => {
   }
 }
 
+const handlePermissionDeniedCall = (errCode: number, errMsg: string): void => {
+  console.log(`hasPermission fail, errCode=${errCode}, errMsg=${errMsg}`)
+  NECallKit.hangup({} as HangupParams)
+  setCallRole(CALL_ROLE_UNKNOWN)
+  setCallStatus(CALL_STATUS_IDLE)
+  shouldNavigateToCallPageOnShow = false
+  resetCallConnectedAt()
+  _navigateBackCallPage()
+}
+
+export const ensureCallPermission = (
+  callType: CallType,
+  success: () => void,
+  fail: (errCode: number, errMsg: string) => void
+): void => {
+  NECallKit.hasPermission({
+    type: callType,
+    success: () => {
+      success()
+    },
+    fail: (errCode: number, errMsg: string) => {
+      fail(errCode, errMsg)
+    }
+  })
+}
+
+const enterIncomingCallPage = (callType: CallType): void => {
+  resetLocalMediaStatus()
+  setCallType(callType)
+  setCallRole(CALL_ROLE_CALLEE)
+  setCallStatus(CALL_STATUS_CALLING)
+
+  _navigateToCallPage()
+}
+
+const getCallEndToastTitle = (reasonCode: number): string => {
+  //呼叫超时
+  if (reasonCode == 2) {
+    return '呼叫超时'
+  }
+
+  //对方忙线
+  if (reasonCode == 3) {
+    return '对方忙线'
+  }
+
+  //对方已拒绝
+  if (reasonCode == 14) {
+    return '对方已拒绝'
+  }
+
+  //对方已挂断
+  if (reasonCode == 16) {
+    return '对方已挂断'
+  }
+
+  //其他端已拒绝
+  if (reasonCode == 17) {
+    return '其他端已拒绝'
+  }
+
+  //其他端已接听
+  if (reasonCode == 18) {
+    return '其他端已接听'
+  }
+
+  return ''
+}
+
+const showCallEndToast = (title: string): void => {
+  if (title.length <= 0) {
+    return
+  }
+
+  pendingCallEndToastTitle = title
+  flushPendingCallEndToast()
+}
+
+export const flushPendingCallEndToast = () => {
+  if (isAppVisible != true || pendingCallEndToastTitle.length <= 0) {
+    return
+  }
+
+  const title = pendingCallEndToastTitle
+  pendingCallEndToastTitle = ''
+  setTimeout(() => {
+    if (isAppVisible == true) {
+      uni.showToast({
+        title: title,
+        icon: 'none'
+      })
+    } else {
+      pendingCallEndToastTitle = title
+    }
+  }, 800)
+}
+
 export const NECallKit = new CallEngine()
 NECallKit.setup({appKey: APP_KEY})
 
 const innerAudioContext = uni.createInnerAudioContext()
 
+const getInfoNumber = (info: any | null, key: string, defaultValue: number): number => {
+  if (info == null) {
+    return defaultValue
+  }
+
+  const text = `${info}`
+  const prefix = `${key}=`
+  const startIndex = text.indexOf(prefix)
+  if (startIndex < 0) {
+    return defaultValue
+  }
+
+  const valueStartIndex = startIndex + prefix.length
+  let valueEndIndex = text.indexOf(",", valueStartIndex)
+  if (valueEndIndex < 0) {
+    valueEndIndex = text.indexOf("}", valueStartIndex)
+  }
+  if (valueEndIndex < 0) {
+    valueEndIndex = text.length
+  }
+
+  const value = parseInt(text.substring(valueStartIndex, valueEndIndex))
+  if (isNaN(value)) {
+    return defaultValue
+  }
+  return value
+}
+
 // 注册事件监听
 NECallKit.on("onCallReceived", (res) => {
   console.log(`onCallReceived, data: ${JSON.stringify(res)}`)
-  const info = (res as UTSJSONObject)?.info as UTSJSONObject
+  let callType = state.callType
+  // #ifdef APP-ANDROID
+  const androidInviteInfo = (res as UTSJSONObject).getAny("info")
+  callType = getInfoNumber(androidInviteInfo, "callType", state.callType) as CallType
+  // #endif
+  // #ifdef APP-IOS
+  const inviteRes = res as any
+  const iosInviteInfo = inviteRes.info
+  if (iosInviteInfo != null) {
+    callType = iosInviteInfo.callType as CallType
+  }
+  // #endif
 
-  NECallKit.hasPermission({
-    type: info?.callType as number,
-    success: () => {},
-    fail: (errCode: number, errMsg: string) => {}
-  })
-
-  setCallType(info?.callType as CallType)
-  setCallRole(CALL_ROLE.CALLEE as CallRole)
-  setCallStatus(CALL_STATUS.CALLING as CallStatus)
-  
-  _navigateToCallPage()
+  ensureCallPermission(
+    callType as CallType,
+    () => {
+      enterIncomingCallPage(callType as CallType)
+    },
+    (errCode: number, errMsg: string) => {
+      handlePermissionDeniedCall(errCode, errMsg)
+    }
+  )
 })
 
 NECallKit.on("onCallConnected", (res) => {
   console.log(`onCallConnected, data: ${JSON.stringify(res)}`)
   NECallKit.startService(state.callType)
-  setCallStatus(CALL_STATUS.CONNECTED as CallStatus)
+  if (state.callConnectedAt <= 0) {
+    setCallConnectedAt(Date.now())
+  }
+  setCallStatus(CALL_STATUS_CONNECTED)
 })
 
 NECallKit.on("onCallNotConnected", (res) => {
   console.log(`onCallNotConnected, data: ${JSON.stringify(res)}`)
-  setCallRole(CALL_ROLE.UNKNOWN as CallRole)
-  setCallStatus(CALL_STATUS.IDLE as CallStatus)
+  setCallRole(CALL_ROLE_UNKNOWN)
+  setCallStatus(CALL_STATUS_IDLE)
+  shouldNavigateToCallPageOnShow = false
+  resetCallConnectedAt()
   _navigateBackCallPage()
   NECallKit.stopFloatWindow()
 })
 
 NECallKit.on("onCallEnd", (res) => {
   console.log(`onCallEnd, data: ${JSON.stringify(res)}`)
-  const info = (res as UTSJSONObject)?.info as UTSJSONObject
-  
+  let reasonCode = 0
+  // #ifdef APP-ANDROID
+  const androidCallEndInfo = (res as UTSJSONObject).getAny("info")
+  reasonCode = getInfoNumber(androidCallEndInfo, "reasonCode", 0)
+  // #endif
+  // #ifdef APP-IOS
+  const callEndRes = res as any
+  const iosCallEndInfo = callEndRes.info
+  if (iosCallEndInfo != null) {
+    reasonCode = iosCallEndInfo.reasonCode as number
+  }
+  // #endif
+  const callEndToastTitle = getCallEndToastTitle(reasonCode)
+
   NECallKit.stopService(state.callType)
-  setCallRole(CALL_ROLE.UNKNOWN as CallRole)
-  setCallStatus(CALL_STATUS.IDLE as CallStatus)
+  setCallRole(CALL_ROLE_UNKNOWN)
+  setCallStatus(CALL_STATUS_IDLE)
+  shouldNavigateToCallPageOnShow = false
+  resetCallConnectedAt()
   _navigateBackCallPage()
   NECallKit.stopFloatWindow()
-  
-  //呼叫超时
-  if (info?.reasonCode == 2) {
-    uni.showToast({
-      title: '呼叫超时',
-      icon: 'none'
-    })
-  }
-  
+
   //对方忙线
-  if (info?.reasonCode == 3) {
-    uni.showToast({
-      title: '对方忙线',
-      icon: 'none'
-    })
-    
+  if (reasonCode == 3) {
     innerAudioContext.src = '/static/audio/avchat_peer_busy.mp3';
     innerAudioContext.play();
   }
-  
+
   //对方已拒绝
-  if (info?.reasonCode == 14) {
-    uni.showToast({
-      title: '对方已拒绝',
-      icon: 'none'
-    })
-    
+  if (reasonCode == 14) {
     innerAudioContext.src = '/static/audio/avchat_peer_reject.mp3';
     innerAudioContext.play();
   }
-  
-  //对方已挂断
-  if (info?.reasonCode == 16) {
-    uni.showToast({
-      title: '对方已挂断',
-      icon: 'none'
-    })
-  }
-  
-  //其他端已拒绝
-  if (info?.reasonCode == 17) {
-    uni.showToast({
-      title: '其他端已拒绝',
-      icon: 'none'
-    })
-  }
-  
-  //其他端已接听
-  if (info?.reasonCode == 18) {
-    uni.showToast({
-      title: '其他端已接听',
-      icon: 'none'
-    })
-  }
+
+  showCallEndToast(callEndToastTitle)
 })
 
 NECallKit.on("onFloatWindowClick", (res) => {
   console.log(`onFloatWindowClick, data: ${JSON.stringify(res)}`)
+
+  shouldNavigateToCallPageOnShow = true
   NECallKit.stopFloatWindow()
-  
-  _navigateToCallPage()
+  if (isAppVisible == true) {
+    completePendingCallPageNavigation()
+    return
+  }
+
+  NECallKit.bringAppToForeground()
+  setTimeout(() => {
+    if (isAppVisible == true && shouldNavigateToCallPageOnShow == true && state.callStatus != CALL_STATUS_IDLE) {
+      completePendingCallPageNavigation()
+    } else if (shouldNavigateToCallPageOnShow == true) {
+      console.log('_navigateToCallPage pending until app show')
+    }
+  }, 300)
 })
