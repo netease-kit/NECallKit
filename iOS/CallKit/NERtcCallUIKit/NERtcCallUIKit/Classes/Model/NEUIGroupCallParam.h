@@ -20,6 +20,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// 指定通话 id 可选
 @property(nonatomic, copy) NSString *callId;
 
+/// 业务群 ID，可选；CallUIKit 不校验或改写
+@property(nonatomic, copy, nullable) NSString *groupId;
+
+/// 透传给群呼的额外信息，可选；CallUIKit 不校验或改写
+@property(nonatomic, copy, nullable) NSString *extraInfo;
+
 #pragma mark - 推送配置
 
 /// 推送配置参数，默认开启

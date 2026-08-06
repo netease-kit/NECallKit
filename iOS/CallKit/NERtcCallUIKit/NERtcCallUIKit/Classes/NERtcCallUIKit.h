@@ -62,6 +62,12 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// 群组通话邀请用户回调
 - (void)inviteUsersWithCallId:(NSString *)callId
+                      groupId:(nullable NSString *)groupId
+                  inCallUsers:(NSArray<NSString *> *)inCallUsers
+                   completion:(void (^)(NSArray<NSString *> *_Nullable users))completion;
+
+/// 群组通话邀请用户回调（兼容旧版本）
+- (void)inviteUsersWithCallId:(NSString *)callId
                   inCallUsers:(NSArray<NSString *> *)inCallUsers
                    completion:(void (^)(NSArray<NSString *> *_Nullable users))completion;
 

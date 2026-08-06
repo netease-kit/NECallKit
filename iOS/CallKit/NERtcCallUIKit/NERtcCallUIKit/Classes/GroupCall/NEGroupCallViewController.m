@@ -20,6 +20,8 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
 
 @interface NEGroupCallViewController () <NEGroupCalledDelegate, NEGroupCallKitDelegate>
 
+@property(nonatomic, copy, nullable) NSString *extraInfo;
+
 @property(nonatomic, strong) NSMutableArray<NEGroupUser *> *datas;
 
 @property(nonatomic, assign) BOOL isCalled;
@@ -50,6 +52,8 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
 @end
 
 @implementation NEGroupCallViewController
+
+@synthesize extraInfo = _extraInfo;
 
 - (void)dealloc {
   [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -112,6 +116,11 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
       NSString *uuid = [self getRandomString];
       param.callId = uuid;
       self.callId = uuid;
+    }
+    param.groupId = self.groupId;
+    param.extraInfo = self.extraInfo;
+    if (self.groupId.length > 0) {
+      param.groupType = GroupTypeDiscussion;
     }
     NEXKitBaseLogInfo(@"call id : %@", param.callId);
     NEXKitBaseLogInfo(@"call id length : %lu", (unsigned long)param.callId.length);
@@ -499,16 +508,17 @@ navigation
     }
   }
 
-  NEXKitBaseLogInfo(@"🔄 NEGroupCallViewController 调用 inviteUsers，callId: %@, "
-                    @"当前用户数: %ld",
-                    callId, (long)inCallUserIds.count);
+  NEXKitBaseLogInfo(@"NEGroupCallViewController inviteUsers callId:%@, groupId:%@, userCount:%ld",
+                    callId, self.groupId, (long)inCallUserIds.count);
 
   // 通过代理回调到 NERtcCallUIKit
   if (self.delegate &&
-      [self.delegate respondsToSelector:@selector(inviteUsersWithCallId:inCallUsers:completion:)]) {
+      [self.delegate respondsToSelector:
+                         @selector(inviteUsersWithCallId:groupId:inCallUsers:completion:)]) {
     __weak typeof(self) weakSelf = self;
     [self.delegate
         inviteUsersWithCallId:callId
+                      groupId:self.groupId
                   inCallUsers:inCallUserIds
                    completion:^(NSArray<NSString *> *_Nullable userIds) {
                      if (userIds && userIds.count > 0) {
@@ -683,6 +693,18 @@ navigation
       [self refreshCollection];
       return;
     }
+  }
+}
+
+- (void)onGroupRtcJoinSuccess:(NEGroupRtcInfo *)info {
+  NEXKitBaseLogInfo(@"onGroupRtcJoinSuccess callId=%@ cid=%llu selfRtcUid=%llu", info.callId,
+                    info.cid, info.selfRtcUid);
+  NEGroupRtcInfo *current = [[NEGroupCallKit sharedInstance] currentGroupRtcInfo];
+  if (current == nil) {
+    NEXKitBaseLogInfo(@"currentGroupRtcInfo null");
+  } else {
+    NEXKitBaseLogInfo(@"currentGroupRtcInfo callId=%@ cid=%llu selfRtcUid=%llu", current.callId,
+                      current.cid, current.selfRtcUid);
   }
 }
 

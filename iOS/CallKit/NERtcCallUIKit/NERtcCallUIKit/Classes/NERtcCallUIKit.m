@@ -22,6 +22,12 @@
 #import "NEIncomingCallBannerView.h"
 #import "NEIncomingCallBannerWindow.h"
 
+@interface NEGroupCallViewController (NEExtraInfo)
+
+@property(nonatomic, copy, nullable) NSString *extraInfo;
+
+@end
+
 static NSString *const kEventInAppFloatWindowStateChanged =
     @"EVENT_IN_APP_FLOATWINDOW_STATE_CHANGED";
 
@@ -1477,7 +1483,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 #pragma mark - Version
 
 + (NSString *)version {
-  return @"4.8.1";
+  return @"4.8.5";
 
 }
 
@@ -1561,6 +1567,8 @@ const NSInteger kGroupCallMaxUsers = 10;
         NEGroupCallViewController *callController =
             [[NEGroupCallViewController alloc] initWithCalled:NO withCaller:caller];
         callController.delegate = weakSelf;
+        callController.groupId = callParam.groupId;
+        callController.extraInfo = callParam.extraInfo;
 
         // 根据全局配置设置邀请按钮显示状态
         if (weakSelf.config && weakSelf.config.uiConfig) {
@@ -1588,6 +1596,11 @@ const NSInteger kGroupCallMaxUsers = 10;
         NEGroupCallViewController *callController =
             [[NEGroupCallViewController alloc] initWithCalled:NO withCaller:nil];
         callController.delegate = weakSelf;
+        callController.groupId = callParam.groupId;
+        callController.extraInfo = callParam.extraInfo;
+        if (callParam.callId) {
+          callController.callId = callParam.callId;
+        }
         [weakSelf showGroupCallView:callController];
       }];
 }
@@ -1623,6 +1636,9 @@ const NSInteger kGroupCallMaxUsers = 10;
 
 #pragma mark group call delegate
 - (void)onGroupInvitedWithInfo:(NEGroupCallInfo *)info {
+  NEXKitBaseLogInfo(
+      @"call uikit onGroupInvitedWithInfo callId:%@, groupId:%@, extraInfo:%@",
+      info.callId, info.groupId, info.extraInfo);
   if (self.config.uiConfig.disableShowGroupCallInviteView == YES) {
     NEXKitBaseLogInfo(
         @"call uikit skip group invite view, disableShowGroupCallInviteView enabled callId:%@",
@@ -1657,6 +1673,7 @@ const NSInteger kGroupCallMaxUsers = 10;
                   NEGroupCallViewController *groupCall =
                       [[NEGroupCallViewController alloc] initWithCalled:YES withCaller:neUser];
                   groupCall.callId = info.callId;
+                  groupCall.groupId = info.groupId;
                   groupCall.startTimestamp = info.startTimestamp;
 
                   // 根据全局配置设置邀请按钮显示状态
@@ -1700,12 +1717,21 @@ const NSInteger kGroupCallMaxUsers = 10;
 #pragma mark - NEGroupCallViewControllerDelegate
 
 - (void)inviteUsersWithCallId:(NSString *)callId
+                      groupId:(nullable NSString *)groupId
                   inCallUsers:(NSArray<NSString *> *)inCallUsers
                    completion:(void (^)(NSArray<NSString *> *_Nullable users))completion {
-  NEXKitBaseLogInfo(@"NERtcCallUIKit 收到邀请用户请求，callId: %@, 当前通话用户数: %ld", callId,
-                    (long)inCallUsers.count);
+  NEXKitBaseLogInfo(@"NERtcCallUIKit inviteUsers callId:%@, groupId:%@, userCount:%ld", callId,
+                    groupId, (long)inCallUsers.count);
   if (self.delegate &&
-      [self.delegate respondsToSelector:@selector(inviteUsersWithCallId:inCallUsers:completion:)]) {
+      [self.delegate respondsToSelector:
+                         @selector(inviteUsersWithCallId:groupId:inCallUsers:completion:)]) {
+    [self.delegate inviteUsersWithCallId:callId
+                                 groupId:groupId
+                             inCallUsers:inCallUsers
+                              completion:completion];
+  } else if (self.delegate &&
+             [self.delegate
+                 respondsToSelector:@selector(inviteUsersWithCallId:inCallUsers:completion:)]) {
     [self.delegate inviteUsersWithCallId:callId inCallUsers:inCallUsers completion:completion];
   }
 }

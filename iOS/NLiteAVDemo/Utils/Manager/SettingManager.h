@@ -46,12 +46,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, assign, readonly) BOOL enableSingleToGroupCall;
 
-@property(nonatomic, strong, nullable) NSString *privateConfigUrl;
-
-@property(nonatomic, strong, nullable) NSDictionary *privateIMConfig;
-
-@property(nonatomic, strong, nullable) NSDictionary *privateRTCConfig;
-
 + (id)shareInstance;
 
 - (void)setTimeoutWithSecond:(NSInteger)second;
@@ -75,14 +69,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setIsGlobalInit:(BOOL)isGlobalInit
             withApnsCer:(NSString *)apnsCer
              withAppkey:(NSString *)appkey;
-
-- (void)setPrivateConfigUrl:(NSString *)url;
-
-- (void)setPrivateIMConfig:(NSDictionary *)config;
-
-- (void)setPrivateRTCConfig:(NSDictionary *)config;
-
-- (void)clearPrivateConfig;
 
 @end
 

@@ -15,6 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 /// 群组通话邀请用户回调
 - (void)inviteUsersWithCallId:(NSString *)callId
+                      groupId:(nullable NSString *)groupId
                   inCallUsers:(NSArray<NSString *> *)inCallUsers
                    completion:(void (^)(NSArray<NSString *> *_Nullable users))completion;
 
@@ -23,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 @interface NEGroupCallViewController : UIViewController
 
 @property(nonatomic, strong) NSString *callId;
+
+@property(nonatomic, copy, nullable) NSString *groupId;
 
 @property(nonatomic, assign) NSInteger startTimestamp;
 
