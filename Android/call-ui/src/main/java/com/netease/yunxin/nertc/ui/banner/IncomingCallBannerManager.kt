@@ -15,6 +15,11 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import com.netease.nimlib.sdk.NIMClient
+import com.netease.nimlib.sdk.RequestCallbackWrapper
+import com.netease.nimlib.sdk.nos.NosService
+import com.netease.nimlib.sdk.uinfo.UserService
+import com.netease.nimlib.sdk.uinfo.model.NimUserInfo
 import com.netease.yunxin.kit.alog.ALog
 import com.netease.yunxin.kit.call.p2p.NECallEngine
 import com.netease.yunxin.kit.call.p2p.model.NECallEndInfo
@@ -22,9 +27,11 @@ import com.netease.yunxin.kit.call.p2p.model.NECallEngineDelegateAbs
 import com.netease.yunxin.kit.call.p2p.model.NEHangupReasonCode
 import com.netease.yunxin.kit.call.p2p.param.NEHangupParam
 import com.netease.yunxin.nertc.ui.R
+import com.netease.yunxin.nertc.ui.base.UserInfoExtensionHelper
 import com.netease.yunxin.nertc.ui.permission.CallMediaPermissionPolicy
 import com.netease.yunxin.nertc.ui.utils.isGranted
 import com.netease.yunxin.nertc.ui.utils.toastShort
+import java.util.Collections
 
 /**
  * 来电方信息数据类
@@ -55,6 +62,8 @@ object IncomingCallBannerManager {
 
     private var bannerView: IncomingCallBannerView? = null
     private var bannerContext: Context? = null
+    private var pendingCallerName: String? = null
+    private var pendingAvatarUrl: String? = null
 
     /**
      * 标记用户已主动导航到通话页面（点击横幅主体或接听），
@@ -114,14 +123,107 @@ object IncomingCallBannerManager {
      * 异步更新横幅中展示的昵称。
      */
     fun updateCallerName(name: String) {
-        bannerView?.updateCallerName(name)
+        pendingCallerName = name
+        val view = bannerView
+        ALog.i(TAG, "updateCallerName name=$name hasBannerView=${view != null}")
+        view?.updateCallerName(name)
     }
 
     /**
      * 异步更新横幅中展示的头像。
      */
     fun updateAvatarUrl(url: String?) {
-        bannerView?.updateAvatarUrl(url)
+        pendingAvatarUrl = url
+        val view = bannerView
+        ALog.i(TAG, "updateAvatarUrl urlBlank=${url.isNullOrBlank()} hasBannerView=${view != null}")
+        view?.updateAvatarUrl(url)
+    }
+
+    /**
+     * 异步获取来电方昵称和头像，并更新当前横幅展示。
+     * 优先使用 [UserInfoExtensionHelper.userInfoHelper]，失败时回退到 NIM SDK 获取。
+     */
+    fun fetchAndUpdateCallerInfo(context: Context, callerAccId: String) {
+        val helper = UserInfoExtensionHelper.userInfoHelper
+        var needNickname = helper?.fetchNickname(callerAccId) { name ->
+            ALog.d(TAG, "fetchNickname callerAccId=$callerAccId")
+            updateCallerName(name)
+        } != true
+        var needAvatar = helper?.fetchAvatar(context, callerAccId) { url, _ ->
+            ALog.d(TAG, "fetchAvatar callerAccId=$callerAccId")
+            updateAvatarUrl(url)
+        } != true
+
+        if (needNickname || needAvatar) {
+            fetchUserInfoFromNim(callerAccId, needNickname, needAvatar)
+        }
+    }
+
+    private fun fetchUserInfoFromNim(
+        accId: String,
+        needName: Boolean,
+        needAvatar: Boolean
+    ) {
+        var missingName = needName
+        var missingAvatar = needAvatar
+
+        val resolveAvatar: (String?) -> Unit = { url ->
+            if (url != null) {
+                NIMClient.getService(NosService::class.java).getOriginUrlFromShortUrl(url)
+                    .setCallback(object : RequestCallbackWrapper<String>() {
+                        override fun onResult(
+                            code: Int,
+                            result: String?,
+                            exception: Throwable?
+                        ) {
+                            val avatarUrl = result.takeUnless { it.isNullOrBlank() } ?: url
+                            ALog.d(
+                                TAG,
+                                "fetchUserInfo NIM avatar accId=$accId code=$code " +
+                                    "originBlank=${result.isNullOrBlank()}"
+                            )
+                            updateAvatarUrl(avatarUrl)
+                        }
+                    })
+            } else {
+                ALog.d(TAG, "fetchUserInfo NIM avatar empty accId=$accId")
+            }
+        }
+
+        val local = NIMClient.getService(UserService::class.java).getUserInfo(accId)
+        if (local != null) {
+            if (missingName && local.name != null) {
+                ALog.d(TAG, "fetchUserInfo NIM local name accId=$accId")
+                updateCallerName(local.name)
+                missingName = false
+            }
+            if (missingAvatar && local.avatar != null) {
+                resolveAvatar(local.avatar)
+                missingAvatar = false
+            }
+            if (!missingName && !missingAvatar) return
+        }
+
+        NIMClient.getService(UserService::class.java)
+            .fetchUserInfo(Collections.singletonList(accId))
+            .setCallback(object : RequestCallbackWrapper<List<NimUserInfo?>>() {
+                override fun onResult(
+                    code: Int,
+                    result: List<NimUserInfo?>?,
+                    exception: Throwable?
+                ) {
+                    val info = result?.firstOrNull() ?: run {
+                        ALog.d(TAG, "fetchUserInfo NIM remote empty accId=$accId")
+                        return
+                    }
+                    if (missingName) {
+                        updateCallerName(info.name ?: accId)
+                    }
+                    if (missingAvatar) {
+                        resolveAvatar(info.avatar)
+                    }
+                }
+            })
     }
 
     /**
@@ -204,8 +306,11 @@ object IncomingCallBannerManager {
             }
         )
         bannerView = view
+        pendingCallerName?.let { view.updateCallerName(it) }
+        pendingAvatarUrl?.let { view.updateAvatarUrl(it) }
         NECallEngine.sharedInstance().addCallDelegate(callEngineDelegate)
         view.show()
+        fetchAndUpdateCallerInfo(context.applicationContext, callerInfo.accId)
         return true
     }
 
@@ -215,6 +320,8 @@ object IncomingCallBannerManager {
         bannerView?.dismiss()
         bannerView = null
         bannerContext = null
+        pendingCallerName = null
+        pendingAvatarUrl = null
     }
 
     fun isShowing(): Boolean = bannerView?.isShowing() == true

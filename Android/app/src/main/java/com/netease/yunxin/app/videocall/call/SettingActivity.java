@@ -22,9 +22,17 @@ import com.netease.yunxin.app.videocall.utils.SPUtils;
 import com.netease.yunxin.kit.call.p2p.NECallEngine;
 import com.netease.yunxin.kit.call.p2p.model.NECallConfig;
 import com.netease.yunxin.kit.call.p2p.model.NECallInitRtcMode;
+import com.netease.yunxin.nertc.ui.CallKitUI;
+import com.netease.yunxin.nertc.ui.NECallUIDynamicConfig;
+import com.netease.yunxin.nertc.ui.NECallUIIncomingBackgroundSource;
+import com.netease.yunxin.nertc.ui.banner.IncomingCallBannerManager;
 import com.netease.yunxin.nertc.ui.base.Constants;
 
 public class SettingActivity extends AppCompatActivity {
+  private static final String KEY_ENABLE_SINGLE_TO_GROUP_CALL = "enableSingleToGroupCall";
+  private static final String DEMO_INCOMING_BACKGROUND_URL =
+      "https://picsum.photos/id/1018/900/1600.jpg";
+
   /** rtc 默认30s */
   public static long RTC_TIME_OUT_SECOND = 30;
   /** 是否开启呼叫时加入rtc */
@@ -74,6 +82,12 @@ public class SettingActivity extends AppCompatActivity {
   public static boolean ENABLE_VIDEO_CALLEE_PREVIEW = false;
   /** 是否支持视频通话虚化功能 */
   public static boolean ENABLE_VIDEO_VIRTUAL_BLUR = false;
+  /** 是否开启来电横幅 */
+  public static boolean ENABLE_INCOMING_BANNER =
+      SPUtils.getInstance().getBoolean("enableIncomingBanner", false);
+  /** 是否开启单呼转多人 */
+  public static boolean ENABLE_SINGLE_TO_GROUP_CALL =
+      SPUtils.getInstance().getBoolean(KEY_ENABLE_SINGLE_TO_GROUP_CALL, false);
   /** AI降噪模式 */
   public static NERtcAudioAINSMode AINS_MODE = NERtcAudioAINSMode.kNERtcAudioAINSOff;
 
@@ -109,6 +123,16 @@ public class SettingActivity extends AppCompatActivity {
         (buttonView, isChecked) -> {
           SPUtils.getInstance().put("autoJoinChannelWhenCalled", isChecked);
           ENABLE_AUTO_JOIN = isChecked;
+          NEED_RESTART = true;
+          updateTip();
+        });
+
+    SwitchCompat swEnableSingleToGroupCall = findViewById(R.id.sw_enable_single_to_group_call);
+    swEnableSingleToGroupCall.setChecked(ENABLE_SINGLE_TO_GROUP_CALL);
+    swEnableSingleToGroupCall.setOnCheckedChangeListener(
+        (buttonView, isChecked) -> {
+          SPUtils.getInstance().put(KEY_ENABLE_SINGLE_TO_GROUP_CALL, isChecked);
+          ENABLE_SINGLE_TO_GROUP_CALL = isChecked;
           NEED_RESTART = true;
           updateTip();
         });
@@ -171,6 +195,20 @@ public class SettingActivity extends AppCompatActivity {
 
     SwitchCompat swVirtualBlur = findViewById(R.id.sw_enable_virtual_blur);
     swVirtualBlur.setChecked(ENABLE_VIDEO_VIRTUAL_BLUR);
+
+    SwitchCompat swIncomingBanner = findViewById(R.id.sw_enable_incoming_banner);
+    swIncomingBanner.setChecked(ENABLE_INCOMING_BANNER);
+    swIncomingBanner.setOnCheckedChangeListener(
+        (buttonView, isChecked) -> {
+          SPUtils.getInstance().put("enableIncomingBanner", isChecked);
+          ENABLE_INCOMING_BANNER = isChecked;
+          if (CallKitUI.INSTANCE.getOptions() != null) {
+            CallKitUI.INSTANCE.getOptions().setEnableIncomingBanner(isChecked);
+          }
+          if (isChecked && !IncomingCallBannerManager.INSTANCE.hasOverlayPermission(this)) {
+            IncomingCallBannerManager.INSTANCE.requestOverlayPermission(this);
+          }
+        });
 
     SwitchCompat swVideo2Audio = findViewById(R.id.sw_video_to_audio_confirm);
     swVideo2Audio.setChecked(VIDEO_TO_AUDIO_CONFIRM);
@@ -263,10 +301,43 @@ public class SettingActivity extends AppCompatActivity {
     findViewById(R.id.bt_self_signal)
         .setOnClickListener(
             v -> startActivity(new Intent(SettingActivity.this, SelfSignalActivity.class)));
+    findViewById(R.id.bt_use_local_incoming_bg)
+        .setOnClickListener(v -> applyLocalIncomingBackground());
+    findViewById(R.id.bt_use_url_incoming_bg).setOnClickListener(v -> applyUrlIncomingBackground());
+    findViewById(R.id.bt_clear_incoming_bg).setOnClickListener(v -> clearIncomingBackground());
   }
 
   private void updateTip() {
     restartTip.setVisibility(NEED_RESTART ? View.VISIBLE : View.GONE);
+  }
+
+  private void applyLocalIncomingBackground() {
+    NECallUIDynamicConfig config =
+        new NECallUIDynamicConfig.Builder()
+            .incomingCallBackground(
+                new NECallUIIncomingBackgroundSource.Builder()
+                    .resource(R.drawable.custom_answer_bg_local)
+                    .build())
+            .build();
+    CallKitUI.setDynamicUIConfig(config);
+    Toast.makeText(this, "已设置本地风景图，下一次来电页生效", Toast.LENGTH_SHORT).show();
+  }
+
+  private void applyUrlIncomingBackground() {
+    NECallUIDynamicConfig config =
+        new NECallUIDynamicConfig.Builder()
+            .incomingCallBackground(
+                new NECallUIIncomingBackgroundSource.Builder()
+                    .url(DEMO_INCOMING_BACKGROUND_URL)
+                    .build())
+            .build();
+    CallKitUI.setDynamicUIConfig(config);
+    Toast.makeText(this, "已设置 URL 风景图，下一次来电页生效", Toast.LENGTH_SHORT).show();
+  }
+
+  private void clearIncomingBackground() {
+    CallKitUI.setDynamicUIConfig(null);
+    Toast.makeText(this, "已清空来电背景", Toast.LENGTH_SHORT).show();
   }
 
   public static void toInit() {

@@ -14,6 +14,8 @@ typedef void (^InviteCompletion)(NSArray<NEUser *> *users);
 
 @property(nonatomic, assign) BOOL isInvite;
 
+@property(nonatomic, copy, nullable) NSString *groupId;
+
 // 已经在通话中的成员，在通话中选择成员使用
 @property(nonatomic, strong) NSMutableDictionary<NSString *, NEUser *> *inCallUserDic;
 

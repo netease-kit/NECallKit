@@ -1,3 +1,20 @@
+## 4.8.5（2026-08-06）
+### New Features
+
+- uni-app UTS 插件支持鸿蒙端1V1音视频通话。
+
+## [4.8.5] - 2026-07-28
+### New Features
+* HarmonyOS UTS 新增 host-managed CallKit 桥接能力，支持 UTS 宿主托管初始化、登录、发起/接听/挂断、音视频切换、来电横幅、小窗和通话状态回调。
+
+### Changed
+* UTS 插件版本更新至 `4.8.5`。
+* HarmonyOS CallKit 和 CallUIKit 版本更新至 `4.8.5`，通过本地 `callkit.har` / `callkit_ui.har` 接入；Android、iOS 依赖版本保持不变。
+* HarmonyOS NIM 相关依赖更新至 `10.9.90`。
+
+### Bug Fixes
+* 修复 HarmonyOS UTS 多轮通话、后台小窗、来电横幅、通话页布局刷新和音视频切换过程中的状态残留与显示异常问题。
+
 ## [4.8.1] - 2026-07-08
 ### New Features
 * UTS-iOS 接入 iOS 既有 LiveCommunicationKit 系统来电横幅能力，支持在后台、锁屏、杀进程拉起场景通过系统横幅接听或拒绝来电。

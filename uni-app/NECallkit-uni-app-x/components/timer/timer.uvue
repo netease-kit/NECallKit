@@ -5,9 +5,10 @@
 </template>
 
 <script setup lang="uts">
+import { state } from '@/store/index.uts'
+
 const callDuration = ref('00:00')
 let timer: number | null = null
-let seconds = 0
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60).toString().padStart(2, '0')
@@ -15,10 +16,23 @@ function formatTime(sec: number): string {
   return `${m}:${s}`
 }
 
+function updateCallDuration(): void {
+  if (state.callConnectedAt <= 0) {
+    callDuration.value = '00:00'
+    return
+  }
+
+  let seconds = Math.floor((Date.now() - state.callConnectedAt) / 1000)
+  if (seconds < 0) {
+    seconds = 0
+  }
+  callDuration.value = formatTime(seconds)
+}
+
 onMounted(() => {
+  updateCallDuration()
   timer = setInterval(() => {
-    seconds++
-    callDuration.value = formatTime(seconds)
+    updateCallDuration()
   }, 1000)
 })
 

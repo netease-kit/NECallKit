@@ -1,30 +1,30 @@
 <template>
-  <view v-if="state.callType === CALL_TYPE.AUDIO">
-    <view class="button-group-row" v-if="state.callStatus === CALL_STATUS.CALLING && state.callRole === CALL_ROLE.CALLER">
+  <view v-if="state.callType === CALL_TYPE_AUDIO">
+    <view class="button-group-row" v-if="state.callStatus === CALL_STATUS_CALLING && state.callRole === CALL_ROLE_CALLER">
       <ne-microphone :isShowText="true" size="large" />
       <hangup />
       <ne-handsfree :isShowText="true" size="large" />
     </view>
-    <view class="button-group" v-if="state.callStatus === CALL_STATUS.CONNECTED">
+    <view class="button-group" v-if="state.callStatus === CALL_STATUS_CONNECTED">
       <view class="button-group-audio">
         <ne-microphone />
         <ne-handsfree />
         <hangup :size="32" :is-show-text="false" />
       </view>
     </view>
-    <view class="button-group-row" v-if="state.callStatus === CALL_STATUS.CALLING && state.callRole === CALL_ROLE.CALLEE">
+    <view class="button-group-row" v-if="state.callStatus === CALL_STATUS_CALLING && state.callRole === CALL_ROLE_CALLEE">
       <reject />
       <accept />
     </view>
   </view>
 
-  <view v-if="state.callType === CALL_TYPE.VIDEO">
-    <view class="button-group" v-if="state.callStatus === CALL_STATUS.CALLING && state.callRole === CALL_ROLE.CALLER">
+  <view v-if="state.callType === CALL_TYPE_VIDEO">
+    <view class="button-group" v-if="state.callStatus === CALL_STATUS_CALLING && state.callRole === CALL_ROLE_CALLER">
       <view class="button-group-row">
         <hangup />
       </view>
     </view>
-    <view class="button-group" v-if="state.callStatus === CALL_STATUS.CONNECTED">
+    <view class="button-group" v-if="state.callStatus === CALL_STATUS_CONNECTED">
       <view class="button-group-video">
         <ne-microphone />
         <ne-camera />
@@ -32,7 +32,7 @@
         <hangup :size="32" :is-show-text="false" />
       </view>
     </view>
-    <view class="button-group" v-if="state.callStatus === CALL_STATUS.CALLING && state.callRole === CALL_ROLE.CALLEE">
+    <view class="button-group" v-if="state.callStatus === CALL_STATUS_CALLING && state.callRole === CALL_ROLE_CALLEE">
       <view class="button-group-row">
         <reject />
         <accept />
@@ -44,9 +44,12 @@
 <script setup>
   import {
     state,
-    CALL_TYPE,
-    CALL_STATUS,
-    CALL_ROLE
+    CALL_TYPE_AUDIO,
+    CALL_TYPE_VIDEO,
+    CALL_STATUS_CALLING,
+    CALL_STATUS_CONNECTED,
+    CALL_ROLE_CALLER,
+    CALL_ROLE_CALLEE
   } from "@/store/index.uts";
   import accept from "./button/accept.uvue";
   import hangup from "./button/hangup.uvue";

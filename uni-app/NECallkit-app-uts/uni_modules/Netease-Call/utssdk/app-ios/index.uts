@@ -208,7 +208,7 @@ export class CallEngine {
   }
 
   public login(param: LoginParams) {
-    console.log(`${NAME.PREFIX} login.start12, data: ${JSON.stringify(param)}`);
+    console.log(`${NAME.PREFIX} login.start12, accountId: ${param.accountId}`);
 
     this.callBridge.login((withAccountId = param.accountId),
       (token = param.token),

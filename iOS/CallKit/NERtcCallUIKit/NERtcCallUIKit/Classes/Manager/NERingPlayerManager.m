@@ -106,7 +106,7 @@
       if (repeat == YES) {
         self.player.numberOfLoops = -1;
       } else {
-        self.player.numberOfLoops = 1;
+        self.player.numberOfLoops = 0;
       }
 
       if (error == nil) {

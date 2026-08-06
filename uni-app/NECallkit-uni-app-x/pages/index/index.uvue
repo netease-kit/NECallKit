@@ -25,13 +25,13 @@
         <radio-group style="margin-left: 15px;display: flex;flex-direction: row;align-items: center;" @change="handleCallTypeChange">
           <view style="display: flex;flex-direction: row;align-items: center;">
             <view>
-              <radio value="2" :checked="state.callType === CALL_TYPE.VIDEO " />
+              <radio value="2" :checked="state.callType === CALL_TYPE_VIDEO " />
             </view>
             <view>视频呼叫</view>
           </view>
           <view style="margin-left: 15px;display: flex;flex-direction: row;align-items: center;">
             <view>
-              <radio value="1" :checked="state.callType === CALL_TYPE.AUDIO " />
+              <radio value="1" :checked="state.callType === CALL_TYPE_AUDIO " />
             </view>
             <view>音频呼叫</view>
           </view>
@@ -43,18 +43,17 @@
 
 <script setup>
   import { CallParams } from '@/uni_modules/Netease-Call'
-  import { NECallKit, _navigateToCallPage } from '@/global/index.uts'
+  import { NECallKit, _navigateToCallPage, ensureCallPermission, resetLocalMediaStatus } from '@/global/index.uts'
   import {
     state,
-    CALL_TYPE,
-    CALL_ROLE,
-    CALL_STATUS,
+    CALL_TYPE_AUDIO,
+    CALL_TYPE_VIDEO,
+    CALL_ROLE_CALLER,
+    CALL_STATUS_CALLING,
     setCallType,
     setCallRole,
     setCallStatus,
-    type CallType,
-    type CallRole,
-    type CallStatus
+    type CallType
   } from '@/store/index.uts'
   
   const loading = ref(false)
@@ -86,30 +85,43 @@
   
   const call = () => {
     loading.value = true
-    const params: CallParams = {
-      accountId: callee.value,
-      callType: state.callType,
-      success: () => {
-        NECallKit.hasPermission({
-          type: state.callType,
-          success: () => {},
-          fail: (errCode: number, errMsg: string) => {}
-        })
-        
-        setCallRole(CALL_ROLE.CALLER as CallRole)
-        setCallStatus(CALL_STATUS.CALLING as CallStatus)
-        
-        loading.value = false
-        
-        _navigateToCallPage()
+    const callType = state.callType
+    const accountId = callee.value
+
+    const startCall = () => {
+      const params: CallParams = {
+        accountId: accountId,
+        callType: callType,
+        success: () => {
+          resetLocalMediaStatus()
+          setCallType(callType)
+          setCallRole(CALL_ROLE_CALLER)
+          setCallStatus(CALL_STATUS_CALLING)
+
+          loading.value = false
+
+          _navigateToCallPage()
+        },
+        fail: (errCode: number, errMsg: string) => {
+          loading.value = false
+          showToast({ title: errMsg, position: "bottom" } as ShowToastOptions)
+        },
+      }
+
+      NECallKit.call(params)
+    }
+
+    ensureCallPermission(
+      callType,
+      () => {
+        startCall()
       },
-      fail: (errCode: number, errMsg: string) => {
+      (errCode: number, errMsg: string) => {
+        console.log(`call skipped because permission denied, errCode=${errCode}, errMsg=${errMsg}`)
         loading.value = false
         showToast({ title: errMsg, position: "bottom" } as ShowToastOptions)
-      },
-    }
-    
-    NECallKit.call(params)
+      }
+    )
   }
 </script>
 

@@ -13,6 +13,7 @@ import com.netease.yunxin.kit.alog.ParameterMap
 import com.netease.yunxin.kit.call.group.GroupCallEndEvent
 import com.netease.yunxin.kit.call.group.GroupCallHangupEvent
 import com.netease.yunxin.kit.call.group.GroupCallMember
+import com.netease.yunxin.kit.call.group.GroupRtcInfo
 import com.netease.yunxin.kit.call.group.NEGroupCall
 import com.netease.yunxin.kit.call.group.NEGroupCallDelegate
 import com.netease.yunxin.kit.call.group.NEGroupCallInfo
@@ -88,6 +89,10 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
 
         override fun onGroupCallEnd(endEvent: GroupCallEndEvent) {
             this@CallKitUIBridgeService.onGroupCallHangup(endEvent.callId)
+        }
+
+        override fun onGroupRtcJoinSuccess(info: GroupRtcInfo) {
+            this@CallKitUIBridgeService.onGroupRtcJoinSuccess(info)
         }
     }
 
@@ -220,11 +225,28 @@ open class CallKitUIBridgeService @JvmOverloads constructor(
         }
     }
 
+    open fun onGroupRtcJoinSuccess(info: GroupRtcInfo) {
+        CallUILog.d(
+            logTag,
+            "onGroupRtcJoinSuccess callId=${info.callId} cid=${info.cid} selfRtcUid=${info.selfRtcUid}"
+        )
+        val current = NEGroupCall.instance().currentGroupRtcInfo()
+        if (current == null) {
+            CallUILog.d(logTag, "currentGroupRtcInfo null")
+        } else {
+            CallUILog.d(
+                logTag,
+                "currentGroupRtcInfo callId=${current.callId} cid=${current.cid} selfRtcUid=${current.selfRtcUid}"
+            )
+        }
+    }
+
     // //////////////////////////////////// NEGroupIncomingCallReceiver /////////////////////////////
     /**
      * 群组来电监听
      */
     open fun onReceiveGroupInvitation(info: NEGroupCallInfo) {
+        CallUILog.d(logTag, GroupInvitationLogFormatter.format(info))
         CallUILog.dApi(logTag, ParameterMap("onReceiveGroupInvitation").append("info", info))
         isSelfGroupInvited = true
         // 检查参数合理性

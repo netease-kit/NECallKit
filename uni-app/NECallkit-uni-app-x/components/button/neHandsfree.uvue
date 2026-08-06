@@ -11,7 +11,7 @@
 import { NECallKit, global, AudioPlaybackDevice } from "@/global/index.uts";
 import {
   state,
-  CALL_TYPE
+  CALL_TYPE_AUDIO
 } from "@/store/index.uts";
 import HANDSFREE_ON_SRC from "../assets/handsfree-on.png";
 import HANDSFREE_OFF_SRC from "../assets/handsfree-off.png";
@@ -55,12 +55,12 @@ onMounted(() => {
   if (savedSpeakerStatus !== null) {
     isEarPhone.value = savedSpeakerStatus === AudioPlaybackDevice.Earpiece;
   } else {
-    const targetAudioPlay = state.callType === CALL_TYPE.AUDIO
+    const targetAudioPlay = state.callType === CALL_TYPE_AUDIO
       ? AudioPlaybackDevice.Earpiece
       : AudioPlaybackDevice.Speakerphone;
     NECallKit.setSpeakerphoneOn(targetAudioPlay == AudioPlaybackDevice.Speakerphone);
     
-    isEarPhone.value = state.callType === CALL_TYPE.AUDIO;
+    isEarPhone.value = state.callType === CALL_TYPE_AUDIO;
   }
 });
 </script>

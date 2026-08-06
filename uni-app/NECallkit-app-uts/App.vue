@@ -35,8 +35,10 @@ export default {
     // #endif
     console.log("App Launch");
     // 关闭启动画面，锁定竖屏 */
+    // #ifndef APP-HARMONY
     plus.navigator.closeSplashscreen();
     plus.screen.lockOrientation("portrait-primary");
+    // #endif
     
     let isActive = true;
     uni.onAppShow(() => {

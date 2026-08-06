@@ -9,6 +9,7 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
@@ -34,7 +35,11 @@ import java.util.List;
 public class MultiCallSettingActivity extends AppCompatActivity {
 
   private TextView logView;
+  public static final String EXTRA_CALL_MODE_TYPE = "extra_call_mode_type";
   public static final String EXTRA_RTC_CHANNEL_NAME = "extra_rtc_channel_name";
+  public static final String EXTRA_GROUP_ID = "extra_group_id";
+  public static final String EXTRA_EXTRA_INFO = "extra_extra_info";
+  public static final String EXTRA_AUTO_EXTRA_INFO = "extra_auto_extra_info";
 
   private final NEGroupCallDelegate actionObserver =
       new NEGroupCallDelegate() {
@@ -74,29 +79,74 @@ public class MultiCallSettingActivity extends AppCompatActivity {
 
       EditText etCallId = findViewById(R.id.edt_call_id);
 
+      EditText etGroupId = findViewById(R.id.edt_group_id);
+
       EditText etCalledAccIdList = findViewById(R.id.edt_called_id_list);
 
       EditText etCallHangupReason = findViewById(R.id.edt_call_reason);
 
+      SwitchCompat swExtraInfoAuto = findViewById(R.id.switch_group_extra_info_auto);
+
+      View extraInfoSwitchRow = findViewById(R.id.group_extra_info_auto_row);
+
+      EditText etExtraInfo = findViewById(R.id.edt_group_extra_info);
+
       EditText etRtcChannelName = findViewById(R.id.edt_rtc_channel_name);
 
+      android.content.Intent currentIntent = getIntent();
+      int callModeType =
+          currentIntent == null
+              ? CallModeType.RTC_GROUP_CALL
+              : currentIntent.getIntExtra(EXTRA_CALL_MODE_TYPE, CallModeType.RTC_GROUP_CALL);
+      boolean showExtraInfoControls = GroupCallExtraInfo.isVisibleForCallMode(callModeType);
+      extraInfoSwitchRow.setVisibility(showExtraInfoControls ? View.VISIBLE : View.GONE);
+      etExtraInfo.setVisibility(showExtraInfoControls ? View.VISIBLE : View.GONE);
+
       // 通过传入的初始值（如有）预填
-      if (getIntent() != null) {
-        String initName = getIntent().getStringExtra(EXTRA_RTC_CHANNEL_NAME);
+      if (currentIntent != null) {
+        String initName = currentIntent.getStringExtra(EXTRA_RTC_CHANNEL_NAME);
         if (!TextUtils.isEmpty(initName)) {
           etRtcChannelName.setText(initName);
         }
+        String initGroupId = currentIntent.getStringExtra(EXTRA_GROUP_ID);
+        if (!TextUtils.isEmpty(initGroupId)) {
+          etGroupId.setText(initGroupId);
+        }
+        if (showExtraInfoControls) {
+          String initExtraInfo = currentIntent.getStringExtra(EXTRA_EXTRA_INFO);
+          if (initExtraInfo != null) {
+            etExtraInfo.setText(initExtraInfo);
+          }
+          swExtraInfoAuto.setChecked(currentIntent.getBooleanExtra(EXTRA_AUTO_EXTRA_INFO, false));
+        }
+      }
+      if (showExtraInfoControls) {
+        etExtraInfo.setEnabled(GroupCallExtraInfo.isEditable(swExtraInfoAuto.isChecked()));
+        swExtraInfoAuto.setOnCheckedChangeListener(
+            (button, checked) -> {
+              String next =
+                  GroupCallExtraInfo.valueAfterAutoFillChanged(
+                      checked, etExtraInfo.getText().toString());
+              etExtraInfo.setText(next);
+              etExtraInfo.setEnabled(GroupCallExtraInfo.isEditable(checked));
+            });
       }
 
       View btSaveRtcChannelName = findViewById(R.id.btn_save_rtc_channel_name);
       btSaveRtcChannelName.setOnClickListener(
           v -> {
             String rtcChannelName = etRtcChannelName.getText().toString().trim();
+            String groupId = etGroupId.getText().toString();
             // 通过 setResult 回传给调用方
             android.content.Intent data = new android.content.Intent();
             data.putExtra(EXTRA_RTC_CHANNEL_NAME, rtcChannelName);
+            data.putExtra(EXTRA_GROUP_ID, groupId);
+            if (showExtraInfoControls) {
+              data.putExtra(EXTRA_EXTRA_INFO, etExtraInfo.getText().toString());
+              data.putExtra(EXTRA_AUTO_EXTRA_INFO, swExtraInfoAuto.isChecked());
+            }
             setResult(RESULT_OK, data);
-            inputLog("保存RTC频道名称: " + rtcChannelName);
+            inputLog("保存群呼设置 rtcChannelName=" + rtcChannelName + ", groupId=" + groupId);
             finish();
           });
 
@@ -105,6 +155,11 @@ public class MultiCallSettingActivity extends AppCompatActivity {
           v -> {
             String accIdListStr = etCalledAccIdList.getText().toString().trim();
             if (TextUtils.isEmpty(accIdListStr)) {
+              Toast.makeText(
+                      MultiCallSettingActivity.this,
+                      R.string.please_input_account_id,
+                      Toast.LENGTH_SHORT)
+                  .show();
               return;
             }
             String callId = etCallId.getText().toString();
@@ -112,11 +167,13 @@ public class MultiCallSettingActivity extends AppCompatActivity {
               callId = null;
             }
 
+            String groupId = etGroupId.getText().toString();
             GroupCallParam param =
-                new GroupCallParam.Builder()
-                    .callId(callId)
-                    .callees(accIdListStr.split(","))
-                    .build();
+                GroupCallParamFactory.create(
+                    accIdListStr.split(","),
+                    callId,
+                    groupId,
+                    showExtraInfoControls ? etExtraInfo.getText().toString() : null);
 
             NEGroupCall.instance().groupCall(param, result -> inputLog("groupCall:" + result));
           });

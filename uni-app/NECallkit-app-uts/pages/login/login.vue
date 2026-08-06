@@ -22,9 +22,16 @@
           </button>
         </view>
         <view style="margin-top: 30px; text-align: center;">
+          <!-- #ifdef APP-HARMONY -->
+          <view class="account-guide-entry" @click="openAccountGuide">
+            如何获取云信账号与Token
+          </view>
+          <!-- #endif -->
+          <!-- #ifndef APP-HARMONY -->
           <uni-link
             href="https://doc.yunxin.163.com/messaging2/guide/jU0Mzg0MTU?platform=client#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E6%B3%A8%E5%86%8C-im-%E8%B4%A6%E5%8F%B7"
             text="如何获取云信账号与Token" color="#007BFF"></uni-link>
+          <!-- #endif -->
         </view>
         <view class="settings-entry" @click="openSettings">
           设置
@@ -42,6 +49,19 @@ const user = useUserStore();
 const userID = ref("");
 const token = ref("");
 const autoLoginStarted = ref(false);
+const ACCOUNT_GUIDE_URL =
+  "https://doc.yunxin.163.com/messaging2/guide/jU0Mzg0MTU?platform=client#%E7%AC%AC%E4%BA%8C%E6%AD%A5%E6%B3%A8%E5%86%8C-im-%E8%B4%A6%E5%8F%B7";
+
+const openAccountGuide = () => {
+  // #ifdef APP-HARMONY
+  plus.runtime.openURL(ACCOUNT_GUIDE_URL, () => {
+    uni.showToast({
+      title: "无法打开帮助链接",
+      position: "bottom",
+    });
+  });
+  // #endif
+};
 
 const openSettings = () => {
   uni.navigateTo({
@@ -195,6 +215,14 @@ onMounted(() => {
     text-align: center;
     font-size: 14px;
     color: #007bff;
+  }
+
+  .account-guide-entry {
+    display: inline-block;
+    color: #007bff;
+    font-size: 14px;
+    line-height: 20px;
+    text-decoration: underline;
   }
 
   .list-item {

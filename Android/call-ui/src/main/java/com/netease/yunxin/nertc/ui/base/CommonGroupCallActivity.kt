@@ -20,6 +20,7 @@ import com.netease.yunxin.kit.alog.ParameterMap
 import com.netease.yunxin.kit.call.group.GroupCallEndEvent
 import com.netease.yunxin.kit.call.group.GroupCallHangupEvent
 import com.netease.yunxin.kit.call.group.GroupCallMember
+import com.netease.yunxin.kit.call.group.GroupRtcInfo
 import com.netease.yunxin.kit.call.group.NEGroupCall
 import com.netease.yunxin.kit.call.group.NEGroupCallDelegate
 import com.netease.yunxin.kit.call.group.NEGroupCallDelegateForAll
@@ -91,6 +92,14 @@ abstract class CommonGroupCallActivity : AppCompatActivity() {
                         .toValue()
                 )
                 this@CommonGroupCallActivity.onGroupCallHangup(endEvent.callId)
+            }
+
+            override fun onGroupRtcJoinSuccess(info: GroupRtcInfo) {
+                CallUILog.d(
+                    tag,
+                    "onGroupRtcJoinSuccess callId=${info.callId} cid=${info.cid} selfRtcUid=${info.selfRtcUid}"
+                )
+                logCurrentGroupRtcInfo()
             }
         }
 
@@ -251,6 +260,18 @@ abstract class CommonGroupCallActivity : AppCompatActivity() {
                 )
                 finish()
             }
+        }
+    }
+
+    private fun logCurrentGroupRtcInfo() {
+        val info = NEGroupCall.instance().currentGroupRtcInfo()
+        if (info == null) {
+            CallUILog.d(tag, "currentGroupRtcInfo null")
+        } else {
+            CallUILog.d(
+                tag,
+                "currentGroupRtcInfo callId=${info.callId} cid=${info.cid} selfRtcUid=${info.selfRtcUid}"
+            )
         }
     }
 

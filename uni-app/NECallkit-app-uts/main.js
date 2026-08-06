@@ -11,17 +11,22 @@ uni.$NEStore = NEStore;
 
 try {
   uni.$UIKitNIM = initNIM();
-  
+} catch (error) {
+  console.error("NIM 初始化失败:", error);
+}
+
+// #ifndef APP-HARMONY
+try {
   uni.$NIMPushPlugin = uni.requireNativePlugin("NIMUniPlugin-PluginModule");
-  
   uni.$UIKitNIM.V2NIMSettingService.setOfflinePushConfig(uni.$NIMPushPlugin, {
     apns: {
       certificateName: "party_release",
     },
   });
 } catch (error) {
-  console.error("NIM 初始化失败:", error);
+  console.error("NIM Push 初始化失败:", error);
 }
+// #endif
 
 export function createApp() {
 	const app = createSSRApp(App);

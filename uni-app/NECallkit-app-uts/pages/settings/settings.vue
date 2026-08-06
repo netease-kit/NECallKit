@@ -155,8 +155,9 @@
   export default {
     data() {
       const ringtoneIndex = getRingtoneIndex(getApp().globalData.liveCommunicationKitRingtoneName);
+      const configuredTimeout = Number(getApp().globalData?.timeout);
       return {
-        timeout: getApp().globalData.timeout,
+        timeout: configuredTimeout > 0 ? configuredTimeout : 30,
         channelName: getApp().globalData.channelName,
         rtcUid: getApp().globalData.rtcUid,
         enableIncomingBanner: getApp().globalData.enableIncomingBanner,

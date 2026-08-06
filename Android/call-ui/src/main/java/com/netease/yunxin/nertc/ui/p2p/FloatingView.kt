@@ -38,8 +38,7 @@ class FloatingView(context: Context) : FrameLayout(context), IFloatingView {
                 return
             }
             if (available) {
-                binding.videoViewSmall.visibility = View.VISIBLE
-                CallUIOperationsMgr.setupRemoteView(binding.videoViewSmall)
+                showRemoteVideo()
             } else {
                 binding.videoViewSmall.visibility = View.GONE
             }
@@ -50,8 +49,7 @@ class FloatingView(context: Context) : FrameLayout(context), IFloatingView {
                 return
             }
             if (!mute) {
-                binding.videoViewSmall.visibility = View.VISIBLE
-                CallUIOperationsMgr.setupRemoteView(binding.videoViewSmall)
+                showRemoteVideo()
             } else {
                 binding.videoViewSmall.visibility = View.GONE
             }
@@ -112,10 +110,17 @@ class FloatingView(context: Context) : FrameLayout(context), IFloatingView {
             if (callInfo.callStatus == CallState.STATE_DIALOG) {
                 val isVideoing = !callInfo.otherUserInfo().isMuteVideo
                 if (isVideoing) {
-                    binding.videoViewSmall.visibility = View.VISIBLE
-                    CallUIOperationsMgr.setupRemoteView(binding.videoViewSmall)
+                    showRemoteVideo()
                 } else {
-                    binding.videoViewSmall.visibility = View.GONE
+                    binding.videoViewSmall.visibility = View.VISIBLE
+                    binding.videoViewSmall.post {
+                        val latestCallInfo = NECallEngine.sharedInstance().callInfo
+                        if (latestCallInfo.callType == NECallType.VIDEO &&
+                            !latestCallInfo.otherUserInfo().isMuteVideo
+                        ) {
+                            showRemoteVideo()
+                        }
+                    }
                 }
             } else {
                 binding.videoViewSmall.visibility = View.VISIBLE
@@ -167,6 +172,13 @@ class FloatingView(context: Context) : FrameLayout(context), IFloatingView {
             },
             permissions = permissionList.toTypedArray()
         )
+    }
+
+    private fun showRemoteVideo() {
+        binding.videoViewSmall.visibility = View.VISIBLE
+        binding.videoViewSmall.post {
+            CallUIOperationsMgr.setupRemoteView(binding.videoViewSmall)
+        }
     }
 
     private fun postCountDownTxt(countDown: String) {

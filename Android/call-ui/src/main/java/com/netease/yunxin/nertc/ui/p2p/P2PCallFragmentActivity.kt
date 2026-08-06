@@ -246,6 +246,9 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
         if (isFinishing) {
             return
         }
+        if (userId == callParam.otherAccId) {
+            CallUIOperationsMgr.updateUIState(isRemoteMuteVideo = !available)
+        }
         if (singleToGroupUiController?.onVideoAvailable(userId, available) == true) {
             return
         }
@@ -255,6 +258,9 @@ open class P2PCallFragmentActivity : CommonCallActivity() {
     override fun onVideoMuted(userId: String?, mute: Boolean) {
         if (isFinishing) {
             return
+        }
+        if (userId == callParam.otherAccId) {
+            CallUIOperationsMgr.updateUIState(isRemoteMuteVideo = mute)
         }
         if (singleToGroupUiController?.onVideoMuted(userId, mute) == true) {
             return

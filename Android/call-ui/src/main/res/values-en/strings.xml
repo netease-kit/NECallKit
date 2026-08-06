@@ -104,7 +104,7 @@
     <string name="ui_permission_bluetooth">Bluetooth</string>
     <string name="ui_permission_separator">,</string>
     <string name="ui_permission_tips">Please turn on the %s permission first</string>
-    <string name="ui_permission_title">%1$s applies for access to the %2$s</string>
+    <string name="ui_permission_title">%s applies for access to the %s</string>
     <string name="ui_permission_mic_reason">Needs access to your microphone, and it can be used for functions such as Audio/Video Call, Group Audio/Video Call etc.</string>
     <string name="ui_permission_camera_reason">Needs access to your camera, and it can be used for functions such as Video Call, Group Video Call etc.</string>
 

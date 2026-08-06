@@ -2,7 +2,7 @@ import NECallParam from 'com.netease.yunxin.kit.call.p2p.param.NECallParam';
 import NECallParamBuilder from 'com.netease.yunxin.kit.call.p2p.param.NECallParam.Builder';
 import NECallPushConfig from 'com.netease.yunxin.kit.call.p2p.model.NECallPushConfig';
 
-import { NAME } from "./const.uts";
+import { LOG_PREFIX } from "./const.uts";
 
 export class ParamsCovert { 
   public static covertCallPrams(
@@ -11,7 +11,7 @@ export class ParamsCovert {
     options: UTSJSONObject | null
   ): NECallParam | null {
     console.log(
-      `${NAME.PREFIX} covertCallPrams.start, accountId: ${accountId}, callType: ${callType}, data: ${JSON.stringify(options)}`
+      `${LOG_PREFIX} covertCallPrams.start, accountId: ${accountId}, callType: ${callType}, data: ${JSON.stringify(options)}`
     );
 
     let builder = new NECallParamBuilder(accountId);

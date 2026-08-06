@@ -23,9 +23,7 @@ static NSInteger const NEGroupInviteHistoryLimit = 20;
 static NSString *const NEGroupInviteHistoryFileName = @"groupInviteHistory";
 
 static NSArray<NSString *> *NEGroupInvitePresetAccounts(void) {
-  return @[
-    @"yuan01", @"yuan02", @"yuan03", @"yuan04", @"yuan05", @"yuan06", @"yuan07", @"yuan08"
-  ];
+  return @[];
 }
 
 @interface NEGroupContactsController () <UITextFieldDelegate,
@@ -37,6 +35,8 @@ static NSArray<NSString *> *NEGroupInvitePresetAccounts(void) {
                                          V2NIMMessageListener>
 @property(nonatomic, strong) UIView *searchBarView;
 @property(nonatomic, strong) UITextField *textField;
+@property(nonatomic, copy, nullable) NSString *extraInfo;
+@property(nonatomic, assign) BOOL extraInfoAutoFillEnabled;
 @property(nonatomic, strong) NSString *lastUpdateText;
 
 @property(nonatomic, strong) UIView *searchResutlTitleView;
@@ -64,6 +64,9 @@ static NSArray<NSString *> *NEGroupInvitePresetAccounts(void) {
 @property(nonatomic, strong) GroupUserController *userController;
 
 @property(nonatomic, strong) NEExpandButton *callBtn;
+
+- (nullable NSString *)currentGroupId;
+- (nullable NSString *)currentExtraInfo;
 
 @end
 
@@ -141,6 +144,18 @@ static NSArray<NSString *> *NEGroupInvitePresetAccounts(void) {
 
 - (void)goToSettingView {
   GroupSettingViewController *setting = [[GroupSettingViewController alloc] init];
+  setting.showsGroupCallParams = !self.isInvite;
+  setting.groupId = self.groupId;
+  setting.extraInfo = self.extraInfo;
+  setting.extraInfoAutoFillEnabled = self.extraInfoAutoFillEnabled;
+  __weak typeof(self) weakSelf = self;
+  setting.completion = ^(NSString *_Nullable groupId,
+                         NSString *_Nullable extraInfo,
+                         BOOL extraInfoAutoFillEnabled) {
+    weakSelf.groupId = groupId;
+    weakSelf.extraInfo = extraInfo;
+    weakSelf.extraInfoAutoFillEnabled = extraInfoAutoFillEnabled;
+  };
   [self.navigationController pushViewController:setting animated:YES];
 }
 
@@ -375,6 +390,8 @@ static NSArray<NSString *> *NEGroupInvitePresetAccounts(void) {
     // 创建群组通话参数（使用最新的简化接口）
     NEUIGroupCallParam *groupCallParam = [[NEUIGroupCallParam alloc] init];
     groupCallParam.remoteUsers = remoteUserIds;
+    groupCallParam.groupId = [self currentGroupId];
+    groupCallParam.extraInfo = [self currentExtraInfo];
 
     // 发起群组通话（主叫用户信息会自动获取）
     [[NERtcCallUIKit sharedInstance] groupCallWithParam:groupCallParam];
@@ -684,6 +701,8 @@ static NSArray<NSString *> *NEGroupInvitePresetAccounts(void) {
     // 创建群组通话参数（使用最新的简化接口）
     NEUIGroupCallParam *groupCallParam = [[NEUIGroupCallParam alloc] init];
     groupCallParam.remoteUsers = remoteUserIds;
+    groupCallParam.groupId = [self currentGroupId];
+    groupCallParam.extraInfo = [self currentExtraInfo];
 
     // 发起群组通话（主叫用户信息会自动获取）
     [[NERtcCallUIKit sharedInstance] groupCallWithParam:groupCallParam];
@@ -789,6 +808,14 @@ static NSArray<NSString *> *NEGroupInvitePresetAccounts(void) {
 }
 
 #pragma mark - lazy init
+
+- (nullable NSString *)currentGroupId {
+  return self.groupId.length > 0 ? self.groupId : nil;
+}
+
+- (nullable NSString *)currentExtraInfo {
+  return self.extraInfo.length > 0 ? self.extraInfo : nil;
+}
 
 - (NEExpandButton *)callBtn {
   if (!_callBtn) {

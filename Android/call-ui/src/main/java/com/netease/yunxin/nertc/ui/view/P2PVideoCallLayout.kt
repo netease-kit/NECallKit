@@ -59,6 +59,8 @@ open class P2PVideoCallLayout @JvmOverloads constructor(
     private val logTag = "SingleVideoCallLayout"
     lateinit var binding: ViewP2pVideoCallBinding
     private var localIsSmallVideo = true
+    private val defaultSmallVideoTopMargin by lazy { 40.dip2Px(context) }
+    private val defaultSmallVideoEndMargin by lazy { 16.dip2Px(context) }
 
     // 贴边动画相关
     private var positionAnimator: ValueAnimator? = null
@@ -256,6 +258,7 @@ open class P2PVideoCallLayout @JvmOverloads constructor(
         val callInfo = NECallEngine.sharedInstance().callInfo
         if (callType == NECallType.VIDEO) {
             forUserInfoUI(callType, visible = false)
+            resetVideoCanvasLayout()
 
             binding.videoViewPreview.visibility = View.GONE
             binding.videoViewSmall.visibility = View.VISIBLE
@@ -553,9 +556,26 @@ open class P2PVideoCallLayout @JvmOverloads constructor(
      */
     open fun resetSwitchState(callType: Int) {
         if (callType == NECallType.VIDEO) {
-            localIsSmallVideo = true
-            binding.tvBigVideoCloseTip.visibility = View.GONE
-            binding.videoViewSmall.setBackgroundColor(Color.TRANSPARENT)
+            resetVideoCanvasLayout()
+        }
+    }
+
+    private fun resetVideoCanvasLayout() {
+        positionAnimator?.cancel()
+        positionAnimator = null
+        isDragging = false
+        localIsSmallVideo = true
+
+        binding.tvBigVideoCloseTip.visibility = View.GONE
+        binding.ivBigVideoShade.visibility = View.GONE
+        binding.tvSmallVideoCloseTip.visibility = View.GONE
+        binding.ivSmallVideoShade.visibility = View.GONE
+        binding.videoViewSmall.setBackgroundColor(Color.TRANSPARENT)
+
+        (binding.flSmallContainer.layoutParams as? ConstraintLayout.LayoutParams)?.let {
+            it.topMargin = defaultSmallVideoTopMargin
+            it.marginEnd = defaultSmallVideoEndMargin
+            binding.flSmallContainer.layoutParams = it
         }
     }
 

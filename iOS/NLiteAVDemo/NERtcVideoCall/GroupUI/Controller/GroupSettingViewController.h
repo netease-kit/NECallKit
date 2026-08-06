@@ -6,7 +6,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef void (^GroupCallParamSettingCompletion)(NSString *_Nullable groupId,
+                                                NSString *_Nullable extraInfo,
+                                                BOOL extraInfoAutoFillEnabled);
+
 @interface GroupSettingViewController : NECallBaseViewController
+
+@property(nonatomic, assign) BOOL showsGroupCallParams;
+@property(nonatomic, copy, nullable) NSString *groupId;
+@property(nonatomic, copy, nullable) NSString *extraInfo;
+@property(nonatomic, assign) BOOL extraInfoAutoFillEnabled;
+@property(nonatomic, copy, nullable) GroupCallParamSettingCompletion completion;
 
 @end
 

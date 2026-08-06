@@ -29,6 +29,7 @@ public class DemoApplication extends Application {
   private static final int IM_LOG_RETENTION_DAYS = 7;
   private static final float IM_LOG_CLEANUP_RATIO = 0.8f;
   public static DemoApplication app;
+
   private static Application instance;
 
   @Override
@@ -45,6 +46,11 @@ public class DemoApplication extends Application {
     }
   }
 
+  /**
+   * 获取Application Context
+   *
+   * @return Application实例，如果未初始化则返回null
+   */
   public static Context getContext() {
     return instance;
   }
@@ -58,12 +64,17 @@ public class DemoApplication extends Application {
     options.maxLogFileSizeInMB = IM_LOG_MAX_FILE_SIZE_MB;
     options.logRetentionDays = IM_LOG_RETENTION_DAYS;
     options.logCleanupRatio = IM_LOG_CLEANUP_RATIO;
+
     return options;
   }
 
   private void initCallKit() {
     // 预收到离线消息时需在 IM 初始化后立即注册群组
     CallKitUI.preGroupConfig();
+    NECallSingleToGroupInviteMode singleToGroupInviteMode =
+        SettingActivity.ENABLE_SINGLE_TO_GROUP_CALL
+            ? NECallSingleToGroupInviteMode.AFTER_1V1_CONNECTED
+            : NECallSingleToGroupInviteMode.DISABLED;
     CallKitUIOptions options =
         new CallKitUIOptions.Builder()
             // 音视频通话 sdk appKey，用于通话中使用
@@ -79,7 +90,8 @@ public class DemoApplication extends Application {
             // 收到被叫时若 app 在后台，在恢复到前台时是否自动唤起被叫页面，默认为 true
             .resumeBGInvitation(true)
             .enableGroup(true)
-            .singleToGroupInviteMode(NECallSingleToGroupInviteMode.AFTER_1V1_CONNECTED)
+            .enableInviteOthersWhenGroupCalling(true)
+            .singleToGroupInviteMode(singleToGroupInviteMode)
             .enableAutoJoinWhenCalled(SettingActivity.ENABLE_AUTO_JOIN)
             // 设置用户信息
             .userInfoHelper(new SelfUserInfoHelper())
@@ -113,7 +125,8 @@ public class DemoApplication extends Application {
                         Intent data = intentResultInfo.getValue();
                         if (intentResultInfo.getSuccess()) {
                           ArrayList<String> selectorList =
-                              data.getStringArrayListExtra(MultiCallUserActivity.KEY_CALL_USER_LIST);
+                              data.getStringArrayListExtra(
+                                  MultiCallUserActivity.KEY_CALL_USER_LIST);
                           listNEResultObserver.onResult(selectorList);
                         }
                         return null;
@@ -150,6 +163,7 @@ public class DemoApplication extends Application {
                       });
                 })
             .language(NECallUILanguage.AUTO)
+            .enableIncomingBanner(SettingActivity.ENABLE_INCOMING_BANNER)
             .build();
     // 初始化
     CallKitUI.init(getApplicationContext(), options);

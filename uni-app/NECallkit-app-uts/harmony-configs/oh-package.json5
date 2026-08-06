@@ -1,0 +1,8 @@
+{
+  "modelVersion": "5.0.0",
+  "description": "NECallKit uni-app UTS HarmonyOS project dependencies",
+  "overrides": {
+    "@yunxin/callkit": "4.8.5",
+    "@yunxin/callkit_ui": "4.8.5"
+  }
+}

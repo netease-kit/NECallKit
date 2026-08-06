@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "@yunxin/callkit": "4.8.5",
+    "@yunxin/callkit_ui": "4.8.5",
+    "@nimsdk/base": "10.9.90",
+    "@nimsdk/nim": "10.9.90",
+    "@nimsdk/message": "10.9.90",
+    "@nimsdk/signalling": "10.9.90",
+    "@nimsdk/user": "10.9.90"
+  }
+}
