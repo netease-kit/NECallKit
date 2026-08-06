@@ -186,7 +186,9 @@ open class GroupCallActivity : CommonGroupCallActivity() {
         if (isFinishing) {
             return
         }
-        gridAdapter?.updateState(uid, enableVideo = !mute)
+        CoroutineScope(Dispatchers.Main).launch {
+            gridAdapter?.updateState(uid, enableVideo = !mute)
+        }
     }
 
     override fun onVideoDeviceStageChange(deviceState: Int) {

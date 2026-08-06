@@ -106,7 +106,7 @@ public class CallOrderAdapter extends RecyclerView.Adapter<CallOrderAdapter.View
         holder.tvNickname.setTextColor(mContext.getResources().getColor(R.color.red));
         holder.tvTime.setTextColor(mContext.getResources().getColor(R.color.red));
         holder.tvDuration.setText("");
-        if (order.isSelf()) {
+        if (!order.isSelf()) {
           if (order.getType()
               == V2NIMSignallingChannelType.V2NIM_SIGNALLING_CHANNEL_TYPE_AUDIO.getValue()) {
             Glide.with(mContext).load(R.drawable.audio_in_failed).into(holder.ivType);

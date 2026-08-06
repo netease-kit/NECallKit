@@ -20,6 +20,7 @@ import com.netease.yunxin.nertc.ui.CallKitUI
 import com.netease.yunxin.nertc.ui.R
 import com.netease.yunxin.nertc.ui.base.CallParam
 import com.netease.yunxin.nertc.ui.base.IncomingCallTextResolver
+import com.netease.yunxin.nertc.ui.base.applyIncomingBackground
 import com.netease.yunxin.nertc.ui.base.fetchNickname
 import com.netease.yunxin.nertc.ui.base.loadAvatarByAccId
 import com.netease.yunxin.nertc.ui.databinding.FragmentP2pAudioCalleeBinding
@@ -83,13 +84,16 @@ open class AudioCalleeFragment : BaseP2pCallFragment() {
                     text = it
                 }
             }
+            val incomingBackground = CallKitUI.dynamicUIConfig?.incomingCallBackground
+            val bigBackground = getView<ImageView>(viewKeyImageBigBackground)
             loadAvatarByAccId(
                 requireContext(),
                 getView<ImageView>(viewKeyImageUserInnerAvatar),
-                getView<ImageView>(viewKeyImageBigBackground),
+                if (incomingBackground == null) bigBackground else null,
                 getView<TextView>(viewKeyTextUserInnerAvatar),
                 uiConfig?.enableTextDefaultAvatar ?: true
             )
+            bigBackground?.applyIncomingBackground(incomingBackground)
         }
     }
 

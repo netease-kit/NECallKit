@@ -10,8 +10,11 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
@@ -21,7 +24,11 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import com.netease.yunxin.kit.alog.ALog
 import com.netease.yunxin.kit.call.p2p.model.NECallType
 import com.netease.yunxin.nertc.ui.R
@@ -62,90 +69,134 @@ class IncomingCallBannerView(
 
     private var rootView: View? = null
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     // 保留对名称和头像视图的引用，以便异步更新
+    @Volatile
     private var nameView: TextView? = null
+    @Volatile
     private var avatarImageView: ImageView? = null
 
     fun show() {
-        if (rootView != null) {
-            ALog.w(TAG, "Banner is already showing.")
-            return
-        }
-        val view = buildView(context)
-        rootView = view
+        runOnMainThread {
+            if (rootView != null) {
+                ALog.w(TAG, "Banner is already showing.")
+                return@runOnMainThread
+            }
+            val view = buildView(context)
+            rootView = view
 
-        val margin = BANNER_MARGIN_DP.dip2Px(context)
-        val screenWidth = context.resources.displayMetrics.widthPixels
+            val margin = BANNER_MARGIN_DP.dip2Px(context)
+            val screenWidth = context.resources.displayMetrics.widthPixels
 
-        @Suppress("DEPRECATION")
-        val windowType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        } else {
-            WindowManager.LayoutParams.TYPE_PHONE
-        }
+            @Suppress("DEPRECATION")
+            val windowType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+            } else {
+                WindowManager.LayoutParams.TYPE_PHONE
+            }
 
-        val params = WindowManager.LayoutParams(
-            screenWidth - 2 * margin,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            windowType,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-            PixelFormat.TRANSLUCENT
-        ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = margin
-            y = getStatusBarHeight() + margin
-        }
+            val params = WindowManager.LayoutParams(
+                screenWidth - 2 * margin,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                windowType,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT
+            ).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = margin
+                y = getStatusBarHeight() + margin
+            }
 
-        try {
-            windowManager.addView(view, params)
-            ALog.i(TAG, "Banner shown for caller: ${callerInfo.accId}")
-        } catch (e: Exception) {
-            ALog.e(TAG, "Failed to add banner view to WindowManager", e)
-            rootView = null
+            try {
+                windowManager.addView(view, params)
+                ALog.i(TAG, "Banner shown for caller: ${callerInfo.accId}")
+            } catch (e: Exception) {
+                ALog.e(TAG, "Failed to add banner view to WindowManager", e)
+                rootView = null
+            }
         }
     }
 
     fun dismiss() {
-        val view = rootView ?: return
-        rootView = null
-        nameView = null
-        avatarImageView = null
-        try {
-            windowManager.removeView(view)
-        } catch (e: Exception) {
-            ALog.e(TAG, "Failed to remove banner view", e)
+        runOnMainThread {
+            val view = rootView ?: return@runOnMainThread
+            rootView = null
+            nameView = null
+            avatarImageView = null
+            try {
+                windowManager.removeView(view)
+            } catch (e: Exception) {
+                ALog.e(TAG, "Failed to remove banner view", e)
+            }
+            onDismissCallback?.invoke()
+            ALog.i(TAG, "Banner dismissed for caller: ${callerInfo.accId}")
         }
-        onDismissCallback?.invoke()
-        ALog.i(TAG, "Banner dismissed for caller: ${callerInfo.accId}")
     }
 
     fun isShowing(): Boolean = rootView != null
 
     // 异步更新昵称
     fun updateCallerName(name: String) {
-        nameView?.post {
+        runOnMainThread {
             nameView?.text = name.ifBlank { callerInfo.accId }
         }
     }
 
     // 异步更新头像
     fun updateAvatarUrl(url: String?) {
-        val iv = avatarImageView ?: return
-        if (url.isNullOrBlank()) return
-        iv.post {
+        if (url.isNullOrBlank()) {
+            ALog.w(TAG, "updateAvatarUrl skipped, url is blank")
+            return
+        }
+        ALog.i(TAG, "updateAvatarUrl start, url=$url")
+        runOnMainThread {
+            val iv = avatarImageView ?: run {
+                ALog.w(TAG, "updateAvatarUrl skipped, avatarImageView is null, url=$url")
+                return@runOnMainThread
+            }
             try {
                 Glide.with(context.applicationContext)
                     .load(url)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .placeholder(R.drawable.t_avchat_avatar_default)
                     .error(R.drawable.t_avchat_avatar_default)
+                    .listener(object : RequestListener<Drawable> {
+                        override fun onLoadFailed(
+                            e: GlideException?,
+                            model: Any?,
+                            target: Target<Drawable>?,
+                            isFirstResource: Boolean
+                        ): Boolean {
+                            ALog.e(TAG, "updateAvatarUrl failed, url=$url", e)
+                            return false
+                        }
+
+                        override fun onResourceReady(
+                            resource: Drawable?,
+                            model: Any?,
+                            target: Target<Drawable>?,
+                            dataSource: DataSource?,
+                            isFirstResource: Boolean
+                        ): Boolean {
+                            ALog.i(TAG, "updateAvatarUrl success, url=$url")
+                            return false
+                        }
+                    })
                     .into(iv)
             } catch (e: Exception) {
                 ALog.e(TAG, "Glide update avatar failed", e)
             }
+        }
+    }
+
+    private fun runOnMainThread(action: () -> Unit) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            action()
+        } else {
+            mainHandler.post(action)
         }
     }
 

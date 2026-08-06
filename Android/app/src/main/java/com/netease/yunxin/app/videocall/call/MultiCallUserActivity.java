@@ -13,6 +13,8 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -26,24 +28,32 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.netease.yunxin.app.videocall.R;
 import com.netease.yunxin.app.videocall.login.LoginManager;
+import com.netease.yunxin.app.videocall.utils.SPUtils;
 import com.netease.yunxin.app.videocall.user.UserModel;
 import com.netease.yunxin.kit.call.group.GroupCallEndEvent;
 import com.netease.yunxin.kit.call.group.GroupCallHangupEvent;
 import com.netease.yunxin.kit.call.group.GroupCallMember;
+import com.netease.yunxin.kit.call.group.GroupRtcInfo;
 import com.netease.yunxin.kit.call.group.NEGroupCall;
 import com.netease.yunxin.kit.call.group.NEGroupCallDelegate;
 import com.netease.yunxin.kit.call.group.NEGroupCallInfo;
 import com.netease.yunxin.kit.call.group.param.GroupCallParam;
 import com.netease.yunxin.nertc.ui.CallKitUI;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
-import org.json.JSONObject;
 
 public class MultiCallUserActivity extends AppCompatActivity {
+  private static final String TAG = "MultiCallUserActivity";
   private static final String KEY_CALL_MODE_TYPE = "key_call_mode_type";
   public static final String KEY_CALL_USER_LIST = "key_call_user_list";
   private static final int LIMIT_COUNT = 10;
+  private static final int RECENT_INVITE_LIMIT = 20;
+  private static final String RECENT_INVITE_SP = "multi_call_recent_invite_users";
+  private static final String RECENT_INVITE_LIST = "recent_invite_list";
+  private static final List<String> PRESET_ACCOUNT_IDS = new ArrayList<>();
   private final List<String> alreadyConnectionUserList = new ArrayList<>();
+  private final List<String> recentInviteAccountIds = new ArrayList<>();
   private TextView tvSelfId;
   private TextView tvNickname;
   private EditText edtAccountId;
@@ -53,10 +63,14 @@ public class MultiCallUserActivity extends AppCompatActivity {
   TextView tvGroupCall;
 
   private LinearLayout containerToCallUsers; // 显示待呼叫用户列表
+  private LinearLayout containerRecentInviteUsers;
 
   private int callModeType;
   private static final int REQ_GROUP_SETTING = 1001;
   private String rtcChannelNameFromSetting = null;
+  private String groupIdFromSetting = null;
+  private String extraInfoFromSetting = null;
+  private boolean autoExtraInfoFromSetting;
 
   private final NEGroupCallDelegate observer =
       new NEGroupCallDelegate() {
@@ -78,6 +92,19 @@ public class MultiCallUserActivity extends AppCompatActivity {
           if (callModeType == CallModeType.RTC_GROUP_INVITE) {
             finish();
           }
+        }
+
+        @Override
+        public void onGroupRtcJoinSuccess(GroupRtcInfo info) {
+          Log.i(
+              TAG,
+              "onGroupRtcJoinSuccess callId="
+                  + info.callId
+                  + " cid="
+                  + info.cid
+                  + " selfRtcUid="
+                  + info.selfRtcUid);
+          logCurrentGroupRtcInfo();
         }
       };
 
@@ -118,6 +145,22 @@ public class MultiCallUserActivity extends AppCompatActivity {
     setContentView(R.layout.multi_call_select_layout);
     initView(callModeType);
     initData();
+  }
+
+  private void logCurrentGroupRtcInfo() {
+    GroupRtcInfo info = NEGroupCall.instance().currentGroupRtcInfo();
+    if (info == null) {
+      Log.i(TAG, "currentGroupRtcInfo null");
+      return;
+    }
+    Log.i(
+        TAG,
+        "currentGroupRtcInfo callId="
+            + info.callId
+            + " cid="
+            + info.cid
+            + " selfRtcUid="
+            + info.selfRtcUid);
   }
 
   private void initView(int callModeType) {
@@ -164,15 +207,25 @@ public class MultiCallUserActivity extends AppCompatActivity {
     settingBtn.setOnClickListener(
         v -> {
           Intent intent = new Intent(MultiCallUserActivity.this, MultiCallSettingActivity.class);
+          intent.putExtra(MultiCallSettingActivity.EXTRA_CALL_MODE_TYPE, callModeType);
           if (!TextUtils.isEmpty(rtcChannelNameFromSetting)) {
             intent.putExtra(
                 MultiCallSettingActivity.EXTRA_RTC_CHANNEL_NAME, rtcChannelNameFromSetting);
+          }
+          if (!TextUtils.isEmpty(groupIdFromSetting)) {
+            intent.putExtra(MultiCallSettingActivity.EXTRA_GROUP_ID, groupIdFromSetting);
+          }
+          if (callModeType == CallModeType.RTC_GROUP_CALL) {
+            intent.putExtra(MultiCallSettingActivity.EXTRA_EXTRA_INFO, extraInfoFromSetting);
+            intent.putExtra(
+                MultiCallSettingActivity.EXTRA_AUTO_EXTRA_INFO, autoExtraInfoFromSetting);
           }
           startActivityForResult(intent, REQ_GROUP_SETTING);
         });
 
     // 初始化待呼叫用户显示区域
     containerToCallUsers = findViewById(R.id.container_to_call_users);
+    containerRecentInviteUsers = findViewById(R.id.container_recent_invite_users);
     tvCallRecord.setVisibility(View.VISIBLE);
     tvCallRecord.setText(R.string.users_to_be_called);
 
@@ -200,36 +253,17 @@ public class MultiCallUserActivity extends AppCompatActivity {
 
           List<String> userList = parseAccountIds(accountIds);
           if (!userList.isEmpty()) {
+            saveRecentInviteAccounts(userList);
             if (callModeType == CallModeType.RTC_GROUP_CALL) {
               String[] userArray = new String[userList.size()];
               userList.toArray(userArray);
 
-              JSONObject extraInfo = new JSONObject();
-              UserModel currentUser = LoginManager.getInstance().getUserModel();
-              try {
-                extraInfo.putOpt("key", "call");
-                extraInfo.putOpt("value", "testValue");
-                if (currentUser != null) {
-                  extraInfo.putOpt("userName", currentUser.getAccount());
-                }
-              } catch (Throwable e) {
-                e.printStackTrace();
-              }
-              GroupCallParam param;
-              if (!TextUtils.isEmpty(rtcChannelNameFromSetting)) {
-                param =
-                    new GroupCallParam.Builder()
-                        .callees(userArray)
-                        .callId(rtcChannelNameFromSetting)
-                        .extraInfo(extraInfo.toString())
-                        .build();
-              } else {
-                param =
-                    new GroupCallParam.Builder()
-                        .callees(userArray)
-                        .extraInfo(extraInfo.toString())
-                        .build();
-              }
+              GroupCallParam param =
+                  GroupCallParamFactory.create(
+                      userArray,
+                      rtcChannelNameFromSetting,
+                      groupIdFromSetting,
+                      extraInfoFromSetting);
               CallKitUI.startGroupCall(this, param);
             } else if (callModeType == CallModeType.RTC_GROUP_INVITE) {
               Intent intent = new Intent();
@@ -278,6 +312,8 @@ public class MultiCallUserActivity extends AppCompatActivity {
       tvSelfId.setOnTouchListener((v, event) -> detector.onTouchEvent(event));
       tvSelfId.setClickable(true);
     }
+    loadRecentInviteAccounts();
+    renderRecentInviteUsers();
   }
 
   private void hideKeyBoard() {
@@ -302,12 +338,125 @@ public class MultiCallUserActivity extends AppCompatActivity {
 
     for (String id : ids) {
       String trimmedId = id.trim();
-      if (!TextUtils.isEmpty(trimmedId) && !trimmedId.equals(currentUser.getAccount())) {
+      if (!TextUtils.isEmpty(trimmedId)
+          && (currentUser == null || !trimmedId.equals(currentUser.getAccount()))
+          && !result.contains(trimmedId)) {
         result.add(trimmedId);
       }
     }
 
     return result;
+  }
+
+  private void loadRecentInviteAccounts() {
+    recentInviteAccountIds.clear();
+    String cache = SPUtils.getInstance(getRecentInviteSpName()).getString(RECENT_INVITE_LIST);
+    if (!TextUtils.isEmpty(cache)) {
+      for (String accountId : cache.split(",")) {
+        appendRecentInviteAccount(recentInviteAccountIds, accountId);
+      }
+    }
+    for (String accountId : PRESET_ACCOUNT_IDS) {
+      appendRecentInviteAccount(recentInviteAccountIds, accountId);
+    }
+    trimRecentInviteAccounts(recentInviteAccountIds);
+  }
+
+  private void saveRecentInviteAccounts(List<String> accountIds) {
+    if (accountIds == null || accountIds.isEmpty()) {
+      return;
+    }
+    LinkedList<String> mergedAccounts = new LinkedList<>();
+    for (String accountId : accountIds) {
+      appendRecentInviteAccount(mergedAccounts, accountId);
+    }
+    for (String accountId : recentInviteAccountIds) {
+      appendRecentInviteAccount(mergedAccounts, accountId);
+    }
+    for (String accountId : PRESET_ACCOUNT_IDS) {
+      appendRecentInviteAccount(mergedAccounts, accountId);
+    }
+    trimRecentInviteAccounts(mergedAccounts);
+    recentInviteAccountIds.clear();
+    recentInviteAccountIds.addAll(mergedAccounts);
+    SPUtils.getInstance(getRecentInviteSpName())
+        .put(RECENT_INVITE_LIST, TextUtils.join(",", recentInviteAccountIds));
+    renderRecentInviteUsers();
+  }
+
+  private String getRecentInviteSpName() {
+    UserModel currentUser = LoginManager.getInstance().getUserModel();
+    String account = currentUser == null ? "" : currentUser.getAccount();
+    return RECENT_INVITE_SP + "_" + account;
+  }
+
+  private void appendRecentInviteAccount(List<String> accounts, String accountId) {
+    if (TextUtils.isEmpty(accountId)) {
+      return;
+    }
+    String trimmedAccountId = accountId.trim();
+    if (TextUtils.isEmpty(trimmedAccountId) || accounts.contains(trimmedAccountId)) {
+      return;
+    }
+    accounts.add(trimmedAccountId);
+  }
+
+  private void trimRecentInviteAccounts(List<String> accounts) {
+    while (accounts.size() > RECENT_INVITE_LIMIT) {
+      accounts.remove(accounts.size() - 1);
+    }
+  }
+
+  private void renderRecentInviteUsers() {
+    if (containerRecentInviteUsers == null) {
+      return;
+    }
+    containerRecentInviteUsers.removeAllViews();
+    List<String> selectedAccountIds = parseAccountIds(edtAccountId.getText().toString());
+    for (String accountId : recentInviteAccountIds) {
+      containerRecentInviteUsers.addView(createRecentInviteRow(accountId, selectedAccountIds));
+    }
+  }
+
+  private View createRecentInviteRow(String accountId, List<String> selectedAccountIds) {
+    LinearLayout row = new LinearLayout(this);
+    row.setGravity(Gravity.CENTER_VERTICAL);
+    row.setOrientation(LinearLayout.HORIZONTAL);
+    row.setPadding(8, 8, 8, 8);
+    row.setOnClickListener(v -> toggleAccountInInput(accountId));
+
+    TextView accountView = new TextView(this);
+    accountView.setText(accountId);
+    accountView.setTextColor(getResources().getColor(R.color.colorWhite));
+    accountView.setTextSize(16);
+    LinearLayout.LayoutParams accountParams =
+        new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+    row.addView(accountView, accountParams);
+
+    TextView actionView = new TextView(this);
+    boolean selected = selectedAccountIds.contains(accountId);
+    actionView.setText(selected ? R.string.remove : R.string.add);
+    actionView.setTextColor(getResources().getColor(R.color.colorWhite));
+    actionView.setGravity(Gravity.CENTER);
+    actionView.setBackgroundResource(
+        selected ? R.drawable.btn_call_bg : R.drawable.shape_select_to_add_bg);
+    row.addView(
+        actionView,
+        new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+    return row;
+  }
+
+  private void toggleAccountInInput(String accountId) {
+    List<String> accountIds = parseAccountIds(edtAccountId.getText().toString());
+    if (accountIds.contains(accountId)) {
+      accountIds.remove(accountId);
+    } else {
+      accountIds.add(accountId);
+    }
+    edtAccountId.setText(TextUtils.join(",", accountIds));
+    edtAccountId.setSelection(edtAccountId.getText().length());
   }
 
   /** 更新待呼叫用户列表显示 */
@@ -317,6 +466,8 @@ public class MultiCallUserActivity extends AppCompatActivity {
 
     if (TextUtils.isEmpty(accountIds)) {
       containerToCallUsers.setVisibility(View.GONE);
+      updateGroupCallButton();
+      renderRecentInviteUsers();
       return;
     }
 
@@ -346,6 +497,7 @@ public class MultiCallUserActivity extends AppCompatActivity {
     }
 
     updateGroupCallButton();
+    renderRecentInviteUsers();
   }
 
   /** 更新群组呼叫按钮文本 */
@@ -384,6 +536,18 @@ public class MultiCallUserActivity extends AppCompatActivity {
       String value = data.getStringExtra(MultiCallSettingActivity.EXTRA_RTC_CHANNEL_NAME);
       if (value != null) {
         rtcChannelNameFromSetting = value;
+      }
+      String groupId = data.getStringExtra(MultiCallSettingActivity.EXTRA_GROUP_ID);
+      if (groupId != null) {
+        groupIdFromSetting = groupId;
+      }
+      if (callModeType == CallModeType.RTC_GROUP_CALL) {
+        String extraInfo = data.getStringExtra(MultiCallSettingActivity.EXTRA_EXTRA_INFO);
+        if (extraInfo != null) {
+          extraInfoFromSetting = extraInfo;
+        }
+        autoExtraInfoFromSetting =
+            data.getBooleanExtra(MultiCallSettingActivity.EXTRA_AUTO_EXTRA_INFO, false);
       }
     }
   }

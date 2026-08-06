@@ -219,14 +219,20 @@ abstract class CommonCallActivity : AppCompatActivity(), NECallEngineDelegate {
     override fun onPause() {
         super.onPause()
         if (isFinishing) {
-            val floatingEnable =
-                uiConfig?.enableFloatingWindow != true || !CallUIFloatingWindowMgr.isFloating()
-            if (floatingEnable) {
+            val isCallActive =
+                CallUIOperationsMgr.currentCallState() != CallState.STATE_IDLE
+            val decision = decideCallPageRelease(
+                isCallActive = isCallActive,
+                isFloating = uiConfig?.enableFloatingWindow == true &&
+                    CallUIFloatingWindowMgr.isFloating()
+            )
+            if (decision.stopVideoPreview) {
                 stopVideoPreview()
             }
-            releaseAndFinish(
-                CallUIOperationsMgr.currentCallState() != CallState.STATE_IDLE && floatingEnable
-            )
+            releaseAndFinish(decision.finishCall)
+            if (decision.releaseUiState && !decision.finishCall) {
+                CallUIOperationsMgr.releaseCallInfoAndUIState(channelId = channelId)
+            }
         }
     }
 

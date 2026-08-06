@@ -27,7 +27,6 @@ import com.netease.yunxin.nertc.ui.banner.CallerInfo
 import com.netease.yunxin.nertc.ui.banner.IncomingCallBannerManager
 import com.netease.yunxin.nertc.ui.banner.hasIncomingBannerMediaPermission
 import com.netease.yunxin.nertc.ui.banner.resolveIncomingBannerAcceptAction
-import com.netease.yunxin.nertc.ui.base.UserInfoExtensionHelper
 import com.netease.yunxin.nertc.ui.base.toCallIntent
 import com.netease.yunxin.nertc.ui.floating.FloatingPermission
 import com.netease.yunxin.nertc.ui.utils.CallUILog
@@ -77,7 +76,7 @@ open class DefaultIncomingCallEx : IncomingCallEx() {
             )
             if (shown) {
                 // 异步获取昵称和头像并更新横幅
-                fetchAndUpdateBannerUserInfo(callerAccId)
+                IncomingCallBannerManager.fetchAndUpdateCallerInfo(context!!, callerAccId)
                 return false
             }
             // 无悬浮窗权限，降级为普通来电通知
@@ -96,23 +95,6 @@ open class DefaultIncomingCallEx : IncomingCallEx() {
 
     override fun onIncomingCallInvalid(invitedInfo: NEInviteInfo?) {
         cancelNotification()
-    }
-
-    /**
-     * 异步获取来电方昵称和头像，并更新横幅展示。
-     */
-    private fun fetchAndUpdateBannerUserInfo(callerAccId: String) {
-        val helper = UserInfoExtensionHelper.userInfoHelper ?: return
-        helper.fetchNickname(callerAccId) { name ->
-            CallUILog.d(TAG, "fetchNickname callerAccId=$callerAccId name=$name")
-            IncomingCallBannerManager.updateCallerName(name)
-        }
-        context?.let { ctx ->
-            helper.fetchAvatar(ctx, callerAccId) { url, _ ->
-                CallUILog.d(TAG, "fetchAvatar callerAccId=$callerAccId url=$url")
-                IncomingCallBannerManager.updateAvatarUrl(url)
-            }
-        }
     }
 
     protected open fun generateNotificationAndNotifyForGroup(invitedInfo: NEGroupCallInfo) {
@@ -320,7 +302,7 @@ open class DefaultIncomingCallEx : IncomingCallEx() {
                     }
                 )
                 if (shown) {
-                    fetchAndUpdateBannerUserInfo(callerAccId)
+                    IncomingCallBannerManager.fetchAndUpdateCallerInfo(ctx, callerAccId)
                 }
             }
             return true

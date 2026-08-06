@@ -117,6 +117,8 @@ public class CallOrderManager {
               ALog.i(TAG, "onReceiveMessages message = " + msg);
               V2NIMMessageAttachment attachment = msg.getAttachment();
               if (attachment instanceof V2NIMMessageCallAttachment) {
+                logCallRecordMessage(
+                    "onReceiveMessages", msg, (V2NIMMessageCallAttachment) attachment);
                 handleNetCallAttachment(msg, (V2NIMMessageCallAttachment) attachment);
               }
             }
@@ -158,6 +160,8 @@ public class CallOrderManager {
               == V2NIMMessageSendingState.V2NIM_MESSAGE_SENDING_STATE_SUCCEEDED) {
             V2NIMMessageAttachment attachment = message.getAttachment();
             if (attachment instanceof V2NIMMessageCallAttachment) {
+              logCallRecordMessage(
+                  "onSendMessage", message, (V2NIMMessageCallAttachment) attachment);
               handleNetCallAttachment(message, (V2NIMMessageCallAttachment) attachment);
             }
           }
@@ -168,6 +172,82 @@ public class CallOrderManager {
           ALog.i(TAG, "onReceiveMessagesModified messages = " + messages);
         }
       };
+
+  private void logCallRecordMessage(
+      String source, V2NIMMessage message, V2NIMMessageCallAttachment attachment) {
+    if (message == null || attachment == null) {
+      ALog.i(
+          TAG,
+          "CallRecordCompare source:"
+              + source
+              + ", messageNull:"
+              + (message == null)
+              + ", attachmentNull:"
+              + (attachment == null));
+      return;
+    }
+
+    ALog.i(
+        TAG,
+        "CallRecordCompare source:"
+            + source
+            + ", isSelf:"
+            + message.isSelf()
+            + ", sender:"
+            + message.getSenderId()
+            + ", receiver:"
+            + message.getReceiverId()
+            + ", conversationId:"
+            + message.getConversationId()
+            + ", messageClientId:"
+            + message.getMessageClientId()
+            + ", messageServerId:"
+            + message.getMessageServerId()
+            + ", createTime:"
+            + message.getCreateTime()
+            + ", sendingState:"
+            + message.getSendingState()
+            + ", messageType:"
+            + message.getMessageType()
+            + ", serverExtension:"
+            + message.getServerExtension()
+            + ", callbackExtension:"
+            + message.getCallbackExtension()
+            + ", callType:"
+            + attachment.getType()
+            + ", channelId:"
+            + attachment.getChannelId()
+            + ", status:"
+            + attachment.getStatus()
+            + ", durations:"
+            + formatDurations(attachment.getDurations()));
+  }
+
+  private String formatDurations(List<V2NIMMessageCallDuration> durations) {
+    if (durations == null || durations.isEmpty()) {
+      return "[]";
+    }
+
+    StringBuilder builder = new StringBuilder("[");
+    for (int i = 0; i < durations.size(); i++) {
+      V2NIMMessageCallDuration duration = durations.get(i);
+      if (i > 0) {
+        builder.append(", ");
+      }
+      if (duration == null) {
+        builder.append("null");
+      } else {
+        builder
+            .append("{accountId:")
+            .append(duration.getAccountId())
+            .append(", duration:")
+            .append(duration.getDuration())
+            .append("}");
+      }
+    }
+    builder.append("]");
+    return builder.toString();
+  }
 
   private void handleNetCallAttachment(
       V2NIMMessage message, V2NIMMessageCallAttachment attachment) {

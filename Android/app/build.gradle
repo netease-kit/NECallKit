@@ -66,5 +66,5 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.5.1'
-    implementation 'com.netease.yunxin.kit.call:call-ui:4.7.0'
+    implementation 'com.netease.yunxin.kit.call:call-ui:4.8.5'
 }

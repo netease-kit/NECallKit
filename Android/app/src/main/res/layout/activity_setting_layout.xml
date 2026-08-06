@@ -8,6 +8,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/video_call_bg"
+    android:fitsSystemWindows="true"
     android:orientation="vertical">
     <LinearLayout
         android:layout_width="match_parent"
@@ -54,7 +55,7 @@
             android:background="@color/color_f5455e"
             android:padding="10dp"
             android:gravity="center"
-            android:text="当前设置需要重启应用生效！"
+            android:text="@string/restart_tip"
             android:textColor="@color/white"
             android:visibility="gone" />
 
@@ -87,7 +88,7 @@
                 android:layout_alignBottom="@id/edt_time"
                 android:layout_marginStart="20dp"
                 android:gravity="center_vertical"
-                android:text="设置RTC呼叫超时时间（秒）：\n 融合呼叫场景下为转换时间"
+                android:text="@string/rtc_timeout_tip"
                 android:textColor="@color/colorWhite" />
         </RelativeLayout>
 
@@ -115,7 +116,36 @@
                 android:layout_alignBottom="@id/swEnableJoinRtcWhenCall"
                 android:layout_width="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="开启呼叫时加入Rtc ：           "
+                android:text="@string/enable_join_rtc_when_call"
+                android:gravity="center_vertical"
+                android:textColor="@color/colorWhite"
+                android:layout_height="wrap_content"/>
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:layout_marginTop="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/sw_enable_single_to_group_call"
+                android:layout_width="wrap_content"
+                android:layout_height="60dp"
+                android:layout_marginEnd="30dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="10dp"
+                android:layout_toEndOf="@+id/enable_single_to_group_call"
+                android:textSize="16sp"
+                android:gravity="center"
+                android:textColor="@color/colorWhite" />
+
+            <TextView
+                android:id="@+id/enable_single_to_group_call"
+                android:layout_alignTop="@id/sw_enable_single_to_group_call"
+                android:layout_alignBottom="@id/sw_enable_single_to_group_call"
+                android:layout_width="wrap_content"
+                android:layout_marginStart="20dp"
+                android:text="@string/enable_single_to_group_call"
                 android:gravity="center_vertical"
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
@@ -145,7 +175,7 @@
                 android:layout_alignBottom="@id/swEnableAutoJoin"
                 android:layout_width="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="开启自动加入信令通道 ：           "
+                android:text="@string/enable_auto_join_channel"
                 android:gravity="center_vertical"
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
@@ -176,7 +206,7 @@
                 android:layout_alignBottom="@id/sw_for_support_foreground_service"
                 android:layout_width="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="是否开启通话前台服务 ：                    "
+                android:text="@string/enable_foreground_service"
                 android:gravity="center_vertical"
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
@@ -205,7 +235,7 @@
                 android:layout_alignBottom="@id/et_input_global_extra"
                 android:layout_width="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="全局抄送参数 ："
+                android:text="@string/global_extra_copy"
                 android:gravity="center_vertical"
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
@@ -234,7 +264,7 @@
                 android:layout_alignBottom="@id/et_input_custom_channel_name"
                 android:layout_width="wrap_content"
                 android:layout_marginStart="20dp"
-                android:text="自定义channelName："
+                android:text="@string/custom_channel_name"
                 android:gravity="center_vertical"
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
@@ -471,7 +501,6 @@
                 android:layout_toEndOf="@+id/enable_incoming_banner"
                 android:checked="false"
                 android:gravity="center"
-                android:maxLength="5"
                 android:textColor="@color/colorWhite"
                 android:textSize="16sp" />
 
@@ -486,6 +515,43 @@
                 android:textColor="@color/colorWhite"
                 android:layout_height="wrap_content"/>
         </RelativeLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="来电背景测试"
+            android:textColor="@color/colorWhite"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/bt_use_local_incoming_bg"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp"
+            android:text="使用本地风景图" />
+
+        <Button
+            android:id="@+id/bt_use_url_incoming_bg"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp"
+            android:text="使用 URL 风景图" />
+
+        <Button
+            android:id="@+id/bt_clear_incoming_bg"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginEnd="20dp"
+            android:text="清空来电背景" />
 
         <RelativeLayout
             android:layout_marginTop="20dp"
@@ -639,32 +705,6 @@
                 android:layout_alignBottom="@id/sw_video_to_audio_confirm"
                 android:gravity="center_vertical"
                 android:text="视频转音频是否需要确认"
-                android:textColor="@color/colorWhite" />
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:layout_marginTop="20dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <Spinner
-                android:id="@+id/spinner_ains_mode"
-                android:layout_width="wrap_content"
-                android:layout_height="60dp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="30dp"
-                android:layout_toEndOf="@+id/ains_noise_reduction_mode_tip" />
-
-            <TextView
-                android:id="@+id/ains_noise_reduction_mode_tip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignTop="@id/spinner_ains_mode"
-                android:layout_alignBottom="@id/spinner_ains_mode"
-                android:layout_marginStart="20dp"
-                android:gravity="center_vertical"
-                android:text="@string/ains_noise_reduction_mode"
                 android:textColor="@color/colorWhite" />
         </RelativeLayout>
 
@@ -830,6 +870,35 @@
             android:text="上传 rtc 日志"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
+
+        <RelativeLayout
+            android:layout_marginTop="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <Spinner
+                android:id="@+id/spinner_ains_mode"
+                android:layout_width="150dp"
+                android:layout_height="60dp"
+                android:layout_marginEnd="30dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="10dp"
+                android:layout_toEndOf="@+id/tv_ains_mode_tip"
+                android:textSize="16sp"
+                android:textColor="@color/colorWhite"
+                android:background="@drawable/et_search_bg" />
+
+            <TextView
+                android:id="@+id/tv_ains_mode_tip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignTop="@id/spinner_ains_mode"
+                android:layout_alignBottom="@id/spinner_ains_mode"
+                android:layout_marginStart="20dp"
+                android:gravity="center_vertical"
+                android:text="@string/ains_noise_reduction_mode"
+                android:textColor="@color/colorWhite" />
+        </RelativeLayout>
 
     </LinearLayout>
 

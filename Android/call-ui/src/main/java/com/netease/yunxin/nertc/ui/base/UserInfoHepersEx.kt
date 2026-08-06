@@ -117,7 +117,7 @@ fun String.loadAvatarByAccId(
                 .setCallback(object : RequestCallbackWrapper<String>() {
                     override fun onResult(code: Int, result: String?, exception: Throwable?) {
                         loadAction(result, defaultResId, name)
-                        bgView?.run {
+                        bgView?.takeUnless { it.hasIncomingDynamicBackground() }?.run {
                             Glide.with(applicationContext).asBitmap().load(result)
                                 .transform(BlurCenterCorp(51, 3)).into(this)
                         }
@@ -133,7 +133,7 @@ fun String.loadAvatarByAccId(
                 res ?: defaultResId,
                 nameMap[this] ?: this@loadAvatarByAccId
             )
-            bgView?.run {
+            bgView?.takeUnless { it.hasIncomingDynamicBackground() }?.run {
                 Glide.with(applicationContext).asBitmap().load(url)
                     .error(res ?: defaultResId)
                     .placeholder(res ?: defaultResId)

@@ -48,6 +48,7 @@ object FloatingWindowManager {
     private var floatingWindowWrapper: FloatingWindowWrapper? = null
     private var dialog: SwitchCallTypeConfirmDialog? = null
     private var dialogFlag: Any? = null
+    private var switchCallTypeConfirmDialogEnabled = true
 
     /**
      * 用于用户展示自己的切换弹窗样式
@@ -67,7 +68,11 @@ object FloatingWindowManager {
             super.onCallTypeChange(info)
             info ?: return
 
-            if (info.state == SwitchCallState.INVITE && dialog?.isShowing != true) {
+            if (
+                info.state == SwitchCallState.INVITE &&
+                switchCallTypeConfirmDialogEnabled &&
+                dialog?.isShowing != true
+            ) {
                 showSwitchCallTypeConfirmDialog(info)
                 return
             }
@@ -198,7 +203,11 @@ object FloatingWindowManager {
         }
         // 避免在全屏/小窗切换时丢失音视频切换弹窗
         val info = CallUIOperationsMgr.currentSwitchTypeCallInfo() ?: return
-        if (dialog?.isShowing == true || info.state != SwitchCallState.INVITE) {
+        if (
+            !switchCallTypeConfirmDialogEnabled ||
+            dialog?.isShowing == true ||
+            info.state != SwitchCallState.INVITE
+        ) {
             return
         }
         showSwitchCallTypeConfirmDialog(info)
@@ -215,6 +224,14 @@ object FloatingWindowManager {
      */
     fun configSwitchCallTypeConfirmDialogProvider(provider: (Activity) -> SwitchCallTypeConfirmDialog?) {
         this.switchCallTypeConfirmDialogProvider = provider
+    }
+
+    fun setSwitchCallTypeConfirmDialogEnabled(enabled: Boolean) {
+        CallUILog.d(TAG, "setSwitchCallTypeConfirmDialogEnabled: $enabled")
+        switchCallTypeConfirmDialogEnabled = enabled
+        if (!enabled) {
+            dismissSwitchCallTypeConfirmDialog()
+        }
     }
 
     /**
@@ -283,6 +300,9 @@ object FloatingWindowManager {
      * 展示音视频切换确认弹窗
      */
     private fun showSwitchCallTypeConfirmDialog(info: NECallTypeChangeInfo) {
+        if (!switchCallTypeConfirmDialogEnabled) {
+            return
+        }
         if (dialogFlag != null) {
             return
         }

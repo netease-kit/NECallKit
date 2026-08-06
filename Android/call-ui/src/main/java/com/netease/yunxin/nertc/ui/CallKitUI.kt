@@ -76,6 +76,10 @@ object CallKitUI {
     var options: CallKitUIOptions? = null
         private set
 
+    @Volatile
+    var dynamicUIConfig: NECallUIDynamicConfig? = null
+        private set
+
     fun baseContext() = callKitUIBridgeService?.context
 
     @JvmStatic
@@ -293,6 +297,16 @@ object CallKitUI {
         options?.enableIncomingBanner = enable
     }
 
+    /**
+     * 设置动态 UI 配置快照。仅保证后续来电页生效，不承诺刷新当前已展示页面。
+     */
+    @JvmStatic
+    @MainThread
+    fun setDynamicUIConfig(config: NECallUIDynamicConfig?) {
+        CallUILog.dApi(TAG, ParameterMap("setDynamicUIConfig"))
+        dynamicUIConfig = config
+    }
+
     @JvmStatic
     @MainThread
     fun destroy() {
@@ -308,13 +322,14 @@ object CallKitUI {
         unregisterResumeUIActionInner()
         callKitUIBridgeService?.destroy()
         callKitUIBridgeService = null
-        currentUserRtcUid = 0L
-        options = null
-        AVChatSoundPlayer.release()
-        NECallEngine.sharedInstance().destroy()
         if (options?.enableGroup == true) {
             NEGroupCall.instance().release()
         }
+        currentUserRtcUid = 0L
+        options = null
+        dynamicUIConfig = null
+        AVChatSoundPlayer.release()
+        NECallEngine.sharedInstance().destroy()
         UserInfoExtensionHelper.userInfoHelper = null
         CallUILog.d(TAG, "CallKitUI destroy inner, completed.")
     }
