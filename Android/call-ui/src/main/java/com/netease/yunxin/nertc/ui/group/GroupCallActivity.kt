@@ -273,6 +273,10 @@ open class GroupCallActivity : CommonGroupCallActivity() {
      * 初始化通话中页面
      */
     private fun initOnTheCallUI(userList: List<String>) {
+        // 进入通话态，恢复操作栏和顶栏可见
+        findViewById<View>(R.id.llOnTheCallOperation).visibility = View.VISIBLE
+        findViewById<View>(R.id.ivSwitchCamera).visibility = View.VISIBLE
+        findViewById<View>(R.id.ivInviteUsers).visibility = View.VISIBLE
         val switchCamera = findViewById<View>(R.id.ivSwitchCamera)
         switchCamera.setOnClickListener {
             NERtcEx.getInstance().switchCamera()
@@ -404,6 +408,10 @@ open class GroupCallActivity : CommonGroupCallActivity() {
     private fun initCalleeUI() {
         val calleeLayout = findViewById<View>(R.id.viewCalleeLayout)
         calleeLayout.visibility = View.VISIBLE
+        // 被叫态隐藏通话操作栏和顶栏控件，防止来电层背景加载前透出
+        findViewById<View>(R.id.llOnTheCallOperation).visibility = View.GONE
+        findViewById<View>(R.id.ivSwitchCamera).visibility = View.GONE
+        findViewById<View>(R.id.ivInviteUsers).visibility = View.GONE
         val ivCallerAvatar = findViewById<ImageView>(R.id.ivUserAvatar)
         val ivCallerAvatarBlur = findViewById<ImageView>(R.id.ivUserAvatarBlur)
         val tvCallerName = findViewById<TextView>(R.id.tvUserName)
@@ -423,6 +431,7 @@ open class GroupCallActivity : CommonGroupCallActivity() {
                     ).into(ivCallerAvatar)
                 Glide.with(applicationContext).asBitmap().load(result.avatarUrl)
                     .transform(BlurCenterCorp(51, 3))
+                    .placeholder(R.drawable.shape_group_caller_error_bg)
                     .error(R.drawable.shape_group_caller_error_bg)
                     .into(ivCallerAvatarBlur)
             }
