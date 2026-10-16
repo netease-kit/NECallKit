@@ -7,7 +7,6 @@
 #import "NEAccount.h"
 #import "NECallStatusRecordCell.h"
 #import "NECallUISettingViewController.h"
-#import "NEPSTNViewController.h"
 #import "NERtcSettingViewController.h"
 #import "NESearchResultCell.h"
 #import "NSArray+NTES.h"
@@ -18,8 +17,7 @@
                                            NIMChatManagerDelegate,
                                            UITableViewDelegate,
                                            UITableViewDataSource,
-                                           SearchCellDelegate,
-                                           NECallViewDelegate>
+                                           SearchCellDelegate>
 @property(nonatomic, strong) UIView *searchBarView;
 @property(nonatomic, strong) UITextField *textField;
 @property(nonatomic, strong) UIButton *videoCallRadioBtn;
@@ -61,11 +59,7 @@
 
 - (void)viewDidLoad {
   [super viewDidLoad];
-  if (self.callKitType == CALLKIT) {
-    self.title = @"发起呼叫";
-  } else if (self.callKitType == PSTN) {
-    self.title = @"发起融合呼叫";
-  }
+  self.title = @"发起呼叫";
   [self setupContent];
   [self setSetting];
   [self addObserver];
@@ -315,21 +309,6 @@
     return;
   }
 
-  NECallUIKitConfig *config = [[NERtcCallUIKit sharedInstance] valueForKey:@"config"];
-  if (config.uiConfig.disableShowCalleeView == YES) {
-    NEPSTNViewController *callVC = [[NEPSTNViewController alloc] init];
-    callVC.localUser = [NEAccount shared].userModel;
-    callVC.remoteUser = user;
-    callVC.callType = callType;
-    callVC.status = NERtcCallStatusCalling;
-    callVC.isCaller = YES;
-    callVC.delegate = self;
-    callVC.callKitType = self.callKitType;
-    callVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-    [self.navigationController presentViewController:callVC animated:YES completion:nil];
-    return;
-  }
-
   NEUICallParam *callParam = [[NEUICallParam alloc] init];
   callParam.remoteUserAccid = user.imAccid;
   callParam.remoteShowName = user.imAccid;  // 使用 accountId 作为显示名称
@@ -450,11 +429,7 @@
     callType = model.isVideoCall ? NECallTypeVideo : NECallTypeAudio;
   }
 
-  if (self.callKitType == CALLKIT) {
-    [self didCallWithUser:user withType:callType];
-  } else if (self.callKitType == PSTN) {
-    [self didCallWithUser:user withType:NECallTypeAudio];
-  }
+  [self didCallWithUser:user withType:callType];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {

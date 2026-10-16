@@ -52,8 +52,13 @@
   if (self.view.frame.size.height < 600) {
     self.factor = 0.5;
   }
-  self.statusHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
+  self.statusHeight = self.view.safeAreaInsets.top;
   [self setupUI];
+}
+
+- (void)viewSafeAreaInsetsDidChange {
+  [super viewSafeAreaInsetsDidChange];
+  self.statusHeight = self.view.safeAreaInsets.top;
 }
 
 /*

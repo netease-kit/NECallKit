@@ -153,7 +153,8 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
 
   [self.view addSubview:self.bannerView];
   [NSLayoutConstraint activateConstraints:@[
-    [self.bannerView.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:80],
+    [self.bannerView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
+                                              constant:20],
     [self.bannerView.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:20],
     [self.bannerView.rightAnchor constraintEqualToAnchor:self.view.rightAnchor constant:-20],
     [self.bannerView.heightAnchor constraintEqualToConstant:40]
@@ -260,9 +261,6 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
   }
 
   CGSize buttonSize = CGSizeMake(75, 103);
-  CGFloat statusHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
-  CGFloat topButtonOffset = statusHeight + 20;
-
   self.blurImage = [[UIImageView alloc] init];
   self.blurImage.translatesAutoresizingMaskIntoConstraints = NO;
   [self.view addSubview:self.blurImage];
@@ -302,8 +300,8 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
   if (self.callParam.enableFloatingWindow == YES) {
     [self.view addSubview:self.smallButton];
     [NSLayoutConstraint activateConstraints:@[
-      [self.smallButton.topAnchor constraintEqualToAnchor:self.view.topAnchor
-                                                 constant:topButtonOffset],
+      [self.smallButton.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
+                                                 constant:20],
       [self.smallButton.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:20],
       [self.smallButton.widthAnchor constraintEqualToConstant:40],
       [self.smallButton.heightAnchor constraintEqualToConstant:40]
@@ -316,8 +314,8 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
     self.switchCameraLeftToViewConstraint =
         [self.switchCameraBtn.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:20];
     self.switchCameraTopConstraint =
-        [self.switchCameraBtn.topAnchor constraintEqualToAnchor:self.view.topAnchor
-                                                       constant:topButtonOffset];
+        [self.switchCameraBtn.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
+                                                       constant:20];
     [NSLayoutConstraint activateConstraints:@[
       self.switchCameraTopConstraint,
       self.switchCameraLeftToSmallConstraint,
@@ -328,8 +326,8 @@ NSString *const kCallKitShowNoti = @"kCallKitShowNoti";
   } else {
     [self.view addSubview:self.switchCameraBtn];
     self.switchCameraTopConstraint =
-        [self.switchCameraBtn.topAnchor constraintEqualToAnchor:self.view.topAnchor
-                                                       constant:topButtonOffset];
+        [self.switchCameraBtn.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
+                                                       constant:20];
     self.switchCameraLeftToViewConstraint =
         [self.switchCameraBtn.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:20];
     [NSLayoutConstraint activateConstraints:@[

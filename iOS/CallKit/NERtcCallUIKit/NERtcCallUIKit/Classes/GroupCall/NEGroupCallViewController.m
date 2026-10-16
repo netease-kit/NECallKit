@@ -88,10 +88,12 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
   [[NERtcCallKit sharedInstance] enableLocalVideo:NO];
   [self setupInCallUI];
   [self.view addSubview:self.timerLabel];
-  [self.timerLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.centerX.equalTo(self.view);
-    make.top.equalTo(self.view).offset(60 * self.factor);
-  }];
+  self.timerLabel.translatesAutoresizingMaskIntoConstraints = NO;
+  [NSLayoutConstraint activateConstraints:@[
+    [self.timerLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+    [self.timerLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
+                                               constant:16 * self.factor]
+  ]];
   if (self.isCalled == YES) {
     if ([[NERtcCallUIKit sharedInstance] isNativeIncomingRingEnabled]) {
       [self playRingWithType:CRTCalleeRing];
@@ -193,19 +195,22 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
 
   // 前后摄像头
   [self.view addSubview:self.cameraBtn];
-  [self.cameraBtn mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.left.equalTo(self.view).offset(12);
-    make.top.equalTo(self.view).offset(56);
-  }];
+  self.cameraBtn.translatesAutoresizingMaskIntoConstraints = NO;
+  [NSLayoutConstraint activateConstraints:@[
+    [self.cameraBtn.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:12],
+    [self.cameraBtn.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:12]
+  ]];
 
   // 邀请按钮 - 根据配置决定是否显示
   if (self.showInviteButton) {
     [self.view addSubview:self.inviteBtn];
-    [self.inviteBtn mas_makeConstraints:^(MASConstraintMaker *make) {
-      make.right.equalTo(self.view).offset(-12);
-      make.top.equalTo(self.view).offset(56);
-      make.width.height.mas_equalTo(40);
-    }];
+    self.inviteBtn.translatesAutoresizingMaskIntoConstraints = NO;
+    [NSLayoutConstraint activateConstraints:@[
+      [self.inviteBtn.rightAnchor constraintEqualToAnchor:self.view.rightAnchor constant:-12],
+      [self.inviteBtn.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:12],
+      [self.inviteBtn.widthAnchor constraintEqualToConstant:40],
+      [self.inviteBtn.heightAnchor constraintEqualToConstant:40]
+    ]];
   } else {
     self.inviteBtn.hidden = YES;
   }
@@ -540,6 +545,14 @@ navigation
                        GroupInviteParam *param = [[GroupInviteParam alloc] init];
                        param.callId = weakSelf.callId;
                        param.calleeList = userIds;
+                       if (weakSelf.pushParam) {
+                         param.pushParam = weakSelf.pushParam;
+                         NEXKitBaseLogInfo(
+                             @"groupInvite use pushParam - pushMode: %ld, pushContent: %@, "
+                              @"payload: %@",
+                             (long)weakSelf.pushParam.pushMode, weakSelf.pushParam.pushContent,
+                             weakSelf.pushParam.payload);
+                       }
 
                        [[NEGroupCallKit sharedInstance]
                            groupInvite:param

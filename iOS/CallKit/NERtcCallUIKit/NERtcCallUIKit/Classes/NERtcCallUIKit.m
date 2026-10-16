@@ -1483,7 +1483,7 @@ const NSInteger kGroupCallMaxUsers = 10;
 #pragma mark - Version
 
 + (NSString *)version {
-  return @"4.8.5";
+  return @"4.8.8";
 
 }
 

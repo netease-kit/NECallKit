@@ -9,14 +9,12 @@
 #import <SDWebImage/SDWebImage.h>
 #import <NECommonUIKit/UIView+YXToast.h>
 #import "SettingManager.h"
-#import <NECallKitPstn/NECallKitPstn.h>
 #import <NERtcCallKit/NERtcCallKit.h>
 #import "NEUser.h"
 #import <Foundation/NSBundle.h>
 #import <NERtcCallUIKit/NERtcCallUIKit.h>
 typedef enum : NSUInteger {
     CALLKIT,
-    PSTN,
 } CallKitType;
 
 static NSString * const NERECORDADD = @"ne_record_add";

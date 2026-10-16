@@ -13,12 +13,11 @@
   return self;
 }
 - (void)initUI {
-  self.backgroundColor = [UIColor blackColor];
+  self.backgroundColor = [UIColor clearColor];
   UIView *bgView = [[UIView alloc] init];
   [self addSubview:bgView];
-  CGFloat statusHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
   [bgView mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.edges.mas_equalTo(UIEdgeInsetsMake(statusHeight, 0, 0, 0));
+    make.edges.mas_equalTo(UIEdgeInsetsZero);
   }];
   UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"云信Logo"]];
   [bgView addSubview:imageView];
