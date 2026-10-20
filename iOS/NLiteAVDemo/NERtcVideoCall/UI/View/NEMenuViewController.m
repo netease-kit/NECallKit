@@ -9,7 +9,6 @@
 #import "NEMenuCell.h"
 #import "NENavCustomView.h"
 #import "NENavigator.h"
-#import "NEPSTNViewController.h"
 #import "NERtcContactsViewController.h"
 #import "NERtcSettingViewController.h"
 #import "NEUser.h"
@@ -56,11 +55,13 @@ static NSString *cellID = @"menuCellID";
                                 action:@selector(settingButtonClick:)
                       forControlEvents:UIControlEventTouchUpInside];
 
-  CGFloat statusHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
-  [customView mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.left.top.right.mas_equalTo(0);
-    make.height.mas_equalTo(statusHeight + 80);
-  }];
+  customView.translatesAutoresizingMaskIntoConstraints = NO;
+  [NSLayoutConstraint activateConstraints:@[
+    [customView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+    [customView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+    [customView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor],
+    [customView.heightAnchor constraintEqualToConstant:80.0]
+  ]];
 
   [self.view addSubview:self.tableView];
   [self.tableView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -212,87 +213,6 @@ static NSString *cellID = @"menuCellID";
   [self.navigationController pushViewController:setting animated:YES];
 }
 
-#pragma mark - NERtcVideoCallDelegate
-
-- (void)onInvited:(NSString *)invitor
-          userIDs:(NSArray<NSString *> *)userIDs
-      isFromGroup:(BOOL)isFromGroup
-          groupID:(nullable NSString *)groupID
-             type:(NERtcCallType)type
-       attachment:(nullable NSString *)attachment {
-  NSLog(@"menu controoler onInvited");
-  NECallUIKitConfig *config = [[NERtcCallUIKit sharedInstance] valueForKey:@"config"];
-  if (config.uiConfig.disableShowCalleeView == NO) {
-    NSLog(@"callee view show in call ui kit");
-    return;
-  }
-
-  [NIMSDK.sharedSDK.v2UserService getUserListFromCloud:@[ invitor ]
-      success:^(NSArray<V2NIMUser *> *_Nonnull result) {
-        if (result.count < 1) {
-          return;
-        }
-
-        V2NIMUser *user = result.firstObject;
-
-        NEUser *remoteUser = [[NEUser alloc] init];
-        remoteUser.imAccid = user.accountId;
-        remoteUser.mobile = user.mobile;
-        remoteUser.avatar = user.avatar;
-
-        NEPSTNViewController *callVC = [[NEPSTNViewController alloc] init];
-        callVC.localUser = [NEAccount shared].userModel;
-        callVC.remoteUser = remoteUser;
-        callVC.status = NERtcCallStatusCalled;
-        callVC.callType = type;
-        callVC.isCaller = NO;
-        if (type == NERtcCallTypeAudio) {
-          callVC.callKitType = PSTN;
-        } else {
-          callVC.callKitType = CALLKIT;
-        }
-        callVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-        [self.navigationController presentViewController:callVC animated:YES completion:nil];
-      }
-      failure:^(V2NIMError *_Nonnull error) {
-        if (error) {
-          [self.view ne_makeToast:error.description];
-          return;
-        }
-      }];
-
-  /*
-    if (type == NERtcCallTypeAudio) {
-        NEUser *remoteUser = [[NEUser alloc] init];
-        remoteUser.imAccid = imUser.userId;
-        remoteUser.mobile = imUser.userInfo.mobile;
-        remoteUser.avatar = imUser.userInfo.avatarUrl;
-
-        NEPSTNViewController *callVC = [[NEPSTNViewController alloc] init];
-        callVC.localUser = [NEAccount shared].userModel;
-        callVC.remoteUser = remoteUser;
-        callVC.status = NERtcCallStatusCalled;
-        callVC.callType = type;
-        callVC.isCaller = NO;
-        callVC.callKitType = PSTN;
-        callVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-        [self.navigationController presentViewController:callVC animated:YES
-    completion:nil]; }else { NECallViewController *callVC = [[NECallViewController
-    alloc] init]; NEUICallParam *callParam = [[NEUICallParam alloc] init];
-          callParam.remoteUserAccid = imUser.userId;
-          callParam.remoteShowName = imUser.userInfo.mobile;
-          callParam.remoteAvatar = imUser.userInfo.avatarUrl;
-          callParam.currentUserAccid = [NEAccount shared].userModel.imAccid;
-          callVC.callParam = callParam;
-          callVC.isCaller = NO;
-          callVC.status = NERtcCallStatusCalled;
-          callVC.callType = type;
-          callVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
-          [self.navigationController presentViewController:callVC animated:YES
-    completion:nil];
-    }*/
-}
-
 #pragma mark - IM delegate
 /* v1
 - (void)willSendMessage:(NIMMessage *)message {
@@ -345,9 +265,6 @@ static NSString *cellID = @"menuCellID";
   } else if (indexPath.row == 1) {
     cell.iconView.image = [UIImage imageNamed:@"menu_single_icon"];
     cell.titleLabel.text = @"多人音视频通话";
-  } else if (indexPath.row == 2) {
-    cell.iconView.image = [UIImage imageNamed:@"pstn"];
-    cell.titleLabel.text = @"融合呼叫";
   }
   return cell;
 }
@@ -363,8 +280,6 @@ static NSString *cellID = @"menuCellID";
       NEGroupContactsController *group = [[NEGroupContactsController alloc] init];
       [self.navigationController pushViewController:group animated:YES];
       return;
-    } else if (indexPath.row == 2) {
-      contact.callKitType = PSTN;
     }
     [self.navigationController pushViewController:contact animated:YES];
   }

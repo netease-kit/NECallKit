@@ -9,4 +9,6 @@
 
 @property(strong, nonatomic) UIWindow *window;
 
+- (void)configureWindow:(UIWindow *)window;
+
 @end

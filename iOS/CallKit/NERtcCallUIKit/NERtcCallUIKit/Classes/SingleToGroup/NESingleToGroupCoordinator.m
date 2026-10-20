@@ -91,8 +91,9 @@
   }
   [self.containerView addSubview:self.inviteMembersButton];
   self.inviteButtonTopConstraint =
-      [self.inviteMembersButton.topAnchor constraintEqualToAnchor:self.containerView.topAnchor
-                                                         constant:[self inviteButtonTopConstantForMultiMode:NO]];
+      [self.inviteMembersButton.topAnchor
+          constraintEqualToAnchor:self.hostViewController.view.safeAreaLayoutGuide.topAnchor
+                         constant:[self inviteButtonTopConstantForMultiMode:NO]];
   self.inviteButtonRightConstraint =
       [self.inviteMembersButton.rightAnchor constraintEqualToAnchor:self.containerView.rightAnchor
                                                            constant:[self inviteButtonRightConstantForMultiMode:NO]];
@@ -114,7 +115,7 @@
   if (isMultiMode) {
     return 56;
   }
-  return [UIApplication sharedApplication].statusBarFrame.size.height + 20;
+  return 20;
 }
 
 - (CGFloat)inviteButtonRightConstantForMultiMode:(BOOL)isMultiMode {

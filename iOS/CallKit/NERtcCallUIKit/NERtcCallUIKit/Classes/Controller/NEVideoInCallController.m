@@ -7,6 +7,8 @@
 
 @interface NEVideoInCallController ()
 
+@property(nonatomic, assign) BOOL didApplyInitialSmallVideoPosition;
+
 @end
 
 @implementation NEVideoInCallController
@@ -28,11 +30,24 @@
   [self.view addSubview:self.smallVideoView];
 
   self.smallVideoView.translatesAutoresizingMaskIntoConstraints = YES;
-  self.smallVideoView.frame =
-      CGRectMake(self.view.bounds.size.width - 20 - 90, self.statusHeight + 20, 90, 160);
+  CGFloat topInset = self.view.safeAreaInsets.top;
+  self.smallVideoView.frame = CGRectMake(self.view.bounds.size.width - 20 - 90,
+                                         topInset + 20, 90, 160);
+  self.didApplyInitialSmallVideoPosition = topInset > 0;
 
   self.smallVideoView.clipsToBounds = YES;
   self.smallVideoView.layer.cornerRadius = self.radius;
+}
+
+- (void)viewSafeAreaInsetsDidChange {
+  [super viewSafeAreaInsetsDidChange];
+  if (self.didApplyInitialSmallVideoPosition || self.smallVideoView == nil) {
+    return;
+  }
+  CGRect frame = self.smallVideoView.frame;
+  frame.origin.y = self.view.safeAreaInsets.top + 20;
+  self.smallVideoView.frame = frame;
+  self.didApplyInitialSmallVideoPosition = YES;
 }
 
 - (void)refreshUI {

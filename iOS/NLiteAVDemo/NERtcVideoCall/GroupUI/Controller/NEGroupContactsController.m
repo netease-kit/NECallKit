@@ -12,7 +12,6 @@
 #import "GroupUserController.h"
 #import "NEAccount.h"
 #import "NECallStatusRecordCell.h"
-#import "NEPSTNViewController.h"
 #import "NERtcSettingViewController.h"
 #import "NESearchResultCell.h"
 #import "NSArray+NTES.h"

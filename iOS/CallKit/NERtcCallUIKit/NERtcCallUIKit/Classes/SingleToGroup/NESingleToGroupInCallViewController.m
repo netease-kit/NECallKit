@@ -62,13 +62,16 @@
   [NSLayoutConstraint activateConstraints:@[
     [self.collectionView.leftAnchor constraintEqualToAnchor:self.view.leftAnchor],
     [self.collectionView.rightAnchor constraintEqualToAnchor:self.view.rightAnchor],
-    [self.collectionView.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:40],
+    [self.collectionView.topAnchor
+        constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
+                       constant:40],
     [self.collectionView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
   ]];
   [self.view addSubview:self.timerLabel];
   [NSLayoutConstraint activateConstraints:@[
     [self.timerLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-    [self.timerLabel.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:60]
+    [self.timerLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
+                                              constant:16]
   ]];
 }
 

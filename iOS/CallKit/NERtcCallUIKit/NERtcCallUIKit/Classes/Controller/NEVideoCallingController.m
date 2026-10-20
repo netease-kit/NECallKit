@@ -28,8 +28,8 @@
 
   [self.view addSubview:self.remoteAvatorView];
   [NSLayoutConstraint activateConstraints:@[
-    [self.remoteAvatorView.topAnchor constraintEqualToAnchor:self.view.topAnchor
-                                                    constant:self.statusHeight + 20],
+    [self.remoteAvatorView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
+                                                    constant:20],
     [self.remoteAvatorView.rightAnchor constraintEqualToAnchor:self.view.rightAnchor constant:-20],
     [self.remoteAvatorView.heightAnchor constraintEqualToConstant:60],
     [self.remoteAvatorView.widthAnchor constraintEqualToConstant:60]

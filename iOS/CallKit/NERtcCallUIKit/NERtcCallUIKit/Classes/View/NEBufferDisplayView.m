@@ -4,7 +4,22 @@
 
 #import "NEBufferDisplayView.h"
 
+@interface NEBufferDisplayView ()
+@property(nonatomic, strong) AVSampleBufferDisplayLayer *displayLayer;
+@end
+
 @implementation NEBufferDisplayView
+
+@synthesize displayLayer = _displayLayer;
+
+- (instancetype)initWithFrame:(CGRect)frame {
+  self = [super initWithFrame:frame];
+  if (self) {
+    // UIView.layer 只能在主线程访问；View 创建时缓存图层，视频回调线程只读取缓存。
+    _displayLayer = (AVSampleBufferDisplayLayer *)self.layer;
+  }
+  return self;
+}
 
 /*
 // Only override drawRect: if you perform custom drawing.
@@ -19,7 +34,7 @@
 }
 
 - (AVSampleBufferDisplayLayer *)getLayer {
-  return (AVSampleBufferDisplayLayer *)self.layer;
+  return _displayLayer;
 }
 
 @end

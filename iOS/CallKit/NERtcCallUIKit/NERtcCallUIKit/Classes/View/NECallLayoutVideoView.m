@@ -93,14 +93,14 @@ static NSString *const kCallLayoutVideoViewTag = @"CallLayoutVideoView";
   CGFloat smallViewWidth = 90;
   CGFloat smallViewHeight = 160;
   CGFloat margin = 20;
-  CGFloat statusBarHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
+  CGFloat topSafeAreaInset = self.safeAreaInsets.top;
 
   self.smallVideoView.translatesAutoresizingMaskIntoConstraints = YES;
   // 使用 frame 布局，不使用约束
   // 如果 bounds 已经正确，立即设置初始位置；否则在 layoutSubviews 中设置
   if (self.bounds.size.width > 0 && self.bounds.size.height > 0 && !self.showLocalVideoOnly) {
     CGFloat x = self.bounds.size.width - smallViewWidth - margin;
-    CGFloat y = statusBarHeight + margin;
+    CGFloat y = topSafeAreaInset + margin;
     self.smallVideoView.frame = CGRectMake(x, y, smallViewWidth, smallViewHeight);
     self.smallVideoViewInitialPositionSet = YES;
     NEXKitBaseLogInfo(
@@ -366,11 +366,11 @@ static NSString *const kCallLayoutVideoViewTag = @"CallLayoutVideoView";
     CGFloat smallViewWidth = 90;
     CGFloat smallViewHeight = 160;
     CGFloat margin = 20;
-    CGFloat statusBarHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
+    CGFloat topSafeAreaInset = self.safeAreaInsets.top;
 
     // 计算期望的 frame（右上角位置）
     CGFloat expectedX = self.bounds.size.width - smallViewWidth - margin;
-    CGFloat expectedY = statusBarHeight + margin;
+    CGFloat expectedY = topSafeAreaInset + margin;
     CGRect expectedFrame = CGRectMake(expectedX, expectedY, smallViewWidth, smallViewHeight);
 
     // 检查当前位置是否与期望位置一致（允许 1 像素的误差）
@@ -442,12 +442,11 @@ static NSString *const kCallLayoutVideoViewTag = @"CallLayoutVideoView";
     self.remoteAvatarView.layer.cornerRadius = 4.0;
     [self addSubview:self.remoteAvatarView];
 
-    CGFloat statusBarHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
     [NSLayoutConstraint activateConstraints:@[
       [self.remoteAvatarView.widthAnchor constraintEqualToConstant:60],
       [self.remoteAvatarView.heightAnchor constraintEqualToConstant:60],
-      [self.remoteAvatarView.topAnchor constraintEqualToAnchor:self.topAnchor
-                                                      constant:statusBarHeight + 20],
+      [self.remoteAvatarView.topAnchor constraintEqualToAnchor:self.safeAreaLayoutGuide.topAnchor
+                                                      constant:20],
       [self.remoteAvatarView.rightAnchor constraintEqualToAnchor:self.rightAnchor constant:-20]
     ]];
   }
@@ -853,8 +852,7 @@ static NSString *const kCallLayoutVideoViewTag = @"CallLayoutVideoView";
     targetCenter.x = parentSize.width - smallVideoSize.width / 2.0 - 20;
   } else if (minDistance == distanceToTop) {
     // 吸附到上边缘
-    CGFloat statusBarHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
-    targetCenter.y = statusBarHeight + smallVideoSize.height / 2.0 + 20;  // 20像素边距
+    targetCenter.y = self.safeAreaInsets.top + smallVideoSize.height / 2.0 + 20;  // 20像素边距
   } else {
     // 吸附到下边缘
     targetCenter.y = parentSize.height - smallVideoSize.height / 2.0 - 20;

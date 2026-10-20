@@ -14,7 +14,6 @@
 #import "NEGroupContactsController.h"
 #import "NEMenuViewController.h"
 #import "NENavigator.h"
-#import "NEPSTNViewController.h"
 #import "SettingManager.h"
 
 @interface AppDelegate () <NERtcCallKitDelegate,
@@ -46,7 +45,14 @@
 }
 
 - (void)initWindow {
-  self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+  if (!self.window) {
+    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+  }
+  [self configureWindow:self.window];
+}
+
+- (void)configureWindow:(UIWindow *)window {
+  self.window = window;
   self.window.backgroundColor = UIColor.whiteColor;
   NEMenuViewController *menuVC = [[NEMenuViewController alloc] init];
   UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:menuVC];

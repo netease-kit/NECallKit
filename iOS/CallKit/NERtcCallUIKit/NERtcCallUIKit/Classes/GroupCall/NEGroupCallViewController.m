@@ -24,6 +24,8 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
 
 @property(nonatomic, strong) NSMutableArray<NEGroupUser *> *datas;
 
+@property(nonatomic, strong) NSMutableSet<NSString *> *busyMemberAccids;
+
 @property(nonatomic, assign) BOOL isCalled;
 
 @property(nonatomic, strong) NEGroupUser *caller;
@@ -63,6 +65,7 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
   self = [super init];
   if (self) {
     self.datas = [[NSMutableArray alloc] init];
+    self.busyMemberAccids = [[NSMutableSet alloc] init];
     self.caller = caller;
     self.isCalled = isCalled;
     self.factor = 1.0;
@@ -88,10 +91,12 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
   [[NERtcCallKit sharedInstance] enableLocalVideo:NO];
   [self setupInCallUI];
   [self.view addSubview:self.timerLabel];
-  [self.timerLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.centerX.equalTo(self.view);
-    make.top.equalTo(self.view).offset(60 * self.factor);
-  }];
+  self.timerLabel.translatesAutoresizingMaskIntoConstraints = NO;
+  [NSLayoutConstraint activateConstraints:@[
+    [self.timerLabel.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+    [self.timerLabel.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
+                                               constant:16 * self.factor]
+  ]];
   if (self.isCalled == YES) {
     if ([[NERtcCallUIKit sharedInstance] isNativeIncomingRingEnabled]) {
       [self playRingWithType:CRTCalleeRing];
@@ -193,19 +198,22 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
 
   // 前后摄像头
   [self.view addSubview:self.cameraBtn];
-  [self.cameraBtn mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.left.equalTo(self.view).offset(12);
-    make.top.equalTo(self.view).offset(56);
-  }];
+  self.cameraBtn.translatesAutoresizingMaskIntoConstraints = NO;
+  [NSLayoutConstraint activateConstraints:@[
+    [self.cameraBtn.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:12],
+    [self.cameraBtn.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:12]
+  ]];
 
   // 邀请按钮 - 根据配置决定是否显示
   if (self.showInviteButton) {
     [self.view addSubview:self.inviteBtn];
-    [self.inviteBtn mas_makeConstraints:^(MASConstraintMaker *make) {
-      make.right.equalTo(self.view).offset(-12);
-      make.top.equalTo(self.view).offset(56);
-      make.width.height.mas_equalTo(40);
-    }];
+    self.inviteBtn.translatesAutoresizingMaskIntoConstraints = NO;
+    [NSLayoutConstraint activateConstraints:@[
+      [self.inviteBtn.rightAnchor constraintEqualToAnchor:self.view.rightAnchor constant:-12],
+      [self.inviteBtn.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:12],
+      [self.inviteBtn.widthAnchor constraintEqualToConstant:40],
+      [self.inviteBtn.heightAnchor constraintEqualToConstant:40]
+    ]];
   } else {
     self.inviteBtn.hidden = YES;
   }
@@ -540,6 +548,14 @@ navigation
                        GroupInviteParam *param = [[GroupInviteParam alloc] init];
                        param.callId = weakSelf.callId;
                        param.calleeList = userIds;
+                       if (weakSelf.pushParam) {
+                         param.pushParam = weakSelf.pushParam;
+                         NEXKitBaseLogInfo(
+                             @"groupInvite use pushParam - pushMode: %ld, pushContent: %@, "
+                              @"payload: %@",
+                             (long)weakSelf.pushParam.pushMode, weakSelf.pushParam.pushContent,
+                             weakSelf.pushParam.payload);
+                       }
 
                        [[NEGroupCallKit sharedInstance]
                            groupInvite:param
@@ -643,6 +659,19 @@ navigation
   NSMutableArray *filters = [[NSMutableArray alloc] init];
   for (GroupCallMember *member in members) {
     NEXKitBaseLogInfo(@"memmber state : %lu member video : %d", member.state, member.isOpenVideo);
+    BOOL isBusy = member.imAccid.length > 0 && member.state == GroupMemberStateHangup &&
+                  [member.action isEqualToString:kActionReject] &&
+                  [member.reason isEqualToString:kReasonBusy];
+    if (isBusy) {
+      if (![self.busyMemberAccids containsObject:member.imAccid]) {
+        [self.busyMemberAccids addObject:member.imAccid];
+        dispatch_async(dispatch_get_main_queue(), ^{
+          [weakSelf.view ne_makeToast:[NECallKitUtil localizableWithKey:@"remote_busy"]];
+        });
+      }
+    } else if (member.imAccid.length > 0) {
+      [self.busyMemberAccids removeObject:member.imAccid];
+    }
     if (member.state != GroupMemberStateHangup) {
       [filters addObject:member];
     }
@@ -713,6 +742,7 @@ navigation
 
 - (void)didBack {
   [self stopCurrentPlaying];
+  [self.busyMemberAccids removeAllObjects];
   [[NEGroupCallKit sharedInstance] removeDelegate:self];
   [[NSNotificationCenter defaultCenter] removeObserver:self];
   [[NSNotificationCenter defaultCenter] postNotificationName:kGroupCallKitDismissNoti object:nil];
