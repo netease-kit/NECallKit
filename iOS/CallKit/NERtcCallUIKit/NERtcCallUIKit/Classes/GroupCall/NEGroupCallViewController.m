@@ -24,6 +24,8 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
 
 @property(nonatomic, strong) NSMutableArray<NEGroupUser *> *datas;
 
+@property(nonatomic, strong) NSMutableSet<NSString *> *busyMemberAccids;
+
 @property(nonatomic, assign) BOOL isCalled;
 
 @property(nonatomic, strong) NEGroupUser *caller;
@@ -63,6 +65,7 @@ NSString *const kGroupCallKitDismissNoti = @"kGroupCallKitDismissNoti";
   self = [super init];
   if (self) {
     self.datas = [[NSMutableArray alloc] init];
+    self.busyMemberAccids = [[NSMutableSet alloc] init];
     self.caller = caller;
     self.isCalled = isCalled;
     self.factor = 1.0;
@@ -656,6 +659,19 @@ navigation
   NSMutableArray *filters = [[NSMutableArray alloc] init];
   for (GroupCallMember *member in members) {
     NEXKitBaseLogInfo(@"memmber state : %lu member video : %d", member.state, member.isOpenVideo);
+    BOOL isBusy = member.imAccid.length > 0 && member.state == GroupMemberStateHangup &&
+                  [member.action isEqualToString:kActionReject] &&
+                  [member.reason isEqualToString:kReasonBusy];
+    if (isBusy) {
+      if (![self.busyMemberAccids containsObject:member.imAccid]) {
+        [self.busyMemberAccids addObject:member.imAccid];
+        dispatch_async(dispatch_get_main_queue(), ^{
+          [weakSelf.view ne_makeToast:[NECallKitUtil localizableWithKey:@"remote_busy"]];
+        });
+      }
+    } else if (member.imAccid.length > 0) {
+      [self.busyMemberAccids removeObject:member.imAccid];
+    }
     if (member.state != GroupMemberStateHangup) {
       [filters addObject:member];
     }
@@ -726,6 +742,7 @@ navigation
 
 - (void)didBack {
   [self stopCurrentPlaying];
+  [self.busyMemberAccids removeAllObjects];
   [[NEGroupCallKit sharedInstance] removeDelegate:self];
   [[NSNotificationCenter defaultCenter] removeObserver:self];
   [[NSNotificationCenter defaultCenter] postNotificationName:kGroupCallKitDismissNoti object:nil];
