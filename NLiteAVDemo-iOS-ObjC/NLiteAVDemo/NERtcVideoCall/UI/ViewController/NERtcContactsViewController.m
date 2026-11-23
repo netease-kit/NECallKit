@@ -6,13 +6,12 @@
 #import <NERtcCallUIKit/NERtcCallUIKit.h>
 #import "NEAccount.h"
 #import "NECallStatusRecordCell.h"
-#import "NEPSTNViewController.h"
 #import "NERtcSettingViewController.h"
 #import "NESearchResultCell.h"
-#import "NESearchTask.h"
-#import "NESectionHeaderView.h"
 #import "NSArray+NTES.h"
 #import "NSMacro.h"
+#import "NESectionHeaderView.h"
+#import "NEPSTNViewController.h"
 #import <NERtcCallUIKit/NetManager.h>
 
 @interface NERtcContactsViewController () <UITextFieldDelegate,
@@ -23,6 +22,9 @@
                                            NECallViewDelegate>
 @property(nonatomic, strong) UIView *searchBarView;
 @property(nonatomic, strong) UITextField *textField;
+@property(nonatomic, strong) UIButton *videoCallRadioBtn;
+@property(nonatomic, strong) UIButton *audioCallRadioBtn;
+@property(nonatomic, assign) BOOL isVideoCall;  // YES: 视频呼叫, NO: 音频呼叫
 
 @property(nonatomic, strong) UIView *searchResutlTitleView;
 
@@ -33,14 +35,10 @@
 @property(nonatomic, strong) UILabel *currentUserPhone;
 
 @property(nonatomic, strong) UITableView *contentTable;
-/// 搜索结果
-@property(nonatomic, strong) NSMutableArray *searchResultData;
 /// 最近搜索
 @property(nonatomic, strong) NSMutableArray *searchHistoryData;
 /// 通话记录
 @property(nonatomic, strong) NSMutableArray *recordData;
-
-@property(nonatomic, strong) NESectionHeaderView *resultHeader;
 
 @property(nonatomic, strong) NESectionHeaderView *historyHeader;
 
@@ -53,7 +51,6 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    self.searchResultData = [[NSMutableArray alloc] init];
     self.searchHistoryData = [[NSMutableArray alloc] init];
     self.recordData = [[NSMutableArray alloc] init];
     [self loadHistoryData];
@@ -64,13 +61,9 @@
 
 - (void)viewDidLoad {
   [super viewDidLoad];
-  if (self.callKitType == CALLKIT) {
-    self.title = @"发起呼叫";
-  } else if (self.callKitType == PSTN) {
-    self.title = @"发起融合呼叫";
-  }
+  self.title = @"发起呼叫";
   [self setupContent];
-  //  [self setSetting];
+  [self setSetting];
   [self addObserver];
   //  [[NERingPlayerManager shareInstance] playRingWithRingType:CRTRejectRing isRtcPlay:YES];
 }
@@ -100,10 +93,10 @@
 }
 
 - (UIView *)getHeaderView {
-  // 搜索框与手机号
+  // 账号输入框
   UIView *back = [[UIView alloc] init];
   back.backgroundColor = UIColor.clearColor;
-  back.frame = CGRectMake(0, 0, self.view.frame.size.width, 40 + 8 + 40);
+  back.frame = CGRectMake(0, 0, self.view.frame.size.width, 40 + 8 + 40 + 50);
 
   [back addSubview:self.searchBarView];
   [self.searchBarView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -118,20 +111,18 @@
     make.top.mas_equalTo(0);
     make.height.mas_equalTo(40);
   }];
-  UIButton *searchBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-  [searchBtn setTitle:@"搜索" forState:UIControlStateNormal];
-  searchBtn.titleLabel.font = [UIFont systemFontOfSize:12];
-  searchBtn.layer.cornerRadius = 4.0;
-  searchBtn.clipsToBounds = YES;
-  searchBtn.backgroundColor = [UIColor colorWithRed:57 / 255.0
-                                              green:130 / 255.0
-                                               blue:252 / 255.0
-                                              alpha:1.0];
-  [searchBtn addTarget:self
-                action:@selector(searchBtn:)
-      forControlEvents:UIControlEventTouchUpInside];
-  [self.searchBarView addSubview:searchBtn];
-  [searchBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+  UIButton *callBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+  [callBtn setTitle:@"呼叫" forState:UIControlStateNormal];
+  callBtn.titleLabel.font = [UIFont systemFontOfSize:12];
+  callBtn.layer.cornerRadius = 4.0;
+  callBtn.clipsToBounds = YES;
+  callBtn.backgroundColor = [UIColor colorWithRed:57 / 255.0
+                                            green:130 / 255.0
+                                             blue:252 / 255.0
+                                            alpha:1.0];
+  [callBtn addTarget:self action:@selector(callBtn:) forControlEvents:UIControlEventTouchUpInside];
+  [self.searchBarView addSubview:callBtn];
+  [callBtn mas_makeConstraints:^(MASConstraintMaker *make) {
     make.left.mas_equalTo(self.textField.mas_right).offset(10);
     make.right.mas_equalTo(-6);
     make.top.mas_equalTo(6);
@@ -144,11 +135,40 @@
   currentPhoneLabel.textColor = HEXCOLORA(0xFFFFFF, 0.5);
   currentPhoneLabel.font = [UIFont systemFontOfSize:14.0];
   currentPhoneLabel.text =
-      [NSString stringWithFormat:@"您的手机号：%@", [NEAccount shared].userModel.mobile];
+      [NSString stringWithFormat:@"您的账号ID：%@", [NEAccount shared].userModel.imAccid];
   [back addSubview:currentPhoneLabel];
   [currentPhoneLabel mas_makeConstraints:^(MASConstraintMaker *make) {
     make.left.equalTo(self.searchBarView);
     make.top.equalTo(self.searchBarView.mas_bottom).offset(20);
+  }];
+
+  // 添加呼叫类型选择
+  UILabel *callTypeLabel = [[UILabel alloc] init];
+  callTypeLabel.text = @"呼叫类型";
+  callTypeLabel.textColor = HEXCOLORA(0xFFFFFF, 0.5);
+  callTypeLabel.font = [UIFont systemFontOfSize:14.0];
+  [back addSubview:callTypeLabel];
+  [callTypeLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.left.equalTo(self.searchBarView);
+    make.top.equalTo(currentPhoneLabel.mas_bottom).offset(15);
+  }];
+
+  // 视频呼叫按钮（单选）
+  [back addSubview:self.videoCallRadioBtn];
+  [self.videoCallRadioBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.left.equalTo(callTypeLabel.mas_right).offset(20);
+    make.centerY.equalTo(callTypeLabel);
+    make.width.mas_equalTo(100);
+    make.height.mas_equalTo(30);
+  }];
+
+  // 音频呼叫按钮（单选）
+  [back addSubview:self.audioCallRadioBtn];
+  [self.audioCallRadioBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+    make.left.equalTo(self.videoCallRadioBtn.mas_right).offset(10);
+    make.centerY.equalTo(callTypeLabel);
+    make.width.mas_equalTo(100);
+    make.height.mas_equalTo(30);
   }];
 
   return back;
@@ -171,6 +191,8 @@
   [self.navigationController pushViewController:setting animated:YES];
 }
 
+
+
 #pragma mark - data
 - (void)loadHistoryData {
   [self.searchHistoryData removeAllObjects];
@@ -184,40 +206,27 @@
   [self.recordData addObjectsFromArray:array];
 }
 
-- (void)searchMobile:(NSString *)mobile {
-  __weak typeof(self) weakSelf = self;
-
-  NESearchTask *task = [NESearchTask task];
-  task.req_mobile = mobile;
-  [task postWithCompletion:^(NSDictionary *_Nullable data, NSError *_Nullable error) {
-    if (error) {
-      [weakSelf.view ne_makeToast:error.localizedDescription];
-    } else {
-      NSDictionary *userDic = [data objectForKey:@"data"];
-      if (userDic) {
-        if (userDic) {
-          NEUser *user = [[NEUser alloc] init];
-          user.mobile = [userDic objectForKey:@"mobile"];
-          user.imAccid = [userDic objectForKey:@"imAccid"];
-          user.avatar = [userDic objectForKey:@"avatar"];
-          [weakSelf saveUser:user];
-        }
-      } else {
-        [weakSelf.searchResultData removeAllObjects];
-        [weakSelf.view ne_makeToast:@"未找到此用户"];
-      }
-      [weakSelf.contentTable reloadData];
-    }
-  }];
-}
-
-- (void)searchUser:(NSString *)account {
+- (void)callUser:(NSString *)accountId {
+  accountId = [accountId stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
   [self.textField resignFirstResponder];
-  if (!account.length) {
+  if (!accountId.length) {
+    [self.view ne_makeToast:@"请输入账号ID"];
     return;
   }
-  // 发送请求
-  [self searchMobile:account];
+
+  // 检查是否是自己
+  if ([accountId isEqualToString:[NEAccount shared].userModel.imAccid]) {
+    [self.view ne_makeToast:@"呼叫用户不可以是自己哦"];
+    return;
+  }
+
+  // 创建用户对象进行呼叫
+  NEUser *user = [[NEUser alloc] init];
+  user.imAccid = accountId;
+
+  // 使用选择的呼叫类型
+  NECallType callType = self.isVideoCall ? NECallTypeVideo : NECallTypeAudio;
+  [self didCallWithUser:user withType:callType];
 }
 
 - (void)updateRecord {
@@ -226,8 +235,8 @@
 }
 
 #pragma mark - event
-- (void)searchBtn:(UIButton *)button {
-  [self searchUser:self.textField.text];
+- (void)callBtn:(UIButton *)button {
+  [self callUser:self.textField.text];
 }
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
   if (self.textField.isFirstResponder) {
@@ -236,7 +245,7 @@
 }
 #pragma mark - UITextFieldDelegate
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
-  [self searchUser:textField.text];
+  [self callUser:textField.text];
   return YES;
 }
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField {
@@ -245,13 +254,7 @@
 - (BOOL)textField:(UITextField *)textField
     shouldChangeCharactersInRange:(NSRange)range
                 replacementString:(NSString *)string {
-  NSString *str = [textField.text stringByReplacingCharactersInRange:range withString:string];
-  if (str.length > 11) {
-    return NO;
-  }
-  NSCharacterSet *invalidCharacters =
-      [NSCharacterSet characterSetWithCharactersInString:@"0123456789"].invertedSet;
-  return ([str rangeOfCharacterFromSet:invalidCharacters].location == NSNotFound);
+  return YES;
 }
 - (UITextField *)textField {
   if (!_textField) {
@@ -260,7 +263,7 @@
     _textField.delegate = self;
     _textField.textColor = [UIColor whiteColor];
     NSMutableAttributedString *string = [[NSMutableAttributedString alloc]
-        initWithString:@"输入手机号搜索已注册用户"
+        initWithString:@"输入账号ID进行呼叫"
             attributes:@{
               NSForegroundColorAttributeName : [UIColor grayColor],
               NSFontAttributeName : _textField.font
@@ -269,8 +272,8 @@
     _textField.layer.cornerRadius = 8;
 
     _textField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    _textField.returnKeyType = UIReturnKeySearch;
-    _textField.keyboardType = UIKeyboardTypeNumbersAndPunctuation;
+    _textField.returnKeyType = UIReturnKeyGo;
+    _textField.keyboardType = UIKeyboardTypeDefault;
   }
   return _textField;
 }
@@ -294,11 +297,15 @@
     [self.view ne_makeToast:@"网络连接异常，请稍后再试"];
     return;
   }
-  
+
   if ([NECallEngine sharedInstance].callStatus != NECallStatusIdle) {
     [self.view ne_makeToast:@"正在通话中"];
     return;
   }
+
+  [self saveUser:user];
+  [self loadHistoryData];
+  [self.contentTable reloadData];
 
   NECallUIKitConfig *config = [[NERtcCallUIKit sharedInstance] valueForKey:@"config"];
   if (config.uiConfig.disableShowCalleeView == YES) {
@@ -317,7 +324,7 @@
 
   NEUICallParam *callParam = [[NEUICallParam alloc] init];
   callParam.remoteUserAccid = user.imAccid;
-  callParam.remoteShowName = user.mobile;
+  callParam.remoteShowName = user.imAccid;
   callParam.remoteAvatar = user.avatar;
   callParam.channelName = [[SettingManager shareInstance] customChannelName];
   callParam.remoteDefaultImage = [[SettingManager shareInstance] remoteDefaultImage];
@@ -330,13 +337,11 @@
 #pragma mark - file read & write
 - (void)saveUser:(NEUser *)user {
   NSArray *array = [self readFileName:historyFileName];
-  [self.searchResultData removeAllObjects];
-  [self.searchResultData addObject:user];
   NSMutableArray *mutArray = [NSMutableArray array];
   [mutArray addObject:user];
   [mutArray addObjectsFromArray:array];
   for (NEUser *saveUser in array) {
-    if ([saveUser.mobile isEqualToString:user.mobile]) {
+    if ([saveUser.imAccid isEqualToString:user.imAccid]) {
       [mutArray removeObject:saveUser];
     }
   }
@@ -383,15 +388,13 @@
 #pragma mark - ui table view delegate
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-  return 3;
+  return 2;  // 只保留最近搜索和通话记录
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
   if (section == 0) {
-    return self.searchResultData.count;
-  } else if (section == 1) {
     return self.searchHistoryData.count;
-  } else if (section == 2) {
+  } else if (section == 1) {
     return self.recordData.count;
   }
   return 0;
@@ -399,68 +402,57 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-  if (indexPath.section == 0 || indexPath.section == 1) {
-    NEUser *user;
-    if (indexPath.section == 0) {
-      user = self.searchResultData[indexPath.row];
-    } else if (indexPath.section == 1) {
-      user = self.searchHistoryData[indexPath.row];
-    }
+  if (indexPath.section == 0) {
+    NEUser *user = self.searchHistoryData[indexPath.row];
     NESearchResultCell *cell =
         (NESearchResultCell *)[tableView dequeueReusableCellWithIdentifier:@"NESearchResultCell"
                                                               forIndexPath:indexPath];
     [cell configureUI:user];
     cell.delegate = self;
     return cell;
+  } else if (indexPath.section == 1) {
+    NECallStatusRecordCell *cell = (NECallStatusRecordCell *)[tableView
+        dequeueReusableCellWithIdentifier:@"NECallStatusRecordCell"
+                             forIndexPath:indexPath];
+    cell.accessibilityIdentifier = [NSString stringWithFormat:@"%ld", (long)indexPath.row];
+    NSLog(@"record cell id : %@ ", cell.accessibilityIdentifier);
+    NECallStatusRecordModel *model = self.recordData[indexPath.row];
+    [cell configure:model];
+    return cell;
   }
-  NECallStatusRecordCell *cell = (NECallStatusRecordCell *)[tableView
-      dequeueReusableCellWithIdentifier:@"NECallStatusRecordCell"
-                           forIndexPath:indexPath];
-  cell.accessibilityIdentifier = [NSString stringWithFormat:@"%ld", (long)indexPath.row];
-  NSLog(@"record cell id : %@ ", cell.accessibilityIdentifier);
-  NECallStatusRecordModel *model = self.recordData[indexPath.row];
-  [cell configure:model];
-  return cell;
+  return nil;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
   NEUser *user;
-  if (indexPath.section == 0 || indexPath.section == 1) {
-    if (indexPath.section == 0) {
-      user = self.searchResultData[indexPath.row];
-    } else if (indexPath.section == 1) {
-      user = self.searchHistoryData[indexPath.row];
-    }
-  } else if (indexPath.section == 2) {
+  NECallType callType;
+
+  if (indexPath.section == 0) {
+    // 最近搜索：使用用户选择的呼叫类型
+    user = self.searchHistoryData[indexPath.row];
+    callType = self.isVideoCall ? NECallTypeVideo : NECallTypeAudio;
+  } else if (indexPath.section == 1) {
+    // 通话记录：使用历史记录中的呼叫类型
     NECallStatusRecordModel *model = self.recordData[indexPath.row];
     user = [[NEUser alloc] init];
     user.imAccid = model.imAccid;
     user.mobile = model.mobile;
     user.avatar = model.avatar;
+    // 根据通话记录判断是视频还是音频
+    callType = model.isVideoCall ? NECallTypeVideo : NECallTypeAudio;
   }
-  if (self.callKitType == CALLKIT) {
-    [self didCallWithUser:user withType:[self isAudioCall] ? NECallTypeAudio : NECallTypeVideo];
-  } else if (self.callKitType == PSTN) {
-    [self didCallWithUser:user withType:NECallTypeAudio];
-  }
+
+  [self didCallWithUser:user withType:callType];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
   if (section == 0) {
-    if (self.searchResultData.count > 0) {
-      return NESectionHeaderView.height;
-    } else {
-      return NESectionHeaderView.hasContentHeight;
-    }
-  }
-
-  if (section == 1) {
     if (self.searchHistoryData.count > 0) {
       return NESectionHeaderView.height;
     }
   }
 
-  if (section == 2) {
+  if (section == 1) {
     if (self.recordData.count > 0) {
       return NESectionHeaderView.height;
     }
@@ -471,22 +463,11 @@
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
   if (section == 0) {
-    if (self.searchResultData.count > 0) {
-      self.resultHeader.frame =
-          CGRectMake(0, 0, self.view.frame.size.width, NESectionHeaderView.height);
-      [self.resultHeader.contentLabel setHidden:YES];
-    } else {
-      self.resultHeader.frame =
-          CGRectMake(0, 0, self.view.frame.size.width, NESectionHeaderView.hasContentHeight);
-      [self.resultHeader.contentLabel setHidden:NO];
-    }
-    return self.resultHeader;
-  } else if (section == 1) {
     if (self.searchHistoryData.count > 0) {
       [self.historyHeader.dividerLine setHidden:NO];
       return self.historyHeader;
     }
-  } else if (section == 2) {
+  } else if (section == 1) {
     if (self.recordData.count > 0) {
       [self.recordHeader.dividerLine setHidden:NO];
       return self.recordHeader;
@@ -533,16 +514,6 @@
   return _contentTable;
 }
 
-- (NESectionHeaderView *)resultHeader {
-  if (nil == _resultHeader) {
-    _resultHeader = [[NESectionHeaderView alloc] init];
-    _resultHeader.frame = CGRectMake(0, 0, self.view.frame.size.width, NESectionHeaderView.height);
-    _resultHeader.contentLabel.text = @"无";
-    _resultHeader.titleLabel.text = @"搜索结果";
-  }
-  return _resultHeader;
-}
-
 - (NESectionHeaderView *)historyHeader {
   if (nil == _historyHeader) {
     _historyHeader = [[NESectionHeaderView alloc] init];
@@ -561,10 +532,93 @@
   return _recordHeader;
 }
 
-- (BOOL)isAudioCall {
-  NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-  NSNumber *number = [defaults objectForKey:@"audio_call"];
-  return number.boolValue;
+#pragma mark - lazy init for radio buttons
+
+- (UIButton *)videoCallRadioBtn {
+  if (!_videoCallRadioBtn) {
+    _videoCallRadioBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    [_videoCallRadioBtn setTitle:@"视频呼叫" forState:UIControlStateNormal];
+    [_videoCallRadioBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    _videoCallRadioBtn.titleLabel.font = [UIFont systemFontOfSize:14];
+
+    // 单选图标（选中状态：蓝色圆点，未选中：白色圆框）
+    [_videoCallRadioBtn setImage:[self createRadioImage:YES] forState:UIControlStateSelected];
+    [_videoCallRadioBtn setImage:[self createRadioImage:NO] forState:UIControlStateNormal];
+    [_videoCallRadioBtn setTitleEdgeInsets:UIEdgeInsetsMake(0, 8, 0, 0)];
+    [_videoCallRadioBtn setImageEdgeInsets:UIEdgeInsetsMake(0, 0, 0, 0)];
+
+    [_videoCallRadioBtn addTarget:self
+                           action:@selector(selectVideoCall:)
+                 forControlEvents:UIControlEventTouchUpInside];
+
+    // 默认选中视频呼叫
+    _videoCallRadioBtn.selected = YES;
+    self.isVideoCall = YES;
+  }
+  return _videoCallRadioBtn;
+}
+
+- (UIButton *)audioCallRadioBtn {
+  if (!_audioCallRadioBtn) {
+    _audioCallRadioBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+    [_audioCallRadioBtn setTitle:@"音频呼叫" forState:UIControlStateNormal];
+    [_audioCallRadioBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    _audioCallRadioBtn.titleLabel.font = [UIFont systemFontOfSize:14];
+
+    // 单选图标
+    [_audioCallRadioBtn setImage:[self createRadioImage:YES] forState:UIControlStateSelected];
+    [_audioCallRadioBtn setImage:[self createRadioImage:NO] forState:UIControlStateNormal];
+    [_audioCallRadioBtn setTitleEdgeInsets:UIEdgeInsetsMake(0, 8, 0, 0)];
+    [_audioCallRadioBtn setImageEdgeInsets:UIEdgeInsetsMake(0, 0, 0, 0)];
+
+    [_audioCallRadioBtn addTarget:self
+                           action:@selector(selectAudioCall:)
+                 forControlEvents:UIControlEventTouchUpInside];
+  }
+  return _audioCallRadioBtn;
+}
+
+// 创建单选图标
+- (UIImage *)createRadioImage:(BOOL)selected {
+  CGSize size = CGSizeMake(20, 20);
+  UIGraphicsBeginImageContextWithOptions(size, NO, [UIScreen mainScreen].scale);
+  CGContextRef context = UIGraphicsGetCurrentContext();
+
+  if (selected) {
+    // 选中：蓝色圆点
+    CGContextSetFillColorWithColor(
+        context,
+        [UIColor colorWithRed:57 / 255.0 green:130 / 255.0 blue:252 / 255.0 alpha:1.0].CGColor);
+    CGContextFillEllipseInRect(context, CGRectMake(4, 4, 12, 12));
+  } else {
+    // 未选中：白色圆框
+    CGContextSetStrokeColorWithColor(context, [UIColor whiteColor].CGColor);
+    CGContextSetLineWidth(context, 2.0);
+    CGContextAddEllipseInRect(context, CGRectMake(2, 2, 16, 16));
+    CGContextStrokePath(context);
+  }
+
+  UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+  UIGraphicsEndImageContext();
+  return image;
+}
+
+// 选择视频呼叫
+- (void)selectVideoCall:(UIButton *)button {
+  if (self.isVideoCall) return;
+
+  self.isVideoCall = YES;
+  self.videoCallRadioBtn.selected = YES;
+  self.audioCallRadioBtn.selected = NO;
+}
+
+// 选择音频呼叫
+- (void)selectAudioCall:(UIButton *)button {
+  if (!self.isVideoCall) return;
+
+  self.isVideoCall = NO;
+  self.videoCallRadioBtn.selected = NO;
+  self.audioCallRadioBtn.selected = YES;
 }
 
 #pragma mark - call view status delegate

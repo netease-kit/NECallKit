@@ -53,7 +53,6 @@
   copy.avatar = self.avatar;
   copy.imAccid = self.imAccid;
   copy.imToken = self.imToken;
-  copy.accessToken = self.accessToken;
   copy.avRoomUid = self.avRoomUid;
   copy.isCaller = self.isCaller;
 
@@ -70,7 +69,6 @@
   copy.avatar = self.avatar;
   copy.imAccid = self.imAccid;
   copy.imToken = self.imToken;
-  copy.accessToken = self.accessToken;
   copy.avRoomUid = self.avRoomUid;
   copy.isCaller = self.isCaller;
 

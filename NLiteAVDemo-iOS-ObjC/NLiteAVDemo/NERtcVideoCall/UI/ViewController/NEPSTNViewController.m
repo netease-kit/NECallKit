@@ -10,7 +10,7 @@
 #import <NERtcCallUIKit/NetManager.h>
 #import "SettingManager.h"
 
-@interface NEPSTNViewController () <NERtcLinkEngineDelegate, NECallKitPstnDelegate>
+@interface NEPSTNViewController ()
 @property(strong, nonatomic) NEVideoView *smallVideoView;
 @property(strong, nonatomic) NEVideoView *bigVideoView;
 @property(strong, nonatomic) UIImageView *remoteAvatorView;
@@ -52,8 +52,6 @@
 
 @property(nonatomic, strong) NECallStatusRecordModel *statusModel;
 
-@property(nonatomic, assign) BOOL isPstn;  // 当前呼叫是否已进入pstn流程，默认 NO
-
 @property(nonatomic, strong) UIView *bannerView;
 
 @property(nonatomic, weak) UIAlertController *alert;
@@ -88,9 +86,7 @@
   [self setupSDK];
   [self updateUIonStatus:self.status];
   self.statusModel.startTime = [NSDate date];
-  if (self.callKitType == PSTN) {
-    [self setupPSTNUI];
-  }
+
   if (self.isCaller == NO && [NERtcCallKit sharedInstance].callStatus == NERtcCallStatusIdle) {
     __weak typeof(self) weakSelf = self;
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -114,17 +110,11 @@
   //    [[NERtcCallKit sharedInstance] switchCamera];
   //  }
   [[NERtcCallKit sharedInstance] setupLocalView:nil];
-  [[NECallKitPstn sharedInstance] removeDelegate];
 }
 #pragma mark - SDK
 - (void)setupSDK {
   if (self.callKitType == CALLKIT || self.isCaller == NO) {
     [[NERtcCallKit sharedInstance] addDelegate:self];
-  } else if (self.callKitType == PSTN) {
-    [[NECallKitPstn sharedInstance] addDelegate:self];
-    [[NECallKitPstn sharedInstance] addPstnDelegate:self];
-    [[NECallKitPstn sharedInstance] setCallee:self.remoteUser.mobile];
-    NSLog(@"pstn mobile : %@", self.remoteUser.mobile);
   }
   NSLog(@"called time out %ld", (long)[[SettingManager shareInstance] timeout]);
   //[NERtcCallKit sharedInstance].timeOutSeconds = [[SettingManager shareInstance] timeout];
@@ -161,11 +151,7 @@
                return;
              }
 
-             if (error.code == 21000 || error.code == 21001) {
-               if (self.callKitType == PSTN && error.code == 21000) {
-                 [weakSelf onCallEnd];
-               }
-             } else {
+             if (error.code != 21000 && error.code != 21001) {
                [weakSelf onCallEnd];
              }
              [UIApplication.sharedApplication.keyWindow ne_makeToast:error.localizedDescription];
@@ -375,13 +361,6 @@
   self.mediaSwitchBtn.hidden = ![[SettingManager shareInstance] supportAutoJoinWhenCalled];
 }
 
-- (void)setupPSTNUI {
-  self.mediaSwitchBtn.hidden = YES;
-  self.remoteAvatorView.hidden = YES;
-  self.mediaSwitchBtn.hidden = YES;
-  [self.operationView hideMediaSwitch];
-}
-
 - (void)setupCenterRemoteAvator {
   [self.view addSubview:self.centerSubtitleLabel];
 
@@ -463,7 +442,7 @@
 - (void)updateUIonStatus:(NERtcCallStatus)status {
   switch (status) {
     case NERtcCallStatusCalling: {
-      self.titleLabel.text = [NSString stringWithFormat:@"正在呼叫 %@", self.remoteUser.mobile];
+      self.titleLabel.text = [NSString stringWithFormat:@"正在呼叫 %@", self.remoteUser.imAccid];
       self.centerTitleLabel.text = self.titleLabel.text;
       self.subTitleLabel.text = @"等待对方接听……";
       self.centerSubtitleLabel.text = self.subTitleLabel.text;
@@ -480,7 +459,7 @@
       self.operationView.hidden = YES;
     } break;
     case NERtcCallStatusCalled: {
-      self.titleLabel.text = [NSString stringWithFormat:@"%@", self.remoteUser.mobile];
+      self.titleLabel.text = [NSString stringWithFormat:@"%@", self.remoteUser.imAccid];
       self.centerTitleLabel.text = self.titleLabel.text;
       self.remoteAvatorView.hidden = NO;
       [self setUrl:self.remoteUser.avatar withPlaceholder:@"avator"];
@@ -529,8 +508,8 @@
         self.smallVideoView.hidden = YES;
       }
 
-      self.titleLabel.text = self.remoteUser.mobile;
-      self.centerTitleLabel.text = self.remoteUser.mobile;
+      self.titleLabel.text = self.remoteUser.imAccid;
+      self.centerTitleLabel.text = self.remoteUser.imAccid;
     } break;
     default:
       break;
@@ -602,12 +581,6 @@
 
 #pragma mark - event
 - (void)closeEvent:(UIButton *)button {
-  if (self.isPstn == YES) {
-    [[NECallKitPstn sharedInstance] hangupWithCompletion:^(NSError *_Nullable error){
-
-    }];
-    return;
-  }
 
   [[NERtcCallKit sharedInstance] hangup:^(NSError *_Nullable error){
 
@@ -619,26 +592,11 @@
   button.enabled = NO;
 
   if ([[NetManager shareInstance] isClose] == YES) {
-    if (self.isPstn == YES) {
-      [[NERtcCallKit sharedInstance] changeStatusIdle];
-    }
+
     [self onCallEnd];
     return;
   }
 
-  if (self.isPstn == YES) {
-    NSLog(@"cancel pstn");
-    [[NECallKitPstn sharedInstance] hangupWithCompletion:^(NSError *_Nullable error) {
-      button.enabled = YES;
-      if (error) {
-        [UIApplication.sharedApplication.keyWindow ne_makeToast:error.localizedDescription];
-      } else {
-        weakSelf.statusModel.status = NIMRtcCallStatusCanceled;
-        [weakSelf destroy];
-      }
-    }];
-    return;
-  }
   NSLog(@"cancel rtc");
   [[NERtcCallKit sharedInstance] cancel:^(NSError *_Nullable error) {
     NSLog(@"cancel error %@", error);
@@ -752,14 +710,8 @@
 }
 - (void)hangupBtnClick:(UIButton *)button {
   self.statusModel.status = NIMRtcCallStatusComplete;
-  if (self.isPstn) {
-    [[NECallKitPstn sharedInstance] hangupWithCompletion:^(NSError *_Nullable error){
-
-    }];
-  } else {
-    [[NERtcCallKit sharedInstance] hangup:^(NSError *_Nullable error){
-    }];
-  }
+  [[NERtcCallKit sharedInstance] hangup:^(NSError *_Nullable error){
+  }];
   [self destroy];
 }
 - (void)microphoneBtnClick:(UIButton *)button {
@@ -845,47 +797,6 @@
     btn.selected = !btn.selected;
   } else {
     [self.view ne_makeToast:error.description];
-  }
-}
-
-#pragma mark - pstn delegate
-
-- (void)pstnWillStart {
-  self.isPstn = YES;
-  [[UIApplication sharedApplication].keyWindow ne_makeToast:@"超时未响应"];
-  //    self.cancelBtn.enabled = NO;
-}
-
-- (void)pstnOnError:(NSError *)error {
-  NSLog(@"pstnOnError on error : %@", error);
-  [[UIApplication sharedApplication].keyWindow ne_makeToast:error.localizedDescription];
-}
-
-- (void)pstnDidStart {
-  NSLog(@"pstnDidStart");
-}
-
-- (void)directCallStartCallFinish {
-  NSLog(@"directCallStartCallFinish");
-  //    self.cancelBtn.enabled = YES;
-}
-
-- (void)onDirectCallRing {
-}
-
-- (void)onDirectCallAccept {
-  [self updateUIonStatus:NERtcCallStatusInCall];
-  [self startTimer];
-}
-
-- (void)onDirectCallDisconnectWithError:(NSError *)error {
-}
-
-- (void)onDirectCallHangupWithReason:(int)reason
-                               error:(NSError *)error
-                   isCallEstablished:(BOOL)isCallEstablished {
-  if (reason == 102) {
-    [[UIApplication sharedApplication].keyWindow ne_makeToast:@"超时未响应"];
   }
 }
 
@@ -1063,10 +974,7 @@
 
 - (void)onCallTypeChange:(NERtcCallType)callType {
   NSLog(@"onCallTypeChange:");
-  if (self.callKitType == PSTN) {
-    NSLog(@"pstn not support audio video convert");
-    return;
-  }
+
   if (self.callType == callType) {
     return;
   }
@@ -1199,9 +1107,6 @@
     [self dismissViewControllerAnimated:YES completion:nil];
   }
   [[NERtcCallKit sharedInstance] removeDelegate:self];
-  if (self.callKitType == PSTN) {
-    [[NECallKitPstn sharedInstance] removePstnDelegate];
-  }
 
   if (self.timer != nil) {
     [self.timer invalidate];
@@ -1444,8 +1349,6 @@
 - (void)dealloc {
   if (self.callType == CALLKIT) {
     [[NERtcCallKit sharedInstance] removeDelegate:self];
-  } else if (self.callType == PSTN) {
-    [[NECallKitPstn sharedInstance] removeDelegate];
   }
 }
 

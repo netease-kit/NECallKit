@@ -54,10 +54,10 @@ static NSString *cellID = @"menuCellID";
                             action:@selector(userButtonClick:)
                   forControlEvents:UIControlEventTouchUpInside];
 
-  CGFloat statusHeight = [[UIApplication sharedApplication] statusBarFrame].size.height;
   [customView mas_makeConstraints:^(MASConstraintMaker *make) {
-    make.left.top.right.mas_equalTo(0);
-    make.height.mas_equalTo(statusHeight + 80);
+    make.left.right.equalTo(self.view);
+    make.top.equalTo(self.view.mas_safeAreaLayoutGuideTop);
+    make.height.mas_equalTo(80);
   }];
 
   [self.view addSubview:self.tableView];
@@ -111,6 +111,7 @@ static NSString *cellID = @"menuCellID";
                            [self.view
                                ne_makeToast:[NSString stringWithFormat:@"IM登录失败%@",
                                                                     error.localizedDescription]];
+                           [NEAccount logoutWithCompletion:nil];
                          } else {
                            // 首次登录成功之后上传deviceToken
                            NSData *deviceToken =
@@ -147,26 +148,18 @@ static NSString *cellID = @"menuCellID";
   [NEAccount removeObserverForObject:self];
 }
 - (void)autoLogin {
-  if ([[NEAccount shared].accessToken length] > 0) {
-    [NEAccount
-        loginByTokenWithCompletion:^(NSDictionary *_Nullable data, NSError *_Nullable error) {
-          if (error) {
-            NSString *msg = data[@"msg"] ?: @"请求错误";
-            [self.view ne_makeToast:msg];
-          } else {
-            [[NERtcCallKit sharedInstance] login:[NEAccount shared].userModel.imAccid
-                                           token:[NEAccount shared].userModel.imToken
-                                      completion:^(NSError *_Nullable error) {
-                                        NSLog(@"login im error : %@", error);
-                                        if (error) {
-                                          [self.view ne_makeToast:error.localizedDescription];
-                                        } else {
-                                          [self.view ne_makeToast:@"IM登录成功"];
-                                          [self updateUserInfo:[NEAccount shared].userModel];
-                                        }
-                                      }];
-          }
-        }];
+  if ([[NEAccount shared].userModel.imToken length] > 0) {
+    [NEAccount loginWithAccountId:[NEAccount shared].userModel.imAccid
+                            token:[NEAccount shared].userModel.imToken
+                       completion:^(NSDictionary *_Nullable data, NSError *_Nullable error) {
+                         if (error) {
+                           NSString *msg = data[@"msg"] ?: @"请求错误";
+                           [self.view ne_makeToast:msg];
+                         } else {
+                           [self.view ne_makeToast:@"IM登录成功"];
+                           [self updateUserInfo:[NEAccount shared].userModel];
+                         }
+                       }];
   }
 }
 
@@ -176,32 +169,24 @@ static NSString *cellID = @"menuCellID";
     UIAlertController *alerVC = [UIAlertController
         alertControllerWithTitle:@""
                          message:[NSString stringWithFormat:@"确认退出登录%@",
-                                                            [NEAccount shared].userModel.mobile]
+                                                            [NEAccount shared].userModel.imAccid]
                   preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"取消"
                                                            style:UIAlertActionStyleCancel
                                                          handler:^(UIAlertAction *_Nonnull action){
 
                                                          }];
-    UIAlertAction *okAction = [UIAlertAction
-        actionWithTitle:@"确认"
-                  style:UIAlertActionStyleDefault
-                handler:^(UIAlertAction *_Nonnull action) {
-                  [NEAccount logoutWithCompletion:^(NSDictionary *_Nullable data,
-                                                    NSError *_Nullable error) {
-                    if (error) {
-                      [self.view ne_makeToast:error.localizedDescription];
-                    } else {
-                      [[NERtcCallKit sharedInstance] logout:^(NSError *_Nullable error) {
-                        if (error) {
-                          [weakSelf.view ne_makeToast:error.localizedDescription];
-                        } else {
-                          [weakSelf.view ne_makeToast:@"已退出登录"];
-                        }
-                      }];
-                    }
-                  }];
-                }];
+    UIAlertAction *okAction =
+        [UIAlertAction actionWithTitle:@"确认"
+                                 style:UIAlertActionStyleDefault
+                               handler:^(UIAlertAction *_Nonnull action) {
+                                 [NEAccount logoutWithCompletion:^(NSDictionary *_Nullable data,
+                                                                   NSError *_Nullable error) {
+                                   if (error) {
+                                     [self.view ne_makeToast:error.localizedDescription];
+                                   }
+                                 }];
+                               }];
     [alerVC addAction:cancelAction];
     [alerVC addAction:okAction];
 
@@ -245,11 +230,7 @@ static NSString *cellID = @"menuCellID";
               callVC.status = NERtcCallStatusCalled;
               callVC.callType = type;
               callVC.isCaller = NO;
-              if (type == NERtcCallTypeAudio) {
-                callVC.callKitType = PSTN;
-              } else {
-                callVC.callKitType = CALLKIT;
-              }
+              callVC.callKitType = CALLKIT;
               callVC.modalPresentationStyle = UIModalPresentationOverFullScreen;
               [self.navigationController presentViewController:callVC animated:YES completion:nil];
 
@@ -357,9 +338,6 @@ static NSString *cellID = @"menuCellID";
   } else if (indexPath.row == 1) {
     cell.iconView.image = [UIImage imageNamed:@"menu_single_icon"];
     cell.titleLabel.text = @"多人音视频通话";
-  } else if (indexPath.row == 2) {
-    cell.iconView.image = [UIImage imageNamed:@"pstn"];
-    cell.titleLabel.text = @"融合呼叫";
   }
   return cell;
 }
@@ -375,8 +353,6 @@ static NSString *cellID = @"menuCellID";
       NEGroupContactsController *group = [[NEGroupContactsController alloc] init];
       [self.navigationController pushViewController:group animated:YES];
       return;
-    } else if (indexPath.row == 2) {
-      contact.callKitType = PSTN;
     }
     [self.navigationController pushViewController:contact animated:YES];
   }

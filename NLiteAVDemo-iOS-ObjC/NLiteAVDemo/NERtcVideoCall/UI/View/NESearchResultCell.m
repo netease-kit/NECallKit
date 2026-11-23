@@ -93,7 +93,7 @@
 
 - (void)configureUI:(NEUser *)user {
   self.user = user;
-  self.titleLabel.text = user.mobile;
+  self.titleLabel.text = user.imAccid;
   [self.iconView sd_setImageWithURL:[NSURL URLWithString:user.avatar]
                    placeholderImage:[UIImage imageNamed:@"avator"]];
 }
