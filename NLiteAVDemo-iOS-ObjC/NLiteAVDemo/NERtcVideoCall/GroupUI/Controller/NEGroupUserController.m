@@ -63,7 +63,7 @@
 - (void)removeUsers:(NSArray<NEUser *> *)users {
   [self.datas removeObjectsInArray:users];
   [self.collection reloadData];
-  if (self.datas.count < 0 && self.hideHeaderSection == NO) {
+  if (self.datas.count == 0 && self.hideHeaderSection == NO) {
     self.sectionHeader.hidden = YES;
   }
 }
@@ -187,7 +187,7 @@ navigation
 - (CGSize)collectionView:(UICollectionView *)collectionView
                     layout:(UICollectionViewLayout *)collectionViewLayout
     sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
-  return CGSizeMake(40, 40);
+  return CGSizeMake(80, 30);
 }
 
 @end

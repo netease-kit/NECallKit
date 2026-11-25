@@ -1,36 +1,29 @@
-# Uncomment the next line to define a global platform for your project
- platform :ios, '12.0'
+# Consume the published CallKit 2.6.0 XCFrameworks.
+platform :ios, '15.0'
+source 'https://github.com/netease-im/Specs.git'
+source 'https://cdn.cocoapods.org/'
 
-source 'https://github.com/CocoaPods/Specs.git'
 target 'NLiteAVDemo' do
   use_frameworks!
-  # 云信基础SDK
-  pod 'NERtcSDK', '5.5.2'
-  pod 'NIMSDK_LITE', '9.16.1'
-  
-  pod 'NECallKitPstn', :path => 'CallKit/NECallKitPstn/NECallKitPstn.podspec'
 
-  # 三方依赖
-  pod 'Masonry'
-  
-  #呼叫组件API组件
-  pod 'NERtcCallKit', '2.5.2'
-  
-  #呼叫组件UI组件
-  pod 'NERtcCallUIKit', '2.5.2'
-  
-  pod 'NETranscodingKit'
-  
+  # Match the tested 2.6.0 binary dependency baseline; retain IM V9.
+  pod 'NERtcSDK/RtcBasic', '5.9.10'
+  pod 'NIMSDK_LITE', '9.17.0'
+
+  pod 'NERtcCallKit/NOS', '2.6.0'
+  pod 'NERtcCallUIKit/NOS', '2.6.0'
   #如果需要查看呼叫组件UI组件源码请注释远端引用，打开下面本地引用
   #pod 'NERtcCallUIKit', :path => 'CallKit/NERtcCallUIKit/NERtcCallUIKit.podspec'
-
-
+  pod 'NETranscodingKit/NOS', '1.0.3'
+  pod 'Masonry', '1.1.0'
 end
 
 post_install do |installer|
+  # Xcode 27 requires a host deployment target of at least iOS 15.
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
   end
 end

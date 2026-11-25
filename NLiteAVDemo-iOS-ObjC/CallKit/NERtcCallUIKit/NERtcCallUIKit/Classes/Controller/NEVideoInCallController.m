@@ -26,8 +26,8 @@
 
   [self.view addSubview:self.smallVideoView];
   [NSLayoutConstraint activateConstraints:@[
-    [self.smallVideoView.topAnchor constraintEqualToAnchor:self.view.topAnchor
-                                                  constant:self.statusHeight + 20],
+    [self.smallVideoView.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor
+                                                  constant:20],
     [self.smallVideoView.rightAnchor constraintEqualToAnchor:self.view.rightAnchor constant:-20],
     [self.smallVideoView.heightAnchor constraintEqualToConstant:160],
     [self.smallVideoView.widthAnchor constraintEqualToConstant:90]

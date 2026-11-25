@@ -4,30 +4,29 @@
 
 #import "NEGroupContactsController.h"
 
+#import <NERtcCallUIKit/NERtcCallUIKit.h>
 #import "Attachment.h"
 #import "GroupSettingViewController.h"
+#import "NEGroupUserController.h"
+#import "NEGroupCallViewController.h"
 #import "NEAccount.h"
 #import "NECallStatusRecordCell.h"
-#import "NEGroupCallViewController.h"
-#import "NEGroupUserController.h"
 #import "NEPSTNViewController.h"
 #import "NERtcSettingViewController.h"
 #import "NESearchResultCell.h"
-#import "NESearchTask.h"
-#import "NESectionHeaderView.h"
 #import "NSArray+NTES.h"
 #import "NSMacro.h"
-#import <NERtcCallUIKit/NetManager.h>
+#import "NESectionHeaderView.h"
 
 @interface NEGroupContactsController () <UITextFieldDelegate,
                                          NIMChatManagerDelegate,
                                          UITableViewDelegate,
                                          UITableViewDataSource,
                                          SearchCellDelegate,
-                                         NEGroupUserDelegagte,
-                                         NIMChatManagerDelegate>
+                                         NEGroupUserDelegagte>
 @property(nonatomic, strong) UIView *searchBarView;
 @property(nonatomic, strong) UITextField *textField;
+@property(nonatomic, strong) NSString *lastUpdateText;
 
 @property(nonatomic, strong) UIView *searchResutlTitleView;
 
@@ -38,14 +37,10 @@
 @property(nonatomic, strong) UILabel *currentUserPhone;
 
 @property(nonatomic, strong) UITableView *contentTable;
-/// 搜索结果
-@property(nonatomic, strong) NSMutableArray *searchResultData;
 /// 最近搜索
 @property(nonatomic, strong) NSMutableArray *searchHistoryData;
 
 @property(nonatomic, strong) NSMutableDictionary<NSString *, NEUser *> *flagDic;
-
-@property(nonatomic, strong) NESectionHeaderView *resultHeader;
 
 @property(nonatomic, strong) NESectionHeaderView *historyHeader;
 
@@ -62,14 +57,12 @@
 - (instancetype)init {
   self = [super init];
   if (self) {
-    self.searchResultData = [[NSMutableArray alloc] init];
     self.searchHistoryData = [[NSMutableArray alloc] init];
     self.flagDic = [[NSMutableDictionary alloc] init];
     self.inCallUserDic = [[NSMutableDictionary alloc] init];
     [self loadHistoryData];
     self.totalCount = GroupCallUserLimit;
     self.hasJoinCount = 1;
-    [[[NIMSDK sharedSDK] chatManager] addDelegate:self];
   }
   return self;
 }
@@ -173,7 +166,7 @@
 }
 
 - (UIView *)getHeaderView {
-  // 搜索框与手机号
+  // 账号ID
   UIView *back = [[UIView alloc] init];
   back.backgroundColor = UIColor.clearColor;
   back.frame = CGRectMake(0, 0, self.view.frame.size.width, 40 + 8 + 40);
@@ -191,20 +184,18 @@
     make.top.mas_equalTo(0);
     make.height.mas_equalTo(40);
   }];
-  UIButton *searchBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-  [searchBtn setTitle:@"搜索" forState:UIControlStateNormal];
-  searchBtn.titleLabel.font = [UIFont systemFontOfSize:12];
-  searchBtn.layer.cornerRadius = 4.0;
-  searchBtn.clipsToBounds = YES;
-  searchBtn.backgroundColor = [UIColor colorWithRed:57 / 255.0
-                                              green:130 / 255.0
-                                               blue:252 / 255.0
-                                              alpha:1.0];
-  [searchBtn addTarget:self
-                action:@selector(searchBtn:)
-      forControlEvents:UIControlEventTouchUpInside];
-  [self.searchBarView addSubview:searchBtn];
-  [searchBtn mas_makeConstraints:^(MASConstraintMaker *make) {
+  UIButton *callBtn = [UIButton buttonWithType:UIButtonTypeCustom];
+  [callBtn setTitle:@"呼叫" forState:UIControlStateNormal];
+  callBtn.titleLabel.font = [UIFont systemFontOfSize:12];
+  callBtn.layer.cornerRadius = 4.0;
+  callBtn.clipsToBounds = YES;
+  callBtn.backgroundColor = [UIColor colorWithRed:57 / 255.0
+                                            green:130 / 255.0
+                                             blue:252 / 255.0
+                                            alpha:1.0];
+  [callBtn addTarget:self action:@selector(callBtn:) forControlEvents:UIControlEventTouchUpInside];
+  [self.searchBarView addSubview:callBtn];
+  [callBtn mas_makeConstraints:^(MASConstraintMaker *make) {
     make.left.mas_equalTo(self.textField.mas_right).offset(10);
     make.right.mas_equalTo(-6);
     make.top.mas_equalTo(6);
@@ -217,7 +208,7 @@
   currentPhoneLabel.textColor = HEXCOLORA(0xFFFFFF, 0.5);
   currentPhoneLabel.font = [UIFont systemFontOfSize:14.0];
   currentPhoneLabel.text =
-      [NSString stringWithFormat:@"您的手机号：%@", [NEAccount shared].userModel.mobile];
+      [NSString stringWithFormat:@"您的账号ID：%@", [NEAccount shared].userModel.imAccid];
   [back addSubview:currentPhoneLabel];
   [currentPhoneLabel mas_makeConstraints:^(MASConstraintMaker *make) {
     make.left.equalTo(self.searchBarView);
@@ -234,8 +225,8 @@
 
 - (void)didRemoveWithUser:(NEUser *)user {
   [self.flagDic removeObjectForKey:user.imAccid];
-  [self.contentTable reloadSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 2)]
-                   withRowAnimation:UITableViewRowAnimationNone];
+  [self refreshInputFromSelection];
+  [self.contentTable reloadData];
   [self userCountDidChange];
 }
 
@@ -246,45 +237,104 @@
   [self.searchHistoryData addObjectsFromArray:records];
 }
 
-- (void)searchMobile:(NSString *)mobile {
-  __weak typeof(self) weakSelf = self;
-
-  NESearchTask *task = [NESearchTask task];
-  task.req_mobile = mobile;
-  [task postWithCompletion:^(NSDictionary *_Nullable data, NSError *_Nullable error) {
-    if (error) {
-      [weakSelf.view ne_makeToast:error.localizedDescription];
-    } else {
-      NSDictionary *userDic = [data objectForKey:@"data"];
-      if (userDic) {
-        if (userDic) {
-          NEUser *user = [[NEUser alloc] init];
-          user.mobile = [userDic objectForKey:@"mobile"];
-          user.imAccid = [userDic objectForKey:@"imAccid"];
-          user.avatar = [userDic objectForKey:@"avatar"];
-          [weakSelf saveUser:user];
-        }
-      } else {
-        [weakSelf.searchResultData removeAllObjects];
-        [weakSelf.view ne_makeToast:@"未找到此用户"];
-      }
-      [weakSelf.contentTable reloadData];
-    }
-  }];
+#pragma mark - event
+- (void)callBtn:(UIButton *)button {
+  [self didCall];
 }
 
-- (void)searchUser:(NSString *)account {
-  [self.textField resignFirstResponder];
-  if (!account.length) {
+- (void)updateCallingList:(NSString *)inputText {
+  if (!inputText || inputText.length == 0) {
+    // 清空待呼叫列表
+    [self.userController removeUsers:[[self.userController getAllUsers] copy]];
+    [self.flagDic removeAllObjects];
+    [self userCountDidChange];
+    [self.contentTable reloadData];
     return;
   }
-  // 发送请求
-  [self searchMobile:account];
+
+  // 解析输入的 accountIds
+  NSArray *accountIds = [self parseAccountIds:inputText];
+
+  // 检查是否包含自己
+  NSString *currentAccid = [NEAccount shared].userModel.imAccid;
+
+  // 先移除所有不在新列表中的用户
+  NSMutableArray *toRemove = [[NSMutableArray alloc] init];
+  for (NSString *imAccid in self.flagDic.allKeys) {
+    if (![accountIds containsObject:imAccid]) {
+      [toRemove addObject:[self.flagDic objectForKey:imAccid]];
+    }
+  }
+  [self.userController removeUsers:toRemove];
+  for (NEUser *user in toRemove) {
+    [self.flagDic removeObjectForKey:user.imAccid];
+  }
+
+  // 添加新用户
+  NSMutableArray *toAdd = [[NSMutableArray alloc] init];
+  for (NSString *accountId in accountIds) {
+    if (!accountId || accountId.length == 0) {
+      continue;
+    }
+
+    // 跳过自己
+    if ([accountId isEqualToString:currentAccid] || self.inCallUserDic[accountId] != nil) {
+      continue;
+    }
+
+    // 如果已经存在，跳过
+    if ([self.flagDic objectForKey:accountId]) {
+      continue;
+    }
+
+    // 检查人数限制
+    if ((self.hasJoinCount + [self.userController getAllUsers].count + toAdd.count) >=
+        GroupCallUserLimit) {
+      break;  // 达到限制，停止添加
+    }
+
+    // 创建新用户对象
+    NEUser *user = [[NEUser alloc] init];
+    user.imAccid = accountId;
+    user.mobile = accountId;
+    [toAdd addObject:user];
+    [self.flagDic setObject:user forKey:accountId];
+  }
+
+  if (toAdd.count > 0) {
+    [self.userController addUsers:toAdd];
+  }
+
+  [self.contentTable reloadData];
+  [self userCountDidChange];
 }
 
-#pragma mark - event
-- (void)searchBtn:(UIButton *)button {
-  [self searchUser:self.textField.text];
+- (void)refreshInputFromSelection {
+  NSMutableArray<NSString *> *accountIds = [NSMutableArray array];
+  for (NEUser *user in [self.userController getAllUsers]) {
+    if (user.imAccid.length > 0) {
+      [accountIds addObject:user.imAccid];
+    }
+  }
+  self.textField.text = [accountIds componentsJoinedByString:@","];
+  self.lastUpdateText = self.textField.text;
+}
+
+- (NSArray *)parseAccountIds:(NSString *)inputText {
+  // 支持中文逗号和英文逗号分隔
+  NSCharacterSet *separators = [NSCharacterSet characterSetWithCharactersInString:@",，;； \n\t"];
+  NSArray *components = [inputText componentsSeparatedByCharactersInSet:separators];
+
+  NSMutableArray *accountIds = [[NSMutableArray alloc] init];
+  for (NSString *component in components) {
+    NSString *trimmed = [component
+        stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (trimmed.length > 0 && ![accountIds containsObject:trimmed]) {
+      [accountIds addObject:trimmed];
+    }
+  }
+
+  return [accountIds copy];
 }
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
   if (self.textField.isFirstResponder) {
@@ -293,7 +343,9 @@
 }
 #pragma mark - UITextFieldDelegate
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
-  [self searchUser:textField.text];
+  // 收起键盘，然后直接呼叫
+  [self.textField resignFirstResponder];
+  [self callBtn:nil];  // 触发呼叫按钮逻辑
   return YES;
 }
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField {
@@ -302,14 +354,23 @@
 - (BOOL)textField:(UITextField *)textField
     shouldChangeCharactersInRange:(NSRange)range
                 replacementString:(NSString *)string {
-  NSString *str = [textField.text stringByReplacingCharactersInRange:range withString:string];
-  if (str.length > 11) {
-    return NO;
-  }
-  NSCharacterSet *invalidCharacters =
-      [NSCharacterSet characterSetWithCharactersInString:@"0123456789"].invertedSet;
-  return ([str rangeOfCharacterFromSet:invalidCharacters].location == NSNotFound);
+  // 延迟更新，避免 range 错误
+  dispatch_after(
+      dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        NSString *currentText = textField.text ?: @"";
+        if (![self.lastUpdateText isEqualToString:currentText]) {
+          self.lastUpdateText = currentText;
+          [self updateCallingList:currentText];
+        }
+      });
+  return YES;
 }
+- (BOOL)textFieldShouldClear:(UITextField *)textField {
+  self.lastUpdateText = @"";
+  [self updateCallingList:@""];
+  return YES;
+}
+
 - (UITextField *)textField {
   if (!_textField) {
     _textField = [[UITextField alloc] init];
@@ -317,7 +378,7 @@
     _textField.delegate = self;
     _textField.textColor = [UIColor whiteColor];
     NSMutableAttributedString *string = [[NSMutableAttributedString alloc]
-        initWithString:@"输入手机号搜索已注册用户"
+        initWithString:@"输入账号ID，多个账号用逗号隔开"
             attributes:@{
               NSForegroundColorAttributeName : [UIColor grayColor],
               NSFontAttributeName : _textField.font
@@ -326,8 +387,8 @@
     _textField.layer.cornerRadius = 8;
 
     _textField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    _textField.returnKeyType = UIReturnKeySearch;
-    _textField.keyboardType = UIKeyboardTypeNumbersAndPunctuation;
+    _textField.returnKeyType = UIReturnKeyGo;
+    _textField.keyboardType = UIKeyboardTypeDefault;
   }
   return _textField;
 }
@@ -335,13 +396,11 @@
 #pragma mark - file read & write
 - (void)saveUser:(NEUser *)user {
   NSArray *array = [self readFileName:historyFileName];
-  [self.searchResultData removeAllObjects];
-  [self.searchResultData addObject:user];
   NSMutableArray *mutArray = [NSMutableArray array];
   [mutArray addObject:user];
   [mutArray addObjectsFromArray:array];
   for (NEUser *saveUser in array) {
-    if ([saveUser.mobile isEqualToString:user.mobile]) {
+    if ([saveUser.imAccid isEqualToString:user.imAccid]) {
       [mutArray removeObject:saveUser];
     }
   }
@@ -369,6 +428,12 @@
     [[UIApplication sharedApplication].keyWindow ne_makeToast:@"请选择通话成员"];
     return;
   }
+
+  for (NEUser *user in [self.userController getAllUsers]) {
+    [self saveUser:user];
+  }
+  [self loadHistoryData];
+  [self.contentTable reloadData];
 
   if (self.isInvite == YES) {
     if (self.completion) {
@@ -401,32 +466,26 @@
   }
 }
 
+#pragma mark - 转换方法
+// 保留 2.6.0 的群呼控制器与 IM V9 接口。
+
 #pragma mark - ui table view delegate
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-  return 2;
+  return 1;  // 只保留最近搜索
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
   if (section == 0) {
-    return self.searchResultData.count;
-  } else if (section == 1) {
     return self.searchHistoryData.count;
-  } else if (section == 2) {
-    return self.calledUsers.count;
   }
   return 0;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView
          cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-  if (indexPath.section == 0 || indexPath.section == 1) {
-    NEUser *user;
-    if (indexPath.section == 0) {
-      user = self.searchResultData[indexPath.row];
-    } else if (indexPath.section == 1) {
-      user = self.searchHistoryData[indexPath.row];
-    }
+  if (indexPath.section == 0) {
+    NEUser *user = self.searchHistoryData[indexPath.row];
     NESearchResultCell *cell =
         (NESearchResultCell *)[tableView dequeueReusableCellWithIdentifier:@"NESearchResultCell"
                                                               forIndexPath:indexPath];
@@ -445,97 +504,55 @@
     cell.delegate = self;
     return cell;
   }
-  NECallStatusRecordCell *cell = (NECallStatusRecordCell *)[tableView
-      dequeueReusableCellWithIdentifier:@"NECallStatusRecordCell"
-                           forIndexPath:indexPath];
-  cell.accessibilityIdentifier = [NSString stringWithFormat:@"%ld", (long)indexPath.row];
-  return cell;
+  return nil;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-  NEUser *user;
-  if (indexPath.section == 0 || indexPath.section == 1) {
-    if (indexPath.section == 0) {
-      user = self.searchResultData[indexPath.row];
-    } else if (indexPath.section == 1) {
-      user = self.searchHistoryData[indexPath.row];
-    }
-  }
-  if ([user.imAccid isEqualToString:NIMSDK.sharedSDK.loginManager.currentAccount]) {
-    [UIApplication.sharedApplication.keyWindow ne_makeToast:@"不能呼叫自己"];
-    return;
-  }
-  NEUser *inCallUser = [self.inCallUserDic objectForKey:user.imAccid];
-  if (inCallUser != nil) {
-    return;
-  }
+  if (indexPath.section == 0) {
+    NEUser *user = self.searchHistoryData[indexPath.row];
 
-  NEUser *calledUser = [self.flagDic objectForKey:user.imAccid];
-  if (calledUser == nil) {
-    if ((self.hasJoinCount + [self.userController getAllUsers].count) >= GroupCallUserLimit) {
-      [UIApplication.sharedApplication.keyWindow ne_makeToast:@"邀请已达上限"];
+    if ([user.imAccid isEqualToString:NIMSDK.sharedSDK.loginManager.currentAccount]) {
+      [UIApplication.sharedApplication.keyWindow ne_makeToast:@"不能呼叫自己"];
       return;
     }
-    [self.userController addUsers:@[ user ]];
-    [self.flagDic setObject:user forKey:user.imAccid];
-    [tableView reloadData];
-    //        NESearchResultCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-    //        [cell setGrayBtn];
-  } else {
-    [self.userController removeUsers:@[ calledUser ]];
-    [self.flagDic removeObjectForKey:user.imAccid];
-    [tableView reloadData];
-    //        NESearchResultCell *cell = [tableView cellForRowAtIndexPath:indexPath];
-    //        [cell setBlueBtn];
+    NEUser *inCallUser = [self.inCallUserDic objectForKey:user.imAccid];
+    if (inCallUser != nil) {
+      return;
+    }
+
+    NEUser *calledUser = [self.flagDic objectForKey:user.imAccid];
+    if (calledUser == nil) {
+      if ((self.hasJoinCount + [self.userController getAllUsers].count) >= GroupCallUserLimit) {
+        [UIApplication.sharedApplication.keyWindow ne_makeToast:@"邀请已达上限"];
+        return;
+      }
+      [self.userController addUsers:@[ user ]];
+      [self.flagDic setObject:user forKey:user.imAccid];
+      [tableView reloadData];
+    } else {
+      [self.userController removeUsers:@[ calledUser ]];
+      [self.flagDic removeObjectForKey:user.imAccid];
+      [tableView reloadData];
+    }
+    [self refreshInputFromSelection];
+    [self userCountDidChange];
   }
-  [self userCountDidChange];
 }
 
 - (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section {
   if (section == 0) {
-    if (self.searchResultData.count > 0) {
-      return NESectionHeaderView.height;
-    } else {
-      return NESectionHeaderView.hasContentHeight;
-    }
-  }
-
-  if (section == 1) {
     if (self.searchHistoryData.count > 0) {
       return NESectionHeaderView.height;
     }
   }
-
-  if (section == 2) {
-    if (self.calledUsers.count > 0) {
-      return NESectionHeaderView.height;
-    }
-  }
-
   return 0;
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section {
   if (section == 0) {
-    if (self.searchResultData.count > 0) {
-      self.resultHeader.frame =
-          CGRectMake(0, 0, self.view.frame.size.width, NESectionHeaderView.height);
-      [self.resultHeader.contentLabel setHidden:YES];
-    } else {
-      self.resultHeader.frame =
-          CGRectMake(0, 0, self.view.frame.size.width, NESectionHeaderView.hasContentHeight);
-      [self.resultHeader.contentLabel setHidden:NO];
-    }
-    return self.resultHeader;
-  } else if (section == 1) {
     if (self.searchHistoryData.count > 0) {
       [self.historyHeader.dividerLine setHidden:NO];
       return self.historyHeader;
-    }
-  } else if (section == 2) {
-    if (self.calledUsers.count > 0) {
-      [self.recordHeader.dividerLine setHidden:NO];
-      return self.recordHeader;
     }
   }
   return nil;
@@ -589,16 +606,6 @@
   return 0;
 }
 
-- (NESectionHeaderView *)resultHeader {
-  if (nil == _resultHeader) {
-    _resultHeader = [[NESectionHeaderView alloc] init];
-    _resultHeader.frame = CGRectMake(0, 0, self.view.frame.size.width, NESectionHeaderView.height);
-    _resultHeader.contentLabel.text = @"无";
-    _resultHeader.titleLabel.text = @"搜索结果";
-  }
-  return _resultHeader;
-}
-
 - (NESectionHeaderView *)historyHeader {
   if (nil == _historyHeader) {
     _historyHeader = [[NESectionHeaderView alloc] init];
@@ -623,44 +630,10 @@
   return view;
 }
 
-- (void)testAccid:(NSString *)accid {
-  NIMSession *session = [NIMSession session:accid type:NIMSessionTypeP2P];
-
-  // 构造自定义消息附件
-  NIMCustomObject *object = [[NIMCustomObject alloc] init];
-  Attachment *attachment = [[Attachment alloc] init];
-  object.attachment = attachment;
-
-  // 构造出具体消息并注入附件
-  NIMMessage *message = [[NIMMessage alloc] init];
-  message.messageObject = object;
-
-  // 错误反馈对象
-  NSError *error = nil;
-
-  // 发送消息
-  [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:&error];
-}
-
 #pragma mark - call view status delegate
 
 - (void)didEndCallWithStatusModel:(NECallStatusRecordModel *)model {
   [[NSNotificationCenter defaultCenter] postNotificationName:NERECORDADD object:model];
 }
 
-//- (void)sendMessage:(NIMMessage *)message didCompleteWithError:(NSError *)error {
-//    NSLog(@"send complete : %@", error);
-//    if (error == nil) {
-//        [[UIApplication sharedApplication].keyWindow ne_makeToast:@"自定义消息发送成功"];
-//    }
-//}
-//
-//- (void)onRecvMessages:(NSArray<NIMMessage *> *)messages {
-//    NSLog(@"contacts onRecvMessages : %lu", (unsigned long)messages.count);
-//    for (NIMMessage *message in messages) {
-//        if (message.messageType == NIMMessageTypeCustom) {
-//            [[UIApplication sharedApplication].keyWindow ne_makeToast:@"收到消息"];
-//        }
-//    }
-//}
 @end

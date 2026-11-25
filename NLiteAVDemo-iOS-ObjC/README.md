@@ -4,6 +4,14 @@
 
 ![profile](https://github.com/netease-im/NEVideoCall-1to1/blob/master/NLiteAVDemo-iOS-ObjC/Images/profile.png)
 
+## CallKit 2.6.0 arm64 模拟器验证
+
+本分支使用正式发布的 NERtcCallKit / NERtcCallUIKit 2.6.0 XCFramework，使用 RTC 5.9.10、IM V9，并移除 PSTN 依赖。
+
+## 账号登录与 master 对齐
+
+本 Demo 已同步 master 的 Xcode 27 Scene 生命周期和账号 ID / token 登录方式。配置 `NLiteAVDemo/AppKey.h` 中的 AppKey，运行后在登录页填写同一应用下的云信账号 ID 和 IM token；联系人页直接输入对端账号 ID，群呼支持逗号分隔多个账号。无需手机号、验证码或旧 Demo 业务服务器域名。
+
 ## 功能介绍
 
 - 视频呼叫/接听
@@ -16,14 +24,14 @@
 
 1. 登录[网易云控制台](https://app.yunxin.163.com/index?clueFrom=nim&from=nim#/)，点击【应用】>【创建】创建自己的App，在【功能管理】中申请开通【信令】和【音视频通话】功能。
 2. 在控制台中【App Key管理】获取App Key。
-3. 下载[本项目]()，将AppDelegate.m中的App Key更换为自己的App Key。
+3. 下载[本项目]()，将 `NLiteAVDemo/AppKey.h` 中的 AppKey 更换为自己的 AppKey。
 
 ## 运行示例项目
 
 **注意：在运行前，请联系商务经理开通非安全模式（因Demo中RTCSDK中的token传空）。**
 
 1. 下载完成后，终端进入Podfile所在文件夹，执行`pod install`命令。如未安装Cocoapods，请参考[安装说明](https://guides.cocoapods.org/using/getting-started.html#getting-started)。
-2. 执行 `pod install` 完成安装后，双击 `NLiteAVDemo.xcworkspace` 通过 Xcode 打开工程。然后打开 `AppDelegate.h` 文件，填入您的AppKey，`APNSCerName`和`VoIPCerName`可以需要时再填写。随后运行工程即可。
+2. 执行 `pod install` 完成安装后，双击 `NLiteAVDemo.xcworkspace` 通过 Xcode 打开工程。然后打开 `NLiteAVDemo/AppKey.h`，填入您的 AppKey，按需配置 APNS 证书名称。运行工程后使用云信账号 ID 与 IM token 登录。
 
 ## 功能实现
 
@@ -31,15 +39,14 @@ Demo项目文件目录功能介绍如下：
 
 |       文件/文件夹        |                   功能                   |
 | :----------------------: | :--------------------------------------: |
-|         AppKey.h         |   配置AppKey、推送证书名称、服务器域名   |
+|         AppKey.h         |   配置 AppKey、推送证书名称   |
 |          Menu/           |                   首页                   |
 |  **NERtcVideoCall/UI**   |  **视频通话UI（联系人页&视频通话页）**   |
 | **NERtcVideoCall/Model** |             **视频通话组件**             |
-|          Login/          |            登录&注册功能模块             |
-|         Service/         |             网络请求功能模块             |
+|          Login/          |            账号 ID / token 登录模块             |
 |          Utils/          | 通用功能：UI父类、分类、宏定义、账户信息 |
 
-其中**NERtcVideoCall**模块主要包含`Model`、`UI`、`Task`三个文件夹，Model文件夹包含了可重用的开源组件NERtcVideoCall，您可以在`NERtcVideoCall.h`中查看适用于一对一视频通话的接口。
+其中**NERtcVideoCall**模块主要包含`Model`、`UI` 等文件夹，Model文件夹包含了可重用的开源组件NERtcVideoCall，您可以在`NERtcVideoCall.h`中查看适用于一对一视频通话的接口。
 
 NERtcVideoCall组件：
 
@@ -47,7 +54,11 @@ NERtcVideoCall组件：
 
 ### 复用UI：
 
-Demo跑通之后，可以修改NERtcVideoCall/UI文件夹下的类文件，复用**联系人搜索页**以及**视频通话页**。
+Demo跑通之后，可以修改NERtcVideoCall/UI文件夹下的类文件，复用**联系人账号输入页**以及**视频通话页**。
+
+### 历史 Model 源码接入示例
+
+以下示例保留旧版开源 Model 的用法；本分支当前运行的 Demo 使用上述 CallKit 2.6.0 二进制接入路线。
 
 ### 自定义UI：
 

@@ -27,14 +27,13 @@
 @implementation AppDelegate
 - (BOOL)application:(UIApplication *)application
     didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-  [self initWindow];
   [self setupSDK];
   [self registerAPNS];
   return YES;
 }
 
-- (void)initWindow {
-  self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+- (void)configureWindow:(UIWindow *)window {
+  self.window = window;
   self.window.backgroundColor = UIColor.whiteColor;
   NEMenuViewController *menuVC = [[NEMenuViewController alloc] init];
   UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:menuVC];
@@ -76,8 +75,8 @@ NSLog(@"class instance : %@", controller);
   config.uiConfig.showCallingSwitchCallType = YES;
   config.uiConfig.enableVideoToAudio = YES;
   config.uiConfig.enableAudioToVideo = YES;
-    config.uiConfig.enableFloatingWindow = YES;
-    config.uiConfig.enableFloatingWindowOutOfApp = YES;
+  config.uiConfig.enableFloatingWindow = YES;
+  config.uiConfig.enableFloatingWindowOutOfApp = YES;
   [[NERtcCallUIKit sharedInstance] setupWithConfig:config];
   [NERtcCallUIKit sharedInstance].delegate = self;
 
@@ -167,6 +166,5 @@ NSLog(@"class instance : %@", controller);
     didReceiveLocalNotification:(UILocalNotification *)notification {
   [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
 }
-
 
 @end

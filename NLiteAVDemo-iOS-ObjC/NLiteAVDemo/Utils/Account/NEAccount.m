@@ -3,8 +3,6 @@
 // found in the LICENSE file.
 
 #import "NEAccount.h"
-#import "NEAccountTask.h"
-#import "NEService.h"
 #import "NSDictionary+NTESJson.h"
 
 /**
@@ -41,14 +39,13 @@
 ///
 
 #define NEAccountShared [NEAccount shared]
-#define kAccessTokenKey @"kAccessTokenKey"
+#define kUserModelKey @"kUserModelKey"
 
 @interface NEAccount ()
 
 @property(nonatomic, readwrite, strong) NSMutableArray *actionObservers;
 @property(nonatomic, readwrite, assign) BOOL hasLogin;
 @property(nonatomic, readwrite, strong, nullable) NEUser *userModel;
-@property(nonatomic, readwrite, copy, nullable) NSString *accessToken;
 
 @end
 
@@ -60,7 +57,12 @@
   dispatch_once(&onceToken, ^{
     instance = [[NEAccount alloc] init];
     instance.actionObservers = [NSMutableArray array];
-    instance.accessToken = [[NSUserDefaults standardUserDefaults] objectForKey:kAccessTokenKey];
+
+    // 从缓存中加载 userModel
+    NSData *userModelData = [[NSUserDefaults standardUserDefaults] objectForKey:kUserModelKey];
+    if (userModelData) {
+      instance.userModel = [NSKeyedUnarchiver unarchiveObjectWithData:userModelData];
+    }
   });
   return instance;
 }
@@ -133,58 +135,52 @@
 @implementation NEAccount (Login)
 
 + (void)logoutWithCompletion:(_Nullable NEAccountComplete)completion {
-  NELogoutTask *task = [NELogoutTask taskWithSubURL:@"/auth/logout"];
-  [[NEService shared] runTask:task
-                   completion:^(NSDictionary *_Nullable data, NSError *_Nullable error) {
-                     if (error == nil) {
-                       NEAccountShared.hasLogin = NO;
-                       NEAccountShared.userModel = nil;
-                       [[NSUserDefaults standardUserDefaults] setObject:nil forKey:kAccessTokenKey];
-                       NEAccountShared.accessToken = nil;
-                       [NEAccountShared _notifyAccountAction:NEAccountActionLogout];
-                     }
+  NEAccountShared.hasLogin = NO;
+  NEAccountShared.userModel = nil;
+  [[NSUserDefaults standardUserDefaults] setObject:nil forKey:kUserModelKey];
+  [NEAccountShared _notifyAccountAction:NEAccountActionLogout];
 
-                     if (completion) {
-                       completion(data, error);
-                     }
-                   }];
+  if (completion) {
+    completion(nil, nil);
+  }
 }
 
-+ (void)loginWithMobile:(NSString *)mobile
-                smsCode:(NSString *)smsCode
-             completion:(NEAccountComplete)completion {
-  NESmsLoginTask *task = [NESmsLoginTask taskWithSubURL:@"/auth/loginBySmsCode"];
-  task.req_mobile = mobile;
-  task.req_smsCode = smsCode;
-  [[NEService shared] runTask:task
-                   completion:^(NSDictionary *_Nullable response, NSError *_Nullable error) {
-                     [self _loginHandleWithResponse:response error:error completion:completion];
-                   }];
-}
-
-+ (void)loginByTokenWithCompletion:(_Nullable NEAccountComplete)completion {
-  NETokenLoginTask *task = [NETokenLoginTask taskWithSubURL:@"/auth/loginByToken"];
-  [[NEService shared] runTask:task
-                   completion:^(NSDictionary *_Nullable response, NSError *_Nullable error) {
-                     [self _loginHandleWithResponse:response error:error completion:completion];
-                   }];
++ (void)loginWithAccountId:(NSString *)accountId
+                     token:(NSString *)token
+                completion:(_Nullable NEAccountComplete)completion {
+  // 直接调用 _loginHandleWithResponse，透传 accountId 和 token
+  NSDictionary *response = @{@"accountId" : accountId ?: @"", @"token" : token ?: @""};
+  [self _loginHandleWithResponse:response error:nil completion:completion];
 }
 
 + (void)_loginHandleWithResponse:(NSDictionary *)response
                            error:(NSError *)error
                       completion:(_Nullable NEAccountComplete)completion {
-  NSString *accessToken = nil;
+  NSString *accountId = response[@"accountId"];
+  NSString *token = response[@"token"];
   BOOL loginResult = NO;
-  NSDictionary *data = response[@"data"];
-  if (error == nil && data != nil && [[data jsonString:@"accessToken"] length] > 0) {
-    accessToken = [data jsonString:@"accessToken"];
+
+  // 检查 accountId 和 token 是否有效
+  if (error == nil && accountId.length > 0 && token.length > 0) {
     loginResult = YES;
+
+    // 创建 userModel 并设置 accountId 和 token
+    NEUser *userModel = [[NEUser alloc] init];
+    userModel.imAccid = accountId;
+    userModel.imToken = token;
+
+    NEAccountShared.userModel = userModel;
+
+    // 缓存 userModel
+    NSData *userModelData = [NSKeyedArchiver archivedDataWithRootObject:userModel];
+    [[NSUserDefaults standardUserDefaults] setObject:userModelData forKey:kUserModelKey];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+  } else {
+    NEAccountShared.userModel = nil;
   }
+
   NEAccountShared.hasLogin = loginResult;
-  NEAccountShared.userModel = loginResult ? [[NEUser alloc] initWithDictionary:data] : nil;
-  NEAccountShared.accessToken = accessToken;
-  [[NSUserDefaults standardUserDefaults] setObject:accessToken forKey:kAccessTokenKey];
-  [[NSUserDefaults standardUserDefaults] synchronize];
+
   if (loginResult) {
     [NEAccountShared _notifyAccountAction:NEAccountActionLogin];
   }
